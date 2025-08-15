@@ -1,8 +1,27 @@
-import React from 'react';
+'use client';
+import React, { useEffect } from 'react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import gsap from 'gsap';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const Home = () => {
+  useEffect(() => {
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#home-section',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+        markers: true,
+      },
+    });
+
+    
+  }, []);
+
   return (
-    <div>Home</div>
+    <div id='home-section'>Home</div>
   );
 }
 

@@ -1,4 +1,4 @@
-type itemType = {
+export type itemType = {
     [key: string]: {
         id: number;
         name: string;

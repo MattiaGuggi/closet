@@ -22,7 +22,7 @@ const AnimationProvider = ({children}: { children: React.ReactNode }) => {
     }, [pathname]);
 
     return (
-        <div>{children}</div>
+        <>{children}</>
     )
 }
 

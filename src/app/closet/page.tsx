@@ -2,9 +2,8 @@
 import React, { useState } from 'react'
 import { MoveLeft, MoveRight } from 'lucide-react';
 import { useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import gsap from "gsap";
+import Scene from '../components/scene';
 import { items } from '@/lib/data';
 
 const page = () => {
@@ -30,37 +29,55 @@ const page = () => {
     console.table(outfit);
   };
 
+  useEffect(() => {
+    const sections = gsap.utils.toArray<HTMLElement>(".closet-row");
+
+    for(const section of sections) {
+      const tl = gsap.timeline();
+      
+      tl.fromTo(section, {
+          opacity: 0,
+          y: 50
+        }, {
+          opacity: 1,
+          y: 0,
+          duration: 0.5
+        }
+      );
+    }
+  }, []);
+
   return (
     <section id='closet-section' className="w-full min-h-screen flex flex-col items-center justify-start overflow-hidden py-10">
       <h1 className='font-bold text-5xl text-center text-white'>Closet</h1>
       <div className='w-full h-full'>
-        <div className='flex items-center justify-around h-[30vh] py-12'>
+        <section className='closet-row flex items-center justify-around h-[30vh] py-12'>
           <MoveLeft className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'top')} />
           <div className="px-28">
-            <p className='text-white text-xl font-semibold'>{items.top[itemState.top].name}</p>
+            <Scene item={items.top[itemState.top]} />
           </div>
           <MoveRight className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'top')} />
-        </div>
+        </section>
         <hr />
-        <div className='flex items-center justify-around h-[30vh] py-12'>
+        <section className='closet-row flex items-center justify-around h-[30vh] py-12'>
           <MoveLeft className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'mid')} />
           <div className="px-28">
-            <p className='text-white text-xl font-semibold'>{items.mid[itemState.mid].name}</p>
+            <Scene item={items.mid[itemState.mid]} />
           </div>
           <MoveRight className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'mid')} />
-        </div>
+        </section>
         <hr />
-        <div className='flex items-center justify-around h-[30vh] py-12'>
+        <section className='closet-row flex items-center justify-around h-[30vh] py-12'>
           <MoveLeft className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'bottom')} />
           <div className="px-28">
-            <p className='text-white text-xl font-semibold'>{items.bottom[itemState.bottom].name}</p>
+            <Scene item={items.bottom[itemState.bottom]} />
           </div>
           <MoveRight className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'bottom')} />
-        </div>
+        </section>
       </div>
       <button
-        className='shadow-lg px-10 py-5 cursor-pointer rounded-xl bg-gradient-to-br from-blue-500 to bg-indigo-800 duration-200 transition-all
-        hover:scale-105 text-white font-semibold text-lg'
+        className='shadow-lg px-10 py-5 cursor-pointer rounded-xl bg-gradient-to-br from-blue-500 to-indigo-800 duration-200 transition-all
+        hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600 hover:to-indigo-900 text-white font-semibold text-lg'
         onClick={buildOutfit}
       >
         Build outfit

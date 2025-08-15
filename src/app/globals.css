@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --light-blue: #35577D;
+  --dark-blue: #141E30;
 }
 
 @theme inline {
@@ -25,5 +27,9 @@ main {
 
 .shadow-custom {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.main-bg {
+  background: linear-gradient(37deg, var(--dark-blue), var(--light-blue));
 }
 

@@ -21,24 +21,24 @@ const Header = () => {
                 <Link
                     href="/"
                     className={`text-lg font-extrabold tracking-wide transition-all duration-200 px-4 py-2 rounded-xl
-                    ${pathname === "/" ? "bg-gradient-to-r from-indigo-500 to-indigo-900 text-white shadow-lg scale-105" :
-                    "text-indigo-100 hover:bg-gradient-to-r hover:from-indigo-700 hover:to-indigo-900 hover:text-white"}`}
+                    ${pathname === "/" ? "main-bg text-white shadow-lg scale-105" :
+                    "text-indigo-100 hover:main-bg hover:text-white"}`}
                 >
                     Home
                 </Link>
                 <Link
                     href="/closet"
                     className={`text-lg font-extrabold tracking-wide transition-all duration-200 px-4 py-2 rounded-xl
-                    ${pathname.startsWith("/closet") ? "bg-gradient-to-r from-indigo-500 to-indigo-900 text-white shadow-lg scale-105" :
-                    "text-indigo-100 hover:bg-gradient-to-r hover:from-indigo-700 hover:to-indigo-900 hover:text-white"}`}
+                    ${pathname.startsWith("/closet") ? "main-bg text-white shadow-lg scale-105" :
+                    "text-indigo-100 hover:main-bg hover:text-white"}`}
                 >
                     Closet
                 </Link>
                 <Link
                     href="/profile"
                     className={`text-lg font-extrabold tracking-wide transition-all duration-200 px-4 py-2 rounded-xl
-                    ${pathname.startsWith("/profile") ? "bg-gradient-to-r from-indigo-500 to-indigo-900 text-white shadow-lg scale-105" :
-                    "text-indigo-100 hover:bg-gradient-to-r hover:from-indigo-700 hover:to-indigo-900 hover:text-white"}`}
+                    ${pathname.startsWith("/profile") ? "main-bg text-white shadow-lg scale-105" :
+                    "text-indigo-100 hover:main-bg hover:text-white"}`}
                 >
                     Profile
                 </Link>

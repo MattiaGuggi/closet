@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
-import { items } from '@/lib/items';
+import { items } from '@/lib/data';
 
 const page = () => {
   const [itemState, setItemState] = useState<{ top: number; mid: number; bottom: number }>({top: 0, mid: 0, bottom: 0,});
@@ -21,14 +21,23 @@ const page = () => {
     });
   };
 
+  const buildOutfit = () => {
+    const outfit = {
+      top: items.top[itemState.top],
+      mid: items.mid[itemState.mid],
+      bottom: items.bottom[itemState.bottom],
+    };
+    console.table(outfit);
+  };
+
   return (
-    <>
-      <h1 className='font-bold text-5xl text-center'>Closet</h1>
+    <section id='closet-section' className="w-full min-h-screen flex flex-col items-center justify-start overflow-hidden py-10">
+      <h1 className='font-bold text-5xl text-center text-white'>Closet</h1>
       <div className='w-full h-full'>
         <div className='flex items-center justify-around h-[30vh] py-12'>
           <MoveLeft className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'top')} />
           <div className="px-28">
-            {items.top[itemState.top].name}
+            <p className='text-white text-xl font-semibold'>{items.top[itemState.top].name}</p>
           </div>
           <MoveRight className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'top')} />
         </div>
@@ -36,7 +45,7 @@ const page = () => {
         <div className='flex items-center justify-around h-[30vh] py-12'>
           <MoveLeft className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'mid')} />
           <div className="px-28">
-            {items.mid[itemState.mid].name}
+            <p className='text-white text-xl font-semibold'>{items.mid[itemState.mid].name}</p>
           </div>
           <MoveRight className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'mid')} />
         </div>
@@ -44,12 +53,19 @@ const page = () => {
         <div className='flex items-center justify-around h-[30vh] py-12'>
           <MoveLeft className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'bottom')} />
           <div className="px-28">
-            {items.bottom[itemState.bottom].name}
+            <p className='text-white text-xl font-semibold'>{items.bottom[itemState.bottom].name}</p>
           </div>
           <MoveRight className='cursor-pointer scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'bottom')} />
         </div>
       </div>
-    </>
+      <button
+        className='shadow-lg px-10 py-5 cursor-pointer rounded-xl bg-gradient-to-br from-blue-500 to bg-indigo-800 duration-200 transition-all
+        hover:scale-105 text-white font-semibold text-lg'
+        onClick={buildOutfit}
+      >
+        Build outfit
+      </button>
+    </section>
   )
 }
 

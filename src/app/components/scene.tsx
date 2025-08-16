@@ -12,16 +12,16 @@ type customType = {
     description: string;
 };
 
-const Scene = ({ item }: { item: customType }) => {
+const Scene = ({ item }: { item: customType }) => {/* 
     const groupRef = React.useRef<Group>(null);
     const { scene, animations } = useGLTF(item.model);
     const mixer = React.useRef<AnimationMixer | null>(null);
     const action = React.useRef<AnimationAction | null>(null);
     const { progress } = useProgress();
-    const [isLoaded, setIsLoaded] = React.useState(false);
+    const [isLoaded, setIsLoaded] = React.useState(false); */
 
     return (
-        <p className='text-white text-xl font-semibold'>
+        <p id={`${item.name}-scene`} className='text-white text-xl font-semibold'>
             {item.id}
             {item.name}
             {item.image}

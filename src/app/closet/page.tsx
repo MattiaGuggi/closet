@@ -10,13 +10,34 @@ const page = () => {
   const [itemState, setItemState] = useState<{ top: number; mid: number; bottom: number }>({top: 0, mid: 0, bottom: 0,});
 
   const handleClick = (arrow: string, position: 'top' | 'mid' | 'bottom') => {
-    setItemState(prev => {
-      const currentIndex = prev[position];
-      const maxIndex = items[position].length - 1;
+    const currentItem = items[position][itemState[position]];
+    const tl = gsap.timeline();
 
-      let newIndex = arrow === 'left' ? currentIndex === 0 ? maxIndex : currentIndex - 1 : currentIndex === maxIndex ? 0 : currentIndex + 1;
+    tl.to(`#${currentItem.name}-scene`, {
+      opacity: 0,
+      x: arrow === 'left' ? -350 : 350,
+      duration: 0.4,
+      ease: 'power2.inOut',
+      onComplete: () => {
+        setItemState(prev => {
+          const currentIndex = prev[position];
+          const maxIndex = items[position].length - 1;
 
-      return { ...prev, [position]: newIndex };
+          let newIndex = arrow === 'left' ? currentIndex === 0 ? maxIndex : currentIndex - 1 : currentIndex === maxIndex ? 0 : currentIndex + 1;
+
+          return { ...prev, [position]: newIndex };
+        });
+      }
+    });
+    tl.set(`#${currentItem.name}-scene`, {
+      x: arrow === 'right' ? -350 : 350,
+      opacity: 0,
+    });
+    tl.to(`#${currentItem.name}-scene`, {
+      opacity: 1,
+      x: 0,
+      duration: 0.4,
+      ease: 'power2.inOut',
     });
   };
 

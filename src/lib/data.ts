@@ -1,20 +1,25 @@
-export type itemType = {
-    [key: string]: {
-        id: number;
-        name: string;
-        image: string;
-        model: string;
-        description: string;
-    }[];
+export type itemStateType = {
+    id: number;
+    name: string;
+    image: string;
+    model: string;
+    scale: number;
+    description: string;
 };
 
-export const items: itemType = {
+type itemsType = {
+    [key: string]: itemStateType[];
+};
+
+
+export const items: itemsType = {
     top: [
         {
             id: 1,
             name: "T-Shirt",
             image: "/images/tshirt.png",
             model: "/models/tshirt.glb",
+            scale: 1,
             description: "A comfortable cotton t-shirt",
         },
         {
@@ -22,6 +27,7 @@ export const items: itemType = {
             name: "Hoodie",
             image: "/images/hoodie.png",
             model: "/models/hoodie.glb",
+            scale: 1,
             description: "A cozy fleece hoodie for cooler days",
         },
         {
@@ -29,6 +35,7 @@ export const items: itemType = {
             name: "Jacket",
             image: "/images/jacket.png",
             model: "/models/jacket.glb",
+            scale: 1,
             description: "A stylish leather jacket for layering",
         },
     ],
@@ -38,6 +45,7 @@ export const items: itemType = {
             name: "Jeans",
             image: "/images/jeans.png",
             model: "/models/jeans.glb",
+            scale: 1,
             description: "Classic slim-fit denim jeans",
         },
         {
@@ -45,6 +53,7 @@ export const items: itemType = {
             name: "Joggers",
             image: "/images/joggers.png",
             model: "/models/joggers.glb",
+            scale: 1,
             description: "Casual cotton joggers for everyday wear",
         },
         {
@@ -52,6 +61,7 @@ export const items: itemType = {
             name: "Shorts",
             image: "/images/shorts.png",
             model: "/models/shorts.glb",
+            scale: 1,
             description: "Lightweight shorts for summer days",
         },
     ],
@@ -61,6 +71,7 @@ export const items: itemType = {
             name: "Sneakers",
             image: "/images/sneakers.png",
             model: "/models/sneakers.glb",
+            scale: 1,
             description: "Classic white sneakers that match everything",
         },
         {
@@ -68,6 +79,7 @@ export const items: itemType = {
             name: "Running Shoes",
             image: "/images/running_shoes.png",
             model: "/models/running_shoes.glb",
+            scale: 1,
             description: "Lightweight running shoes for training",
         },
         {
@@ -75,6 +87,7 @@ export const items: itemType = {
             name: "Boots",
             image: "/images/boots.png",
             model: "/models/boots.glb",
+            scale: 1,
             description: "Durable leather boots for outdoor wear",
         },
     ],

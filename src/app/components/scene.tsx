@@ -1,33 +1,28 @@
-import React from 'react'
-import { AnimationMixer, Group, AnimationAction } from 'three'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Environment, Html, useProgress, useGLTF, OrbitControls } from '@react-three/drei'
-import gsap from 'gsap'
+'use client'
+import React, { useRef } from 'react'
+import { Group } from 'three'
+import { Canvas } from '@react-three/fiber'
+import { Environment, useGLTF, OrbitControls } from '@react-three/drei'
+import { itemStateType } from '@/lib/data'
 
-type customType = {
-    id: number;
-    name: string;
-    image: string;
-    model: string;
-    description: string;
-};
-
-const Scene = ({ item }: { item: customType }) => {/* 
-    const groupRef = React.useRef<Group>(null);
-    const { scene, animations } = useGLTF(item.model);
-    const mixer = React.useRef<AnimationMixer | null>(null);
-    const action = React.useRef<AnimationAction | null>(null);
-    const { progress } = useProgress();
-    const [isLoaded, setIsLoaded] = React.useState(false); */
+const Scene = ({ item }: { item: itemStateType }) => {
+    const groupRef = useRef<Group>(null);
+    const { scene } = useGLTF(item.model);
 
     return (
-        <p id={`${item.name}-scene`} className='text-white text-xl font-semibold'>
-            {item.id}
-            {item.name}
-            {item.image}
-            {item.model}
-            {item.description}
-        </p>
+        <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }} id={`${item.name}-scene`}>
+            <Environment preset="sunset" />
+            <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]} dispose={null}>
+                <primitive object={scene} scale={1} position={[0, 0, 0]} />
+            </group>
+            <OrbitControls 
+                enableDamping 
+                dampingFactor={0.05} 
+                enableZoom={false} 
+                minDistance={2} 
+                maxDistance={10} 
+            />
+        </Canvas>
     )
 }
 

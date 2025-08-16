@@ -13,7 +13,7 @@ const Scene = ({ item }: { item: itemStateType }) => {
         <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }} id={`${item.name}-scene`}>
             <Environment preset="sunset" />
             <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]} dispose={null}>
-                <primitive object={scene} scale={1} position={[0, 0, 0]} />
+                <primitive object={scene} scale={item.scale} position={item.position} />
             </group>
             <OrbitControls 
                 enableDamping 

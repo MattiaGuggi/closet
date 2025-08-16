@@ -4,6 +4,7 @@ export type itemStateType = {
     image: string;
     model: string;
     scale: number;
+    position: [number, number, number];
     description: string;
 };
 
@@ -20,6 +21,7 @@ export const items: itemsType = {
             image: "/images/tshirt.png",
             model: "/models/tshirt.glb",
             scale: 1,
+            position: [0, -0.4, 0],
             description: "A comfortable cotton t-shirt",
         },
         {
@@ -28,6 +30,7 @@ export const items: itemsType = {
             image: "/images/hoodie.png",
             model: "/models/hoodie.glb",
             scale: 1,
+            position: [0, 0, 0],
             description: "A cozy fleece hoodie for cooler days",
         },
         {
@@ -36,6 +39,7 @@ export const items: itemsType = {
             image: "/images/jacket.png",
             model: "/models/jacket.glb",
             scale: 1,
+            position: [0, 0, 0],
             description: "A stylish leather jacket for layering",
         },
     ],
@@ -45,7 +49,8 @@ export const items: itemsType = {
             name: "Jeans",
             image: "/images/jeans.png",
             model: "/models/jeans.glb",
-            scale: 1,
+            scale: 0.7,
+            position: [0, 0, 0],
             description: "Classic slim-fit denim jeans",
         },
         {
@@ -54,6 +59,7 @@ export const items: itemsType = {
             image: "/images/joggers.png",
             model: "/models/joggers.glb",
             scale: 1,
+            position: [0, 0, 0],
             description: "Casual cotton joggers for everyday wear",
         },
         {
@@ -62,6 +68,7 @@ export const items: itemsType = {
             image: "/images/shorts.png",
             model: "/models/shorts.glb",
             scale: 1,
+            position: [0, 0, 0],
             description: "Lightweight shorts for summer days",
         },
     ],
@@ -71,7 +78,8 @@ export const items: itemsType = {
             name: "Sneakers",
             image: "/images/sneakers.png",
             model: "/models/sneakers.glb",
-            scale: 1,
+            scale: 0.7,
+            position: [0, 0, 0],
             description: "Classic white sneakers that match everything",
         },
         {
@@ -80,6 +88,7 @@ export const items: itemsType = {
             image: "/images/running_shoes.png",
             model: "/models/running_shoes.glb",
             scale: 1,
+            position: [0, 0, 0],
             description: "Lightweight running shoes for training",
         },
         {
@@ -88,6 +97,7 @@ export const items: itemsType = {
             image: "/images/boots.png",
             model: "/models/boots.glb",
             scale: 1,
+            position: [0, 0, 0],
             description: "Durable leather boots for outdoor wear",
         },
     ],

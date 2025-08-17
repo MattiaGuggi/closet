@@ -3,9 +3,9 @@ import React, { useState } from 'react'
 import { MoveLeft, MoveRight } from 'lucide-react';
 import { useEffect } from "react";
 import gsap from "gsap";
-import Scene from '../components/scene';
+import Scene from '@/app/components/scene';
+import Modal from '@/app/components/modal';
 import { items } from '@/lib/data';
-import Modal from '../components/modal';
 
 const page = () => {
   const [itemState, setItemState] = useState<{ top: number; mid: number; bottom: number }>({top: 0, mid: 0, bottom: 0,});

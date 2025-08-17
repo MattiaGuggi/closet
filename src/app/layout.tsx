@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AnimationProvider from "./components/AnimationProvider"
-import Header from "./components/header";
+import { UserProvider } from "./context/UserContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +30,12 @@ export default function RootLayout({
         suppressHydrationWarning={true}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Header />
         <main className="w-full min-h-full flex-1 flex flex-col items-center justify-center mt-20 main-bg">
-          <AnimationProvider>
-            {children}
-          </AnimationProvider>
+          <UserProvider>
+            <AnimationProvider>
+              {children}
+            </AnimationProvider>
+          </UserProvider>
         </main>
       </body>
     </html>

@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import gsap from 'gsap';
 import { usePathname } from 'next/navigation';
 
-const AnimationProvider = ({children}: { children: React.ReactNode }) => {
+const AnimationProvider = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
 
     useEffect(() => {

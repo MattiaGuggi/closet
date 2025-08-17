@@ -1,36 +1,18 @@
 'use client'
-import React, { useRef } from 'react'
-import { Group } from 'three'
-import { Canvas } from '@react-three/fiber'
-import { Environment, useGLTF, OrbitControls, Html, useProgress } from '@react-three/drei'
-import { itemStateType } from '@/lib/data'
-
-const Loader = () => {
-    const { progress } = useProgress()
-    return <Html className="absolute" center>Loading {progress.toFixed(0)}%</Html>
-}
+import { itemStateType } from '@/lib/data';
+import { useGLTF } from '@react-three/drei';
+import React from 'react'
+import { Group } from 'three';
 
 const Scene = ({ item }: { item: itemStateType }) => {
-    const groupRef = useRef<Group>(null);
+    const groupRef = React.useRef<Group>(null);
     const { scene } = useGLTF(item.model);
 
     return (
-        <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }} id={`${item.name}-scene`}>
-            <React.Suspense fallback={<Loader />}>
-                <Environment preset="sunset" />
-                <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]} dispose={null}>
-                    <primitive object={scene} scale={item.scale} position={item.position} />
-                </group>
-                <OrbitControls 
-                    enableDamping 
-                    dampingFactor={0.05} 
-                    enableZoom={false} 
-                    minDistance={2} 
-                    maxDistance={10} 
-                />
-            </React.Suspense>
-        </Canvas>
+        <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]} dispose={null}>
+            <primitive object={scene} scale={item.scale} position={item.position} />
+        </group>
     )
 }
 
-export default Scene
+export default Scene;

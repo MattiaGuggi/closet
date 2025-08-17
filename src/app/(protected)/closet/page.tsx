@@ -3,19 +3,28 @@ import React, { useState } from 'react'
 import { MoveLeft, MoveRight } from 'lucide-react';
 import { useEffect } from "react";
 import gsap from "gsap";
+import { Canvas } from '@react-three/fiber'
+import { Environment, OrbitControls, Html, useProgress } from '@react-three/drei'
 import Scene from '@/app/components/scene';
 import Modal from '@/app/components/modal';
 import { items } from '@/lib/data';
+
+const Loader = () => {
+    const { progress } = useProgress()
+    return <Html className="absolute" center>Loading {progress.toFixed(0)}%</Html>
+}
 
 const page = () => {
   const [itemState, setItemState] = useState<{ top: number; mid: number; bottom: number }>({top: 0, mid: 0, bottom: 0,});
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const handleClick = (arrow: string, position: 'top' | 'mid' | 'bottom') => {
-    const currentItem = items[position][itemState[position]];
+
+  const handleClick = (arrow: 'left' | 'right', position: 'top' | 'mid' | 'bottom') => {
+    const wrapper = document.getElementById(`${position}-wrapper`);
+    if (!wrapper) return;
     const tl = gsap.timeline();
 
-    tl.to(`#${currentItem.name}-scene`, {
+    tl.to(wrapper, {
       opacity: 0,
       x: arrow === 'left' ? -350 : 350,
       duration: 0.4,
@@ -31,11 +40,11 @@ const page = () => {
         });
       }
     });
-    tl.set(`#${currentItem.name}-scene`, {
+    tl.set(wrapper, {
       x: arrow === 'right' ? -350 : 350,
       opacity: 0,
     });
-    tl.to(`#${currentItem.name}-scene`, {
+    tl.to(wrapper, {
       opacity: 1,
       x: 0,
       duration: 0.4,
@@ -88,24 +97,42 @@ const page = () => {
         <div className='w-full h-full'>
           <section className='closet-row flex items-center justify-around h-[35vh]'>
             <MoveLeft className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'top')} />
-            <div className="w-full h-full">
-              <Scene item={items.top[itemState.top]} />
+            <div className="scene-wrapper w-full h-full" id="top-wrapper">
+              <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
+                <React.Suspense fallback={<Loader />}>
+                  <Environment preset="sunset" />
+                  <Scene item={items.top[itemState.top]} />
+                  <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
+                </React.Suspense>
+              </Canvas>
             </div>
             <MoveRight className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'top')} />
           </section>
           <hr />
           <section className='closet-row flex items-center justify-around h-[35vh]'>
             <MoveLeft className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'mid')} />
-            <div className="w-full h-full">
-              <Scene item={items.mid[itemState.mid]} />
+            <div className="scene-wrapper w-full h-full" id="mid-wrapper">
+              <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
+                <React.Suspense fallback={<Loader />}>
+                  <Environment preset="sunset" />
+                  <Scene item={items.mid[itemState.mid]} />
+                  <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
+                </React.Suspense>
+              </Canvas>
             </div>
             <MoveRight className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'mid')} />
           </section>
           <hr />
           <section className='closet-row flex items-center justify-around h-[35vh]'>
             <MoveLeft className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'bottom')} />
-            <div className="w-full h-full">
-              <Scene item={items.bottom[itemState.bottom]} />
+            <div className="scene-wrapper w-full h-full" id="bottom-wrapper">
+              <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
+                <React.Suspense fallback={<Loader />}>
+                  <Environment preset="sunset" />
+                  <Scene item={items.bottom[itemState.bottom]} />
+                  <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
+                </React.Suspense>
+              </Canvas>
             </div>
             <MoveRight className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'bottom')} />
           </section>

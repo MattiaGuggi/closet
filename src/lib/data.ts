@@ -27,7 +27,7 @@ export const items: itemsType = {
         {
             id: 2,
             name: "Hoodie",
-            image: "/images/hoodie.png",
+            image: "/images/hoodie.webp",
             model: "/models/hoodie.glb",
             scale: 0.7,
             position: [0, 0, 0],

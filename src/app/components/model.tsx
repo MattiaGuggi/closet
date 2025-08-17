@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei';
 import React from 'react'
 import { Group } from 'three';
 
-const Scene = ({ item }: { item: itemStateType }) => {
+const Model = ({ item }: { item: itemStateType }) => {
     const groupRef = React.useRef<Group>(null);
     const { scene } = useGLTF(item.model);
 
@@ -15,4 +15,4 @@ const Scene = ({ item }: { item: itemStateType }) => {
     )
 }
 
-export default Scene;
+export default Model;

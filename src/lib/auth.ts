@@ -5,8 +5,8 @@ export async function authenticateUser(email: string, password: string) {
   return await getUserFromDb({ email, password });
 }
 
-export async function registerUser(name: string, email: string, password: string) {
-  await createUserInDb({ name, email, password });
+export async function registerUser(username: string, email: string, password: string) {
+  await createUserInDb({ username, email, password });
 }
 
 export async function updateUser(user: typeof User) {

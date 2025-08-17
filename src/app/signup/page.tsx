@@ -8,7 +8,7 @@ import { useGSAP } from '@gsap/react';
 
 const signup = () => {
   const containerRef = useRef(null);
-  const [name, setName] = React.useState("");
+  const [username, setUsername] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState("");
@@ -27,10 +27,10 @@ const signup = () => {
       setError("Invalid email format");
       return;
     }
-    const res = await fetch("/api/auth/signup", {
+    const res = await fetch("/api/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password })
+      body: JSON.stringify({ username, email, password })
     });
     const data = await res.json();
     if (data.success) {
@@ -73,8 +73,8 @@ const signup = () => {
               type={'text'}
               required
               placeholder="Username"
-              onChange={(e) => setName(e.target.value)}
-              value={name}
+              onChange={(e) => setUsername(e.target.value)}
+              value={username}
               className={`w-full h-full px-12 py-4 bg-opacity-50 rounded-lg border border-gray-700 focus:border-indigo-700 focus:ring-2 focus:ring-indigo-700 placeholder-gray-400 transition duration-200 xs:py-3`}
             />
           </div>

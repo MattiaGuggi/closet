@@ -1,16 +1,22 @@
 import mongoose from "mongoose";
-import { User, Outfit } from "./models.js";
+import { Outfit, User } from "./models";
 
 /**
  * Connects to MongoDB
  */
 export const connectDB = async () => {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+        throw new Error(
+            'MONGODB_URI is not set. Add it to .env.local or set it in your environment variables and restart the dev server.'
+        );
+    }
     try {
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log("MongoDB connected");
+        await mongoose.connect(uri);
+        console.log('MongoDB connected');
     } catch (error) {
-        console.error("MongoDB connection error:", error);
-        process.exit(1); // Exit the process with failure (0 successfull, 1 failure)
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
     }
 };
 /**

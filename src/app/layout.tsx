@@ -30,7 +30,7 @@ export default function RootLayout({
         suppressHydrationWarning={true}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <main className="w-full min-h-full flex-1 flex flex-col items-center justify-center mt-20 main-bg">
+        <main className="w-full min-h-screen flex-1 flex flex-col items-center justify-center main-bg">
           <UserProvider>
             <AnimationProvider>
               {children}

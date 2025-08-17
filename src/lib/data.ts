@@ -29,7 +29,7 @@ export const items: itemsType = {
             name: "Hoodie",
             image: "/images/hoodie.png",
             model: "/models/hoodie.glb",
-            scale: 1,
+            scale: 0.7,
             position: [0, 0, 0],
             description: "A cozy fleece hoodie for cooler days",
         },

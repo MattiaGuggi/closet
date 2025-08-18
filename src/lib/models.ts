@@ -19,7 +19,6 @@ export const User = mongoose.models.User || mongoose.model('User', userSchema);
 const clothesSchema = new mongoose.Schema({
     name: { type: String, required: true },
     image: { type: String, default: '' },
-    rating: { type: Number, default: 1500 },
     model: { type: String, required: true },
     scale: { type: Number, default: 1 },
     position: { type: [Number], default: [0, 0, 0] },

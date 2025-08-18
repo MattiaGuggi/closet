@@ -13,7 +13,7 @@ const Header = () => {
   ];
 
   return (
-    <header className="w-full border-b border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+    <header className="w-full border-b border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg">
       <nav className="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
         <Link href="/" className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">
           ClosetApp

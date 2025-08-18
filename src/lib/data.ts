@@ -1,5 +1,5 @@
 export type itemStateType = {
-    id: number;
+    _id: number;
     name: string;
     image: string;
     model: string;
@@ -17,7 +17,7 @@ export type Position = "top" | "mid" | "bottom";
 export const items: itemsType = {
     top: [
         {
-            id: 1,
+            _id: 1,
             name: "T-Shirt",
             image: "/images/tshirt.png",
             model: "/models/tshirt.glb",
@@ -26,7 +26,7 @@ export const items: itemsType = {
             description: "A comfortable cotton t-shirt",
         },
         {
-            id: 2,
+            _id: 2,
             name: "Hoodie",
             image: "/images/hoodie.webp",
             model: "/models/hoodie.glb",
@@ -35,7 +35,7 @@ export const items: itemsType = {
             description: "A cozy fleece hoodie for cooler days",
         },
         {
-            id: 3,
+            _id: 3,
             name: "Jacket",
             image: "/images/jacket.png",
             model: "/models/jacket.glb",
@@ -46,7 +46,7 @@ export const items: itemsType = {
     ],
     mid: [
         {
-            id: 4,
+            _id: 4,
             name: "Jeans",
             image: "/images/jeans.png",
             model: "/models/jeans.glb",
@@ -55,7 +55,7 @@ export const items: itemsType = {
             description: "Classic slim-fit denim jeans",
         },
         {
-            id: 5,
+            _id: 5,
             name: "Joggers",
             image: "/images/joggers.png",
             model: "/models/joggers.glb",
@@ -64,7 +64,7 @@ export const items: itemsType = {
             description: "Casual cotton joggers for everyday wear",
         },
         {
-            id: 6,
+            _id: 6,
             name: "Shorts",
             image: "/images/shorts.png",
             model: "/models/shorts.glb",
@@ -75,7 +75,7 @@ export const items: itemsType = {
     ],
     bottom: [
         {
-            id: 7,
+            _id: 7,
             name: "Sneakers",
             image: "/images/sneakers.png",
             model: "/models/sneakers.glb",
@@ -84,7 +84,7 @@ export const items: itemsType = {
             description: "Classic white sneakers that match everything",
         },
         {
-            id: 8,
+            _id: 8,
             name: "Running Shoes",
             image: "/images/running_shoes.png",
             model: "/models/running_shoes.glb",
@@ -93,7 +93,7 @@ export const items: itemsType = {
             description: "Lightweight running shoes for training",
         },
         {
-            id: 9,
+            _id: 9,
             name: "Boots",
             image: "/images/boots.png",
             model: "/models/boots.glb",

@@ -5,6 +5,17 @@ import gsap from "gsap";
 import Modal from '@/app/components/modal';
 import ClosetRows from '@/app/components/ClosetRows';
 import { items, Position } from '@/lib/data';
+import axios from 'axios';
+
+type newItemType = {
+  name: string;
+  image: string;
+  model: string;
+  scale: number;
+  position: [number, number, number];
+  description: string;
+  type: Position | null
+};
 
 const page = () => {
   const [itemState, setItemState] = useState<{ top: number; mid: number; bottom: number }>({top: 0, mid: 0, bottom: 0,});
@@ -53,8 +64,15 @@ const page = () => {
     console.table(outfit);
   };
 
-  const importItem = () => {
-    setIsModalOpen(true);
+  const importItem = async (newItem: newItemType) => {
+    const response = await axios.post('/api/import', {
+      item: newItem
+    });
+    const data = response.data;
+
+    console.log('Item imported: ', data);
+
+    setIsModalOpen(false);
   };
 
   useEffect(() => {
@@ -82,7 +100,7 @@ const page = () => {
         <button
           className='shadow-lg px-6 py-3 my-16 cursor-pointer rounded-lg bg-gradient-to-br from-blue-500 to-indigo-800 duration-200 transition-all
           hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600 hover:to-indigo-900 text-white font-semibold text-lg'
-          onClick={importItem}
+          onClick={() => setIsModalOpen(true)}
         >
           Import new item
         </button>
@@ -112,7 +130,7 @@ const page = () => {
         </button>
       </section>
       {isModalOpen && (
-        <Modal onClose={() => setIsModalOpen(false)} />
+        <Modal onClose={() => setIsModalOpen(false)} onSave={(newItem) => importItem(newItem)} />
       )}
     </>
   )

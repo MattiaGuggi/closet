@@ -28,7 +28,7 @@ const page = () => {
 
     tl.to(wrapper, {
       opacity: 0,
-      x: arrow === 'left' ? -350 : 350,
+      x: arrow === 'left' ? -500 : 500,
       duration: 0.4,
       ease: 'power2.inOut',
       onComplete: () => {
@@ -43,7 +43,7 @@ const page = () => {
       }
     });
     tl.set(wrapper, {
-      x: arrow === 'right' ? -350 : 350,
+      x: arrow === 'right' ? -500 : 500,
       opacity: 0,
     });
     tl.to(wrapper, {
@@ -98,17 +98,17 @@ const page = () => {
         </button>
         <label className="relative inline-flex items-center cursor-pointer">
           <input className="sr-only peer" value="" type="checkbox" />
-            <div className="peer rounded-full outline-none duration-100 after:duration-500 w-28 h-14 bg-blue-300 peer-focus:outline-none
-              peer-focus:ring-4 peer-focus:ring-blue-500 after:content-['3D'] after:absolute after:outline-none after:rounded-full after:h-12 after:w-12
-              after:bg-white after:top-1 after:left-1 after:flex after:justify-center after:items-center  after:text-sky-800 after:font-bold
-              peer-checked:after:translate-x-14 peer-checked:after:content-['Image'] peer-checked:after:border-white"
+            <div className="peer rounded-full outline-none duration-100 after:duration-500 w-28 h-14 bg-gradient-to-br from-blue-500 to-indigo-800
+              after:content-['Img'] after:absolute after:outline-none after:rounded-full after:h-12 after:w-12
+              after:bg-white after:top-1 after:left-1 after:flex after:justify-center after:items-center  after:text-blue-600 after:font-bold
+              peer-checked:after:translate-x-14 peer-checked:after:content-['3D'] peer-checked:after:border-white"
               onClick={() => setThree(prev => !prev)}
             >
           </div>
         </label>
         <div className='w-full h-full'>
           <section className='closet-row flex items-center justify-around h-[35vh]'>
-            <MoveLeft className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'top')} />
+            <MoveLeft size={48} strokeWidth={3} className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'top')} />
             <div className="scene-wrapper w-full h-full flex justify-center items-center" id="top-wrapper">
               {three ? (
                   <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
@@ -130,11 +130,11 @@ const page = () => {
                 </>
               )}
             </div>
-            <MoveRight className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'top')} />
+            <MoveRight size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'top')} />
           </section>
           <hr />
           <section className='closet-row flex items-center justify-around h-[35vh]'>
-            <MoveLeft className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'mid')} />
+            <MoveLeft size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'mid')} />
             <div className="scene-wrapper w-full h-full flex justify-center items-center" id="mid-wrapper">
               {three ? (
                   <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
@@ -156,11 +156,11 @@ const page = () => {
                 </>
               )}
             </div>
-            <MoveRight className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'mid')} />
+            <MoveRight size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'mid')} />
           </section>
           <hr />
           <section className='closet-row flex items-center justify-around h-[35vh]'>
-            <MoveLeft className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'bottom')} />
+            <MoveLeft size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'bottom')} />
             <div className="scene-wrapper w-full h-full flex justify-center items-center" id="bottom-wrapper">
               {three ? (
                   <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
@@ -182,7 +182,7 @@ const page = () => {
                 </>
               )}
             </div>
-            <MoveRight className='cursor-pointer mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'bottom')} />
+            <MoveRight size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'bottom')} />
           </section>
         </div>
         <button

@@ -1,24 +1,17 @@
 'use client'
-import React, { useRef } from 'react'
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useUser } from '../context/UserContext';
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import gsap from 'gsap';
-import { useGSAP } from '@gsap/react';
+import React, { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useUser } from '../context/UserContext'
+import { useGSAP } from '@gsap/react'
+import gsap from 'gsap'
 
-const login = () => {
-  const containerRef = useRef(null);
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [error, setError] = React.useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const { login, isAuthenticated } = useUser();
-  const router = useRouter();
-  
-  const toggleIcon = () => {
-    setShowPassword((prev) => !prev);
-  };
+const Login = () => {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const containerRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const { isAuthenticated, login } = useUser()
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -59,64 +52,58 @@ const login = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="max-w-md w-full bg-gray-500 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden xs:w-11/12">
-      <div className="p-8">
-        <h2 className='text-3xl font-bold mb-6 text-center bg-gradient-to-r from-indigo-700 to-indigo-950 text-transparent bg-clip-text'>
-          Welcome Back
-        </h2>
-        {error && <p className="text-red-500">{error}</p>}
-        <form onSubmit={handleSubmit}>
-          <div className={`input relative w-full flex`}>
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none scale-110">
-              <Mail className="size-5 text-indigo-900" />
-            </div>
-            <input
-              type={'email'}
-              required
-              placeholder="Email Address"
-              onChange={(e) => setEmail(e.target.value)}
-              value={email}
-              className={`w-full h-full px-12 py-4 bg-opacity-50 rounded-lg border border-gray-700 focus:border-indigo-700 focus:ring-2 focus:ring-indigo-700 placeholder-gray-400 transition duration-200 xs:py-3`}
-            />
-          </div>
-          <div className={`input relative w-full flex mt-8`}>
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none scale-110">
-              <Lock className="size-5 text-indigo-900" />
-            </div>
-            <input
-              type={`${showPassword ? 'text' : 'password'}`}
-              required
-              placeholder="Password"
-              onChange={(e) => setPassword(e.target.value)}
-              value={password}
-              className={`w-full h-full px-12 py-4 bg-opacity-50 rounded-lg border border-gray-700 focus:border-indigo-700 focus:ring-2 focus:ring-indigo-700 placeholder-gray-400 transition duration-200 xs:py-3`}
-            />
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer">
-              {showPassword ? (
-                <Eye className="size-5 text-indigo-900" onClick={toggleIcon} />
-              ) : (
-                <EyeOff className="size-5 text-indigo-900" onClick={toggleIcon} />
-              )}
-            </div>
-          </div>
-          <button
-            className="cursor-pointer mt-5 w-full py-3 px-4 bg-gradient-to-r from-indigo-700 to-indigo-950 text-white font-bold rounded-lg shadow-lg hover:from-indigo-800 hover:to-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-700 focus:ring-offset-2 focus:ring-offset-gray-900 transition duration-200"
-            type="submit"
-          >
-            Login
-          </button>
-        </form>
+    <div className="min-h-screen flex" ref={containerRef}>
+      {/* Left side (branding / image / message) */}
+      <div className="hidden md:flex flex-1 bg-gradient-to-br from-indigo-700 to-indigo-900 text-white items-center justify-center">
+        <div className="p-10 max-w-md text-center">
+          <h1 className="text-4xl font-bold mb-4">Welcome Back!</h1>
+          <p className="text-lg">Log in to access your profile and continue where you left off.</p>
+        </div>
       </div>
-      <div className="px-8 py-4 bg-gray-600 bg-opacity-50 flex justify-center">
-        <p className="text-sm text-indigo-950">
-          {"Don't have an account?"}
-          <button onClick={() => router.push('/signup')} className="text-bg-indigo-700 hover:underline cursor-pointer" type="button">
-            Sign up
-          </button>
-        </p>
+
+      {/* Right side (form) */}
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-full max-w-md p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg">
+          <h2 className="text-2xl font-semibold mb-6 text-center text-indigo-600">Login</h2>
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <input
+              type="email"
+              placeholder="Email"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-neutral-700 bg-transparent focus:ring-2 focus:ring-indigo-600 text-white"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-neutral-700 bg-transparent focus:ring-2 focus:ring-indigo-600 text-white"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="submit"
+              className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition cursor-pointer"
+            >
+              Login
+            </button>
+          </form>
+          <p className="mt-6 text-sm text-center text-gray-600 dark:text-gray-400">
+            Don’t have an account?{' '}
+            <button
+              type="button"
+              onClick={() => router.push('/signup')}
+              className="text-indigo-600 hover:underline cursor-pointer"
+            >
+              Sign Up
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   )
 }
 
-export default login
+export default Login

@@ -4,49 +4,43 @@ import { usePathname } from 'next/navigation'
 import React from 'react'
 
 const Header = () => {
-    const pathname = usePathname();
+  const pathname = usePathname();
 
-    return (
-        <header
-            className="absolute flex flex-wrap sm:justify-start sm:flex-nowrap w-full h-20 top-0 z-20 bg-white/10 dark:bg-neutral-900/30 backdrop-blur-xl border-b border-indigo-800/40 shadow-xl"
-            style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.25)' }}
-        >
-            <nav className="max-w-[85rem] w-full mx-auto px-4 sm:flex sm:items-center sm:justify-between h-full">
-            <div
-                id="hs-navbar-example"
-                className="hidden hs-collapse overflow-hidden transition-all duration-300 basis-full grow sm:block"
-                aria-labelledby="hs-navbar-example-collapse"
-            >
-                <div className="flex flex-col gap-5 mt-5 sm:flex-row sm:items-center sm:justify-end sm:mt-0 sm:ps-5">
-                <Link
-                    href="/"
-                    className={`text-lg font-extrabold tracking-wide transition-all duration-200 px-4 py-2 rounded-xl
-                    ${pathname === "/" ? "main-bg text-white shadow-lg scale-105" :
-                    "text-indigo-100 hover:main-bg hover:text-white"}`}
-                >
-                    Home
-                </Link>
-                <Link
-                    href="/closet"
-                    className={`text-lg font-extrabold tracking-wide transition-all duration-200 px-4 py-2 rounded-xl
-                    ${pathname.startsWith("/closet") ? "main-bg text-white shadow-lg scale-105" :
-                    "text-indigo-100 hover:main-bg hover:text-white"}`}
-                >
-                    Closet
-                </Link>
-                <Link
-                    href="/profile"
-                    className={`text-lg font-extrabold tracking-wide transition-all duration-200 px-4 py-2 rounded-xl
-                    ${pathname.startsWith("/profile") ? "main-bg text-white shadow-lg scale-105" :
-                    "text-indigo-100 hover:main-bg hover:text-white"}`}
-                >
-                    Profile
-                </Link>
-                </div>
-            </div>
-            </nav>
-        </header>
-    )
+  const links = [
+    { href: '/', label: 'Home' },
+    { href: '/closet', label: 'Closet' },
+    { href: '/profile', label: 'Profile' }
+  ];
+
+  return (
+    <header className="w-full border-b border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+      <nav className="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
+        <Link href="/" className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">
+          ClosetApp
+        </Link>
+
+        <ul className="flex gap-6">
+          {links.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className={`relative font-medium transition-colors ${
+                  pathname === link.href
+                    ? 'text-indigo-700 dark:text-indigo-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-300'
+                }`}
+              >
+                {link.label}
+                {pathname === link.href && (
+                  <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-indigo-600 rounded-full" />
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </header>
+  )
 }
 
 export default Header

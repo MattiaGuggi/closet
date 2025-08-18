@@ -5,14 +5,15 @@ import { OrbitControls, Environment, useProgress, Html } from "@react-three/drei
 import Image from "next/image";
 import React from "react";
 import Model from "./model";
-import { items, Position } from "@/lib/data";
+import { clothesType, Position } from "@/lib/types";
 
 const positions: Position[] = ["top", "mid", "bottom"];
 
 interface ClosetRowsProps {
-  itemState: { top: number; mid: number; bottom: number };
+  currentItemState: { top: number; mid: number; bottom: number };
   handleClick: (dir: "left" | "right", pos: Position) => void;
   three: boolean;
+  items: clothesType[];
 }
 
 const Loader = () => {
@@ -20,7 +21,7 @@ const Loader = () => {
     return <Html className="absolute" center>Loading {progress.toFixed(0)}%</Html>
 }
 
-export default function ClosetRows({ itemState, handleClick, three }: ClosetRowsProps) {
+export default function ClosetRows({ currentItemState, handleClick, three, items }: ClosetRowsProps) {
   return (
     <>
         {positions.map((pos: Position, idx: number) => (
@@ -33,23 +34,29 @@ export default function ClosetRows({ itemState, handleClick, three }: ClosetRows
                         onClick={() => handleClick("left", pos)}
                     />
                     <div className="scene-wrapper w-full h-full flex justify-center items-center" id={`${pos}-wrapper`}>
-                    {three ? (
-                        <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
-                        <React.Suspense fallback={<Loader />}>
-                            <Environment preset="sunset" />
-                            <Model item={items[pos][itemState[pos]]} />
-                            <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
-                        </React.Suspense>
-                        </Canvas>
-                    ) : (
-                        <Image
-                            src={items[pos][itemState[pos]].image}
-                            alt={items[pos][itemState[pos]].name}
-                            className="w-64 h-64 object-cover rounded-lg shadow-lg"
-                            width={256}
-                            height={256}
-                        />
-                    )}
+                        {three ? (
+                            <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
+                            <React.Suspense fallback={<Loader />}>
+                                <Environment preset="sunset" />
+                                <Model item={items.filter(i => i.type === pos)[currentItemState[pos]]} />
+                                <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
+                            </React.Suspense>
+                            </Canvas>
+                        ) : (
+                            (() => {
+                            const itemsOfType = items.filter(item => item.type === pos);
+                            const currentItem = itemsOfType[currentItemState[pos]];
+                            return (
+                                <Image
+                                    src={currentItem.image}
+                                    alt={currentItem.name}
+                                    className="w-64 h-64 object-cover rounded-lg shadow-lg"
+                                    width={256}
+                                    height={256}
+                                />
+                            );
+                            })()
+                        )}
                     </div>
                     <MoveRight
                         size={48}

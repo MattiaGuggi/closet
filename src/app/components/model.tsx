@@ -1,12 +1,12 @@
 'use client'
-import { itemStateType } from '@/lib/data';
+import { clothesType } from '@/lib/types';
 import { useGLTF } from '@react-three/drei';
 import React from 'react'
 import { Group } from 'three';
 
-const Model = ({ item }: { item: itemStateType }) => {
+const Model = ({ item }: { item: clothesType }) => {
     const groupRef = React.useRef<Group>(null);
-    const { scene } = useGLTF(item.model);
+    const { scene } = useGLTF(item.modelFile);
 
     return (
         <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]} dispose={null}>

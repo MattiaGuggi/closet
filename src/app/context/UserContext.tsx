@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Loading from '../loading';
-import type { IUser } from '@/lib/models';
+import type { IUser } from '@/lib/interfaces';
 
 interface IUserContext {
     isAuthenticated: boolean;

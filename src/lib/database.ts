@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import { Outfit, User } from "./models";
+import { Outfit, User, Clothes } from "./models";
+import { IClothes, IOutfit, IUser } from "./interfaces";
 
 /**
  * Connects to MongoDB
@@ -29,26 +30,28 @@ export const getUsersFromDb = async () => {
 /**
  * Finds user in DB based on email/username
  *
- * @param {criteria} criteria - The criteria(email/username)
+ * @param {email} email - The email
  * @returns {User} User - A user saved in the DB
  */
-export const getUserFromDb = async (criteria: any) => {
+export const getUserFromDb = async (email: string) => {
     await connectDB();
-    return await User.findOne(criteria); // Ensure you're passing the correct criteria
+    return await User.findOne({ email: email });
 };
 /**
  * Creates user in DB 
  *
- * @param {newUser} newUser - User to create in DB
+ * @param {username} username - Username of the new user
+ * @param {email} email - Email of the new user
+ * @param {password} password - Password of the new user
 */
-export const createUserInDb = async (newUser: any) => {
+export const createUserInDb = async (username: string, email: string, password: string) => {
     await connectDB();
-    const existingUser = await User.find({ email: newUser.email });
+    const existingUser = await User.find({ email: email });
     // Check if the user already exists
     if (existingUser.length > 0) {
         throw new Error('User already exists');
     }
-    const user = new User(newUser);
+    const user = new User({ username, email, password });
     await user.save();
 };
 /**
@@ -57,7 +60,7 @@ export const createUserInDb = async (newUser: any) => {
  * @param {user} user - the user you need to update
  * @returns {void}
  */
-export const updateUserInDb = async (user: any) => {
+export const updateUserInDb = async (user: IUser) => {
     await connectDB();
     try  {
         await User.findByIdAndUpdate(user._id, { $set: user }, { new: true }); // Update the user and return the updated document
@@ -66,12 +69,12 @@ export const updateUserInDb = async (user: any) => {
     }
 };
 /**
- * Updates every users' formation reference from the oldUsername to the newUsername
+ * Updates every users' outfit reference from the oldName to the newName
  *
  * @param {user} user - the user you need to delete
  * @returns {void}
  */
-export const deleteUserFromDb = async (user: any) => {
+export const deleteUserFromDb = async (user: IUser) => {
     await connectDB();
     try {
         await User.findByIdAndDelete(user._id); // Delete the user by ID
@@ -79,7 +82,61 @@ export const deleteUserFromDb = async (user: any) => {
         console.error('Error deleting user', err);
     }
 };
-
+/**
+ * Helper function to get every clothing item from MongoDB
+ */
+export const getAllClothesFromDb = async () => {
+    await connectDB();
+    return await Clothes.find({});
+}
+/**
+ * Finds clothing item in DB based on name/type
+ *
+ * @param {criteria} criteria - The criteria(name/type)
+ * @returns {Clothes} Clothes - A clothing item saved in the DB
+ */
+export const getClothingFromDb = async (criteria: any) => {
+    await connectDB();
+    return await Clothes.findOne(criteria); // Ensure you're passing the correct criteria
+};
+/**
+ * Creates clothing item in DB 
+ *
+ * @param {newClothes} newClothes - Clothing item to create in DB
+*/
+export const createClothingInDb = async (newClothes: typeof Clothes) => {
+    await connectDB();
+    const clothes = new Clothes(newClothes);
+    await clothes.save();
+};
+/**
+ * Updates an existing clothes
+ *
+ * @param {clothes} clothes - the clothing item you need to update
+ * @returns {void}
+ */
+export const updateClothingInDb = async (clothes: IClothes) => {
+    await connectDB();
+    try  {
+        await Clothes.findByIdAndUpdate(clothes._id, { $set: clothes }, { new: true }); // Update the clothing item and return the updated document
+    } catch (err) {
+        console.error('Error updating clothes', err);
+    }
+};
+/**
+ * Updates every clothes' outfit reference from the oldName to the newName
+ *
+ * @param {clothes} clothes - the clothes you need to delete
+ * @returns {void}
+ */
+export const deleteClothingFromDb = async (clothes: IClothes) => {
+    await connectDB();
+    try {
+        await Clothes.findByIdAndDelete(clothes._id); // Delete the clothing item by ID
+    } catch (err) {
+        console.error('Error deleting clothes', err);
+    }
+};
 /**
  * Helper function to get every outfit from MongoDB
  */
@@ -102,7 +159,7 @@ export const getOutfitFromDb = async (criteria: any) => {
  *
  * @param {newOutfit} newOutfit - Outfit to create in DB
 */
-export const createOutfitInDb = async (newOutfit: any) => {
+export const createOutfitInDb = async (newOutfit: typeof Outfit) => {
     await connectDB();
     const outfit = new Outfit(newOutfit);
     await outfit.save();
@@ -113,7 +170,7 @@ export const createOutfitInDb = async (newOutfit: any) => {
  * @param {outfit} outfit - the outfit you need to update
  * @returns {void}
  */
-export const updateOutfitInDb = async (outfit: any) => {
+export const updateOutfitInDb = async (outfit: IOutfit) => {
     await connectDB();
     try  {
         await Outfit.findByIdAndUpdate(outfit._id, { $set: outfit }, { new: true }); // Update the user and return the updated document
@@ -127,7 +184,7 @@ export const updateOutfitInDb = async (outfit: any) => {
  * @param {outfit} outfit - the outfit you need to delete
  * @returns {void}
  */
-export const deleteOutfitFromDb = async (outfit: any) => {
+export const deleteOutfitFromDb = async (outfit: IOutfit) => {
     await connectDB();
     try {
         await Outfit.findByIdAndDelete(outfit._id); // Delete the user by ID

@@ -1,26 +1,32 @@
 'use client';
-import React, { useState } from 'react'
+import React, { use, useState } from 'react'
 import { useEffect } from "react";
 import gsap from "gsap";
 import Modal from '@/app/components/modal';
 import ClosetRows from '@/app/components/ClosetRows';
-import { items, Position } from '@/lib/data';
+import { items, clothesType, Position } from '@/lib/types';
 import axios from 'axios';
 
-type newItemType = {
-  name: string;
-  image: string;
-  model: string;
-  scale: number;
-  position: [number, number, number];
-  description: string;
-  type: Position | null
-};
-
 const page = () => {
-  const [itemState, setItemState] = useState<{ top: number; mid: number; bottom: number }>({top: 0, mid: 0, bottom: 0,});
+  const [allItems, setAllItems] = useState<clothesType[]>([]);
+  const [currentItemState, setCurrentItemState] = useState<{ top: number; mid: number; bottom: number }>({
+    top: 0,
+    mid: 0,
+    bottom: 0
+  });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
+  
+  const fetchItems = async () => {
+    /* try {
+      const response = await axios.get('/api/items');
+      setAllItems(response.data);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+    } */
+    
+    setAllItems(items);
+  }
 
   const handleClick = (arrow: string, position: Position) => {
     const wrapper = document.getElementById(`${position}-wrapper`);
@@ -33,11 +39,12 @@ const page = () => {
       duration: 0.4,
       ease: 'power2.inOut',
       onComplete: () => {
-        setItemState(prev => {
+        const itemsOfType = allItems.filter(item => item.type === position);
+        setCurrentItemState(prev => {
           const currentIndex = prev[position];
-          const maxIndex = items[position].length - 1;
+          const maxIndex = itemsOfType.length - 1;
 
-          let newIndex = arrow === 'left' ? currentIndex === 0 ? maxIndex : currentIndex - 1 : currentIndex === maxIndex ? 0 : currentIndex + 1;
+          const newIndex = arrow === 'left' ? currentIndex === 0 ? maxIndex : currentIndex - 1 : currentIndex === maxIndex ? 0 : currentIndex + 1;
 
           return { ...prev, [position]: newIndex };
         });
@@ -56,15 +63,15 @@ const page = () => {
   };
 
   const buildOutfit = () => {
-    const outfit = {
-      top: items.top[itemState.top],
-      mid: items.mid[itemState.mid],
-      bottom: items.bottom[itemState.bottom],
+    const outfit: Record<Position, clothesType | undefined> = {
+      top: allItems.filter(item => item.type === "top")[currentItemState.top],
+      mid: allItems.filter(item => item.type === "mid")[currentItemState.mid],
+      bottom: allItems.filter(item => item.type === "bottom")[currentItemState.bottom],
     };
     console.table(outfit);
   };
 
-  const importItem = async (newItem: newItemType) => {
+  const importItem = async (newItem: clothesType) => {
     const response = await axios.post('/api/import', {
       item: newItem
     });
@@ -74,6 +81,10 @@ const page = () => {
 
     setIsModalOpen(false);
   };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
 
   useEffect(() => {
     const sections = gsap.utils.toArray<HTMLElement>(".closet-row");
@@ -115,11 +126,14 @@ const page = () => {
           </div>
         </label>
         <div className='w-full h-full'>
-          <ClosetRows
-            itemState={itemState}
-            handleClick={handleClick}
-            three={three}
-          />
+          {allItems.length > 0 && (
+            <ClosetRows
+              items={allItems}
+              currentItemState={currentItemState}
+              handleClick={handleClick}
+              three={three}
+            />
+          )}
         </div>
         <button
           className='shadow-lg px-10 py-5 my-16 cursor-pointer rounded-xl bg-gradient-to-br from-blue-500 to-indigo-800 duration-200 transition-all

@@ -1,19 +1,9 @@
 import Image from 'next/image';
 import React, { useState } from 'react'
-import { Position } from '@/lib/data';
+import { clothesType, Position } from '@/lib/types';
 
-type newItemType = {
-  name: string;
-  image: string;
-  model: string;
-  scale: number;
-  position: [number, number, number];
-  description: string;
-  type: Position | null
-};
-
-const Modal = ({ onClose, onSave }: { onClose: () => void, onSave: (newItem: newItemType) => void }) => {
-  const [newItem, setNewItem] = useState<newItemType>({  name: '', image: '', model: '', scale: 0.0, position: [0, 0, 0], description: '', type: null });
+const Modal = ({ onClose, onSave }: { onClose: () => void, onSave: (newItem: clothesType) => void }) => {
+  const [newItem, setNewItem] = useState<clothesType>({ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null });
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/70 bg-opacity-50 z-50">
@@ -46,7 +36,7 @@ const Modal = ({ onClose, onSave }: { onClose: () => void, onSave: (newItem: new
             if (file) {
               const reader = new FileReader();
               reader.onload = (e) => {
-                setNewItem({ ...prev, model: e.target?.result as string });
+                setNewItem({ ...prev, modelFile: e.target?.result as string });
               };
               reader.readAsDataURL(file);
             }

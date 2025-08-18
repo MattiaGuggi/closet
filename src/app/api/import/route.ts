@@ -1,4 +1,4 @@
-
+import { createClothingInDb } from '@/lib/database';
 
 export async function POST (request: Request): Promise<Response> {
   const { item } = await request.json();
@@ -7,7 +7,8 @@ export async function POST (request: Request): Promise<Response> {
     return new Response('Missing item', { status: 400 });
   }
 
-  // Creating in db or somewhere the clothes item
+  // Creating in db 
+  await createClothingInDb(item);
 
   return new Response(JSON.stringify({ message: 'File uploaded successfully', item }), {
     headers: { 'Content-Type': 'application/json' },

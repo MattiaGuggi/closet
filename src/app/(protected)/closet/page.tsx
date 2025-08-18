@@ -1,27 +1,17 @@
 'use client';
 import React, { useState } from 'react'
-import { MoveLeft, MoveRight } from 'lucide-react';
 import { useEffect } from "react";
 import gsap from "gsap";
-import { Canvas } from '@react-three/fiber'
-import { Environment, OrbitControls, Html, useProgress } from '@react-three/drei'
-import Model from '@/app/components/model';
 import Modal from '@/app/components/modal';
-import { items } from '@/lib/data';
-import Image from 'next/image';
-
-const Loader = () => {
-    const { progress } = useProgress()
-    return <Html className="absolute" center>Loading {progress.toFixed(0)}%</Html>
-}
+import ClosetRows from '@/app/components/ClosetRows';
+import { items, Position } from '@/lib/data';
 
 const page = () => {
   const [itemState, setItemState] = useState<{ top: number; mid: number; bottom: number }>({top: 0, mid: 0, bottom: 0,});
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
 
-
-  const handleClick = (arrow: 'left' | 'right', position: 'top' | 'mid' | 'bottom') => {
+  const handleClick = (arrow: string, position: Position) => {
     const wrapper = document.getElementById(`${position}-wrapper`);
     if (!wrapper) return;
     const tl = gsap.timeline();
@@ -107,83 +97,11 @@ const page = () => {
           </div>
         </label>
         <div className='w-full h-full'>
-          <section className='closet-row flex items-center justify-around h-[35vh]'>
-            <MoveLeft size={48} strokeWidth={3} className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'top')} />
-            <div className="scene-wrapper w-full h-full flex justify-center items-center" id="top-wrapper">
-              {three ? (
-                  <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
-                    <React.Suspense fallback={<Loader />}>
-                      <Environment preset="sunset" />
-                      <Model item={items.top[itemState.top]} />
-                      <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
-                    </React.Suspense>
-                  </Canvas>
-              ) : (
-                <>
-                  <Image
-                    src={items.top[itemState.top].image}
-                    alt={items.top[itemState.top].name}
-                    className="w-64 h-64 object-cover rounded-lg shadow-lg"
-                    width={256}
-                    height={256}
-                  />
-                </>
-              )}
-            </div>
-            <MoveRight size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'top')} />
-          </section>
-          <hr />
-          <section className='closet-row flex items-center justify-around h-[35vh]'>
-            <MoveLeft size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'mid')} />
-            <div className="scene-wrapper w-full h-full flex justify-center items-center" id="mid-wrapper">
-              {three ? (
-                  <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
-                    <React.Suspense fallback={<Loader />}>
-                      <Environment preset="sunset" />
-                      <Model item={items.mid[itemState.mid]} />
-                      <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
-                    </React.Suspense>
-                  </Canvas>
-              ) : (
-                <>
-                  <Image
-                    src={items.mid[itemState.mid].image}
-                    alt={items.mid[itemState.mid].name}
-                    className="w-64 h-64 object-cover rounded-lg shadow-lg"
-                    width={256}
-                    height={256}
-                  />
-                </>
-              )}
-            </div>
-            <MoveRight size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'mid')} />
-          </section>
-          <hr />
-          <section className='closet-row flex items-center justify-around h-[35vh]'>
-            <MoveLeft size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('left', 'bottom')} />
-            <div className="scene-wrapper w-full h-full flex justify-center items-center" id="bottom-wrapper">
-              {three ? (
-                  <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
-                    <React.Suspense fallback={<Loader />}>
-                      <Environment preset="sunset" />
-                      <Model item={items.bottom[itemState.bottom]} />
-                      <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
-                    </React.Suspense>
-                  </Canvas>
-              ) : (
-                <>
-                  <Image
-                    src={items.bottom[itemState.bottom].image}
-                    alt={items.bottom[itemState.bottom].name}
-                    className="w-64 h-64 object-cover rounded-lg shadow-lg"
-                    width={256}
-                    height={256}
-                  />
-                </>
-              )}
-            </div>
-            <MoveRight size={48} strokeWidth={3}  className='cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200' onClick={() => handleClick('right', 'bottom')} />
-          </section>
+          <ClosetRows
+            itemState={itemState}
+            handleClick={handleClick}
+            three={three}
+          />
         </div>
         <button
           className='shadow-lg px-10 py-5 my-16 cursor-pointer rounded-xl bg-gradient-to-br from-blue-500 to-indigo-800 duration-200 transition-all

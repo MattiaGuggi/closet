@@ -12,6 +12,7 @@ type itemsType = {
     [key: string]: itemStateType[];
 };
 
+export type Position = "top" | "mid" | "bottom";
 
 export const items: itemsType = {
     top: [

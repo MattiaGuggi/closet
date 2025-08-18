@@ -103,11 +103,13 @@ export const getClothingFromDb = async (criteria: any) => {
  * Creates clothing item in DB 
  *
  * @param {newClothes} newClothes - Clothing item to create in DB
+ * @returns {Clothes} - The created clothing item
 */
-export const createClothingInDb = async (newClothes: typeof Clothes) => {
+export const createClothingInDb = async (newClothes: IClothes) => {
     await connectDB();
     const clothes = new Clothes(newClothes);
     await clothes.save();
+    return clothes; // Return the created clothing item
 };
 /**
  * Updates an existing clothes
@@ -159,7 +161,7 @@ export const getOutfitFromDb = async (criteria: any) => {
  *
  * @param {newOutfit} newOutfit - Outfit to create in DB
 */
-export const createOutfitInDb = async (newOutfit: typeof Outfit) => {
+export const createOutfitInDb = async (newOutfit: IOutfit) => {
     await connectDB();
     const outfit = new Outfit(newOutfit);
     await outfit.save();

@@ -1,4 +1,5 @@
 import { Types, Document } from "mongoose";
+import { Position } from "./types";
 
 export interface IUser extends Document {
   username: string;
@@ -10,10 +11,11 @@ export interface IUser extends Document {
 export interface IClothes extends Document {
   name: string;
   image: string;
-  modelFile: string;
+  modelFile?: string;
   scale: number;
   position: [number, number, number];
   description: string;
+  type: Position;
 }
 
 export interface IOutfit extends Document {

@@ -40,7 +40,7 @@ const Modal = ({ onClose, onSave }: { onClose: () => void, onSave: (newItem: clo
               };
               reader.readAsDataURL(file);
             }
-            return { ...prev, model: file ? URL.createObjectURL(file) : '' };
+            return { ...prev, modelFile: file ? URL.createObjectURL(file) : '' };
           })}
           className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
         />

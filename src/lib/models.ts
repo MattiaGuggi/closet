@@ -12,10 +12,11 @@ export const User = mongoose.models.User || mongoose.model('User', userSchema);
 const clothesSchema = new mongoose.Schema({
   name: { type: String, required: true },
   image: { type: String, default: '' },
-  modelFile: { type: String, required: true },
+  modelFile: { type: String, default: '' },
   scale: { type: Number, default: 1 },
   position: { type: [Number], default: [0, 0, 0] },
   description: { type: String, default: '' },
+  type: { type: String, enum: ['top', 'mid', 'bottom'], required: true },
 });
 
 export const Clothes = mongoose.models.Clothes || mongoose.model('Clothes', clothesSchema);

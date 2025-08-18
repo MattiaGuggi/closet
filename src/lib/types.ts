@@ -4,7 +4,7 @@ export type clothesType = {
     _id?: number;
     name: string;
     image: string;
-    modelFile: string;
+    modelFile?: string;
     scale: number;
     position: [number, number, number];
     description: string;

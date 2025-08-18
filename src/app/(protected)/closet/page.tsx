@@ -1,10 +1,10 @@
 'use client';
-import React, { use, useState } from 'react'
+import React, { useState } from 'react'
 import { useEffect } from "react";
 import gsap from "gsap";
 import Modal from '@/app/components/modal';
 import ClosetRows from '@/app/components/ClosetRows';
-import { items, clothesType, Position } from '@/lib/types';
+import { clothesType, Position } from '@/lib/types';
 import axios from 'axios';
 
 const page = () => {
@@ -18,14 +18,13 @@ const page = () => {
   const [three, setThree] = useState<boolean>(false);
   
   const fetchItems = async () => {
-    /* try {
+    try {
       const response = await axios.get('/api/items');
-      setAllItems(response.data);
+      const data = response.data;
+      setAllItems(data.clothes);
     } catch (error) {
       console.error('Error fetching items:', error);
-    } */
-    
-    setAllItems(items);
+    }
   }
 
   const handleClick = (arrow: string, position: Position) => {
@@ -77,9 +76,8 @@ const page = () => {
     });
     const data = response.data;
 
-    console.log('Item imported: ', data);
-
     setIsModalOpen(false);
+    setAllItems(prev => [...prev, data.item]);
   };
 
   useEffect(() => {
@@ -128,7 +126,6 @@ const page = () => {
         <div className='w-full h-full'>
           {allItems.length > 0 && (
             <ClosetRows
-              items={allItems}
               currentItemState={currentItemState}
               handleClick={handleClick}
               three={three}

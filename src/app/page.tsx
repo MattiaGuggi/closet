@@ -1,10 +1,10 @@
 'use client';
-import React, { use, useEffect } from 'react';
-import { useUser } from './context/UserContext';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from './components/header';
 import Image from 'next/image';
 import gsap from 'gsap';
+import { useUser } from './context/UserContext';
 
 const Home = () => {
   const { isAuthenticated } = useUser();

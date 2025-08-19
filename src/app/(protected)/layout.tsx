@@ -1,10 +1,27 @@
+'use client'
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "../components/header";
+import { useUser } from "../context/UserContext";
 
-export default function RootLayout({
+export default function ProtectedLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { isAuthenticated } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <>
       <Header />

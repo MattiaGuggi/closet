@@ -107,23 +107,27 @@ const page = () => {
     <>
       <section id='closet-section' className="w-full min-h-screen flex flex-col items-center justify-start overflow-hidden pt-10">
         <h1 className='font-bold text-5xl text-center text-white mb-12'>Closet</h1>
-        <button
-          className='shadow-lg px-6 py-3 my-16 cursor-pointer rounded-lg bg-gradient-to-br from-blue-500 to-indigo-800 duration-200 transition-all
-          hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600 hover:to-indigo-900 text-white font-semibold text-lg'
-          onClick={() => setIsModalOpen(true)}
-        >
-          Import new item
-        </button>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input className="sr-only peer" value="" type="checkbox" />
-            <div className="peer rounded-full outline-none duration-100 after:duration-500 w-12 h-6 bg-gradient-to-br from-blue-500 to-indigo-800
-              after:absolute after:outline-none after:rounded-full after:h-4 after:w-4
-              after:bg-white after:top-1 after:left-1 after:flex after:justify-center after:items-center  after:text-blue-600 after:font-bold
-              peer-checked:after:translate-x-5 peer-checked:after:border-white"
-              onClick={() => setThree(prev => !prev)}
+        <div className='w-full h-full flex justify-end mr-40 my-16'>
+          <div className='w-72 h-11/12 bg-white flex flex-col items-center justify-center py-12 gap-10 rounded-2xl'>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input className="sr-only peer" value="" type="checkbox" />
+                <div className="peer rounded-full outline-none duration-100 after:duration-500 w-12 h-6 bg-gradient-to-br from-blue-500 to-indigo-800
+                  after:absolute after:outline-none after:rounded-full after:h-4 after:w-4
+                  after:bg-white after:top-1 after:left-1 after:flex after:justify-center after:items-center  after:text-blue-600 after:font-bold
+                  peer-checked:after:translate-x-5 peer-checked:after:border-white"
+                  onClick={() => setThree(prev => !prev)}
+                >
+              </div>
+            </label>
+            <button
+              className='shadow-lg px-6 py-3 cursor-pointer rounded-lg bg-gradient-to-br from-blue-500 to-indigo-800 duration-200 transition-all
+              hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600 hover:to-indigo-900 text-white font-semibold text-md'
+              onClick={() => setIsModalOpen(true)}
             >
+              Import new item
+            </button>
           </div>
-        </label>
+        </div>
         <div className='w-full h-full'>
           <ClosetRows
             currentItemState={currentItemState}

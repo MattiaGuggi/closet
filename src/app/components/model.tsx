@@ -6,7 +6,7 @@ import { Group } from 'three';
 
 const Model = ({ item }: { item: clothesType }) => {
     const groupRef = React.useRef<Group>(null);
-    const { scene } = useGLTF(item.modelFile);
+    const { scene } = useGLTF<any>(item.modelFile) as { scene: Group };
 
     return (
         <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]} dispose={null}>

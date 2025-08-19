@@ -54,7 +54,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex" ref={containerRef}>
       {/* Left side (branding / image / message) */}
-      <div className="hidden md:flex flex-1 bg-gradient-to-br from-indigo-700 to-indigo-900 text-white items-center justify-center">
+      <div className="hidden md:flex flex-1 bg-gradient-to-br from-blue-500 to-indigo-700 text-white items-center justify-center">
         <div className="p-10 max-w-md text-center">
           <h1 className="text-4xl font-bold mb-4">Welcome Back!</h1>
           <p className="text-lg">Log in to access your profile and continue where you left off.</p>
@@ -64,13 +64,13 @@ const Login = () => {
       {/* Right side (form) */}
       <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-md p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg">
-          <h2 className="text-2xl font-semibold mb-6 text-center text-indigo-600">Login</h2>
+          <h2 className="text-2xl font-semibold mb-6 text-center text-blue-600">Login</h2>
           {error && <p className="text-red-500 mb-4">{error}</p>}
           <form className="space-y-5" onSubmit={handleSubmit}>
             <input
               type="email"
               placeholder="Email"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-neutral-700 bg-transparent focus:ring-2 focus:ring-indigo-600 text-white"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-neutral-700 bg-transparent focus:ring-2 focus:ring-blue-600 text-white"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -78,14 +78,15 @@ const Login = () => {
             <input
               type="password"
               placeholder="Password"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-neutral-700 bg-transparent focus:ring-2 focus:ring-indigo-600 text-white"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-neutral-700 bg-transparent focus:ring-2 focus:ring-blue-600 text-white"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
             <button
               type="submit"
-              className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition cursor-pointer"
+              className="w-full py-3 bg-gradient-to-br from-blue-500 to-indigo-700 text-white font-semibold rounded-lg
+              hover:bg-gradient-to-br hover:from-blue-600 hover:to-indigo-800 transition cursor-pointer"
             >
               Login
             </button>
@@ -95,7 +96,7 @@ const Login = () => {
             <button
               type="button"
               onClick={() => router.push('/signup')}
-              className="text-indigo-600 hover:underline cursor-pointer"
+              className="bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent hover:underline cursor-pointer"
             >
               Sign Up
             </button>

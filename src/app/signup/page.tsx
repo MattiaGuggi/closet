@@ -52,7 +52,7 @@ const Signup = () => {
   return (
     <div className="min-h-screen flex items-center justify-center" ref={containerRef}>
       <div className="w-full max-w-md p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-semibold mb-6 text-center text-indigo-600">Create Account</h2>
+        <h2 className="text-2xl font-semibold mb-6 text-center bg-gradient-to-br from-blue-500 to-indigo-700 text-transparent bg-clip-text">Create Account</h2>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form className="space-y-5" onSubmit={handleSubmit}>
           <input
@@ -81,7 +81,8 @@ const Signup = () => {
           />
           <button
             type="submit"
-            className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition cursor-pointer"
+            className="w-full py-3 bg-gradient-to-br from-blue-500 to-indigo-700 font-semibold rounded-lg
+            hover:bg-gradient-to-br transition cursor-pointer hover:from-blue-600 hover:to-indigo-800 text-white"
           >
             Sign Up
           </button>
@@ -91,7 +92,7 @@ const Signup = () => {
           <button
             type="button"
             onClick={() => router.push('/login')}
-            className="text-indigo-600 hover:underline cursor-pointer"
+            className="bg-gradient-to-br from-blue-500 to-indigo-700 text-transparent bg-clip-text hover:underline cursor-pointer"
           >
             Login
           </button>

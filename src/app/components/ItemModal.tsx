@@ -1,9 +1,11 @@
 import Image from 'next/image';
 import React, { useState } from 'react'
+import { useUser } from '../context/UserContext';
 import { clothesType, Position } from '@/lib/types';
 
 const ItemModal = ({ onClose, onSave }: { onClose: () => void, onSave: (newItem: clothesType) => void }) => {
-  const [newItem, setNewItem] = useState<clothesType>({ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null });
+  const { user } = useUser();
+  const [newItem, setNewItem] = useState<clothesType>({ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user });
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/70 bg-opacity-50 z-50">

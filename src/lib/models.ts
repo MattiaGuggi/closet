@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 const clothesSchema = new mongoose.Schema({
+  creator: { type: mongoose.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
   image: { type: String, default: '' },
   modelFile: { type: String, default: '' },
@@ -23,7 +24,9 @@ export const Clothes = mongoose.models.Clothes || mongoose.model('Clothes', clot
 
 const outfitSchema = new mongoose.Schema({
   creator: { type: mongoose.Types.ObjectId, ref: 'User', required: true },
-  clothes: { type: [clothesSchema], required: true },
+  top: { type: clothesSchema, required: true },
+  mid: { type: clothesSchema, required: true },
+  bottom: { type: clothesSchema, required: true },
 });
 
 export const Outfit = mongoose.models.Outfit || mongoose.model('Outfit', outfitSchema);

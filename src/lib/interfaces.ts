@@ -9,6 +9,7 @@ export interface IUser extends Document {
 }
 
 export interface IClothes extends Document {
+  creator: Types.ObjectId | IUser;
   name: string;
   image: string;
   modelFile?: string;
@@ -20,5 +21,7 @@ export interface IClothes extends Document {
 
 export interface IOutfit extends Document {
   creator: Types.ObjectId | IUser;
-  clothes: IClothes[];
+  top: IClothes;
+  mid: IClothes;
+  bottom: IClothes;
 }

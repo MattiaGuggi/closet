@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Outfit, User, Clothes } from "./models";
 import { IClothes, IOutfit, IUser } from "./interfaces";
+import { outfitType } from "./types";
 
 /**
  * Connects to MongoDB
@@ -161,9 +162,9 @@ export const getOutfitFromDb = async (criteria: any) => {
  *
  * @param {newOutfit} newOutfit - Outfit to create in DB
 */
-export const createOutfitInDb = async (newOutfit: IOutfit) => {
+export const createOutfitInDb = async ({ top, mid, bottom }: outfitType) => {
     await connectDB();
-    const outfit = new Outfit(newOutfit);
+    const outfit = new Outfit({ top, mid, bottom });
     await outfit.save();
 };
 /**

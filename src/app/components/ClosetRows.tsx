@@ -55,7 +55,7 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
                 <MoveLeft
                     size={48}
                     strokeWidth={3}
-                    className="cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200"
+                    className="cursor-pointer text-blue-600 mx-10 scale-150 duration-400 transition-all hover:scale-200"
                     onClick={() => handleClick("left", pos)}
                 />
 
@@ -71,13 +71,13 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
                                     </React.Suspense>
                                 </Canvas>
                             ) : (
-                                <div className="text-gray-500">No 3D model available</div>
+                                <div className="text-blue-600 text-xl font-bold">No 3D model available</div>
                             )}
                         </>
                     ) : (
                         <>
                             {itemsOfType.length === 0 && (
-                                <div className="text-gray-500">No items available</div>
+                                <div className="text-blue-600 text-xl font-bold">No items available</div>
                             )}
                             {currentItem && (
                                 <div className="relative w-64 h-64">
@@ -103,7 +103,7 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
                 <MoveRight
                     size={48}
                     strokeWidth={3}
-                    className="cursor-pointer text-gray-400 mx-10 scale-150 duration-400 transition-all hover:scale-200"
+                    className="cursor-pointer text-blue-600 mx-10 scale-150 duration-400 transition-all hover:scale-200"
                     onClick={() => handleClick("right", pos)}
                 />
             </section>

@@ -15,7 +15,7 @@ const Header = () => {
   return (
     <header className="w-full border-b border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg">
       <nav className="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
-        <Link href="/" className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">
+        <Link href="/" className="text-2xl font-bold text-blue-600 dark:text-blue-500">
           ClosetApp
         </Link>
 
@@ -26,13 +26,13 @@ const Header = () => {
                 href={link.href}
                 className={`relative font-medium transition-colors ${
                   pathname === link.href
-                    ? 'text-indigo-700 dark:text-indigo-400'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-300'
+                    ? 'text-blue-700 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-300'
                 }`}
               >
                 {link.label}
                 {pathname === link.href && (
-                  <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-indigo-600 rounded-full" />
+                  <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-blue-600 rounded-full" />
                 )}
               </Link>
             </li>

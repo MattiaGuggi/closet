@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { useEffect } from "react";
 import gsap from "gsap";
-import Modal from '@/app/components/modal';
+import ItemModel from '@/app/components/ItemModal';
 import ClosetRows from '@/app/components/ClosetRows';
 import { clothesType, Position } from '@/lib/types';
 import axios from 'axios';
@@ -116,22 +116,20 @@ const page = () => {
         </button>
         <label className="relative inline-flex items-center cursor-pointer">
           <input className="sr-only peer" value="" type="checkbox" />
-            <div className="peer rounded-full outline-none duration-100 after:duration-500 w-28 h-14 bg-gradient-to-br from-blue-500 to-indigo-800
-              after:content-['Img'] after:absolute after:outline-none after:rounded-full after:h-12 after:w-12
+            <div className="peer rounded-full outline-none duration-100 after:duration-500 w-12 h-6 bg-gradient-to-br from-blue-500 to-indigo-800
+              after:absolute after:outline-none after:rounded-full after:h-4 after:w-4
               after:bg-white after:top-1 after:left-1 after:flex after:justify-center after:items-center  after:text-blue-600 after:font-bold
-              peer-checked:after:translate-x-14 peer-checked:after:content-['3D'] peer-checked:after:border-white"
+              peer-checked:after:translate-x-5 peer-checked:after:border-white"
               onClick={() => setThree(prev => !prev)}
             >
           </div>
         </label>
         <div className='w-full h-full'>
-          {allItems.length > 0 && (
-            <ClosetRows
-              currentItemState={currentItemState}
-              handleClick={handleClick}
-              three={three}
-            />
-          )}
+          <ClosetRows
+            currentItemState={currentItemState}
+            handleClick={handleClick}
+            three={three}
+          />
         </div>
         <button
           className='shadow-lg px-10 py-5 my-16 cursor-pointer rounded-xl bg-gradient-to-br from-blue-500 to-indigo-800 duration-200 transition-all
@@ -142,7 +140,7 @@ const page = () => {
         </button>
       </section>
       {isModalOpen && (
-        <Modal onClose={() => setIsModalOpen(false)} onSave={(newItem) => importItem(newItem)} />
+        <ItemModel onClose={() => setIsModalOpen(false)} onSave={(newItem) => importItem(newItem)} />
       )}
     </>
   )

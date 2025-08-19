@@ -2,22 +2,22 @@
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Loading from '../loading';
-import type { IUser } from '@/lib/interfaces';
+import { userType } from '@/lib/types';
 
 interface IUserContext {
     isAuthenticated: boolean;
-    user: IUser | null;
-    setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
-    login: (loggedUser: IUser) => void;
+    user: userType | null;
+    setUser: React.Dispatch<React.SetStateAction<userType | null>>;
+    login: (loggedUser: userType) => void;
     logout: () => void;
     signup: () => void;
 }
 
 const UserContext = createContext<IUserContext | null>(null);
 
-export const UserProvider = ({ children }: { children: React.ReactNode }): React.ReactNode => {
+export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState<IUser | null>(null);
+    const [user, setUser] = useState<userType | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -39,7 +39,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }): React
         setLoading(false);
     }, []);
 
-    const login = (loggedUser: IUser) => {
+    const login = (loggedUser: userType) => {
         setUser(loggedUser);
         setIsAuthenticated(true);
         if (typeof window !== 'undefined') {

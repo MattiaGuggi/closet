@@ -20,12 +20,10 @@ const page = () => {
 
     setClothes(data.clothes);
     setOutfits(data.outfits);
-
-    console.log(data);
   };
 
   useEffect(() => {
-    fetchUserDetails();
+    if (user?._id) fetchUserDetails();
   }, []);
 
   return (
@@ -53,10 +51,10 @@ const page = () => {
       </div>
       <section id='clothes-section' className='w-full h-full flex flex-col justify-center items-center my-10'>
         <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Your Clothes</h1>
-        <div className='flex flex-col justify-center items-center'>
+        <div className='flex flex-col justify-center items-center w-full h-full'>
           {clothes && clothes?.length > 0 ? (
             (clothes.map((clothing, idx) => (
-              <div key={idx} className='grid grid-cols-3 w-full h-full px-5 py-10'>
+              <div key={idx} className='grid grid-cols-3 w-full h-full px-5 p-10'>
                 <Clothing item={clothing} />
               </div>
             )))
@@ -70,7 +68,7 @@ const page = () => {
         <div className='flex flex-col justify-center items-center'>
           {outfits && outfits?.length > 0 ? (
             (outfits.map((outfit, idx) => (
-              <div key={idx} className='grid grid-cols-3 w-full h-full px-5 py-10'>
+              <div key={idx} className='grid grid-cols-3 w-full h-full px-5 p-10'>
                 <Outfit item={outfit} />
               </div>
             )))

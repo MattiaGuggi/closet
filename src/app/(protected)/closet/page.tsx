@@ -1,13 +1,15 @@
 'use client';
+import axios from 'axios';
 import React, { useState } from 'react'
 import { useEffect } from "react";
 import gsap from "gsap";
 import ItemModel from '@/app/components/ItemModal';
 import ClosetRows from '@/app/components/ClosetRows';
+import { useUser } from '@/app/context/UserContext';
 import { clothesType, Position } from '@/lib/types';
-import axios from 'axios';
 
 const page = () => {
+  const { user } = useUser();
   const [allItems, setAllItems] = useState<clothesType[]>([]);
   const [currentItemState, setCurrentItemState] = useState<{ top: number; mid: number; bottom: number }>({
     top: 0,
@@ -145,7 +147,7 @@ const page = () => {
         </button>
       </section>
       {isModalOpen && (
-        <ItemModel onClose={() => setIsModalOpen(false)} onSave={(newItem) => importItem(newItem)} />
+        <ItemModel onClose={() => setIsModalOpen(false)} onSave={(newItem) => importItem(newItem)} item={{ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user }} />
       )}
     </>
   )

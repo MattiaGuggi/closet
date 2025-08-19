@@ -12,7 +12,11 @@ export async function GET(request: Request): Promise<Response> {
     const clothes = await getClothingFromDb({ creator: userId });
     const outfits = await getOutfitFromDb({ creator: userId });
     
-    return new Response(JSON.stringify({ success: true, clothes, outfits }), {
+    return new Response(JSON.stringify({
+            success: true, 
+            clothes: Array.isArray(clothes) ? clothes : [clothes],
+            outfits: Array.isArray(outfits) ? outfits : [outfits]
+        }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
     });

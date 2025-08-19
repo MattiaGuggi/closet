@@ -29,16 +29,17 @@ const page = () => {
 
   const handleClick = (arrow: string, position: Position) => {
     const wrapper = document.getElementById(`${position}-wrapper`);
-    if (!wrapper) return;
-    const tl = gsap.timeline();
+    const itemsOfType = allItems.filter(item => item.type === position);
 
+    if (!wrapper || itemsOfType.length < 2) return;
+
+    const tl = gsap.timeline();
     tl.to(wrapper, {
       opacity: 0,
       x: arrow === 'left' ? -500 : 500,
       duration: 0.4,
       ease: 'power2.inOut',
       onComplete: () => {
-        const itemsOfType = allItems.filter(item => item.type === position);
         setCurrentItemState(prev => {
           const currentIndex = prev[position];
           const maxIndex = itemsOfType.length - 1;

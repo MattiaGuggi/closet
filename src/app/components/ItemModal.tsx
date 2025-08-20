@@ -16,8 +16,8 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
           <div className='flex flex-col items-start gap-2'>
             <h2 className="text-2xl font-bold mb-4">Import New Item</h2>
             <select
-              name="type"
               id="item-type"
+              name="type"
               value={newItem.type ?? ""}
               className='border border-gray-300 rounded-lg p-2 mb-4 w-full'
               onChange={(e) => setNewItem(prev => ({ ...prev, type: e.target.value as Position }))}
@@ -27,10 +27,12 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
               <option value="mid">Mid</option>
               <option value="bottom">Bottom</option>
             </select>
-            <label htmlFor="">Image</label>
+            <label htmlFor="image-input">Image</label>
             <input
+              id='image-input'
+              name='image-input'
               type="file"
-              accept='png/jpg/jpeg'
+              accept='.png, .jpg, .jpeg, .webp'
               onChange={(e) => setNewItem(prev => {
                 const file = e.target.files?.[0];
                 if (file) {
@@ -45,10 +47,12 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
             {newItem?.image && <Image alt='New Item Image' src={newItem.image} width={176} height={176} className='w-44 h-44 object-cover mx-auto mb-2' /> }
-            <label htmlFor="">3D Model</label>
+            <label htmlFor="3d-input">3D Model</label>
             <input
+              id='3d-input'
+              name='3d-input'
               type="file"
-              accept='glb/gltf'
+              accept=".glb, .gltf"
               onChange={(e) => setNewItem(prev => {
                 const file = e.target.files?.[0];
                 if (file) {
@@ -73,41 +77,41 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
             )}
           </div>
           <div className='flex flex-col items-start gap-2'>
-            <label htmlFor="">3D Model</label>
-            <input type="text" placeholder='Name' value={newItem.name} onChange={(e) => {
+            <label htmlFor="name-input">Name</label>
+            <input id='name-input' name='name-input' type="text" placeholder='Name' value={newItem.name} onChange={(e) => {
                 setNewItem(prev => ({ ...prev, name: e.target.value }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-            <label htmlFor="">Description</label>
-            <input type="text" placeholder='Description' value={newItem.description} onChange={(e) => {
+            <label htmlFor="description-input">Description</label>
+            <input id='description-input' name='description-input' type="text" placeholder='Description' value={newItem.description} onChange={(e) => {
                 setNewItem(prev => ({ ...prev, description: e.target.value }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-            <label htmlFor="">Position X</label>
-            <input type="number" placeholder='Position X' value={newItem.position[0]} onChange={(e) => {
+            <label htmlFor="position-x-input">Position X</label>
+            <input  id='position-x-input' name='position-x-input' type="number" placeholder='Position X' value={newItem.position[0]} onChange={(e) => {
                 const val = parseFloat(e.target.value) || 0;
                 setNewItem(prev => ({ ...prev, position: [val, prev.position[1], prev.position[2]] }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-            <label htmlFor="">Position Y</label>
-            <input type="number" placeholder='Position Y' value={newItem.position[1]} onChange={(e) => {
+            <label htmlFor="position-y-input">Position Y</label>
+            <input  id='position-y-input' name='position-y-input' type="number" placeholder='Position Y' value={newItem.position[1]} onChange={(e) => {
                 const val = parseFloat(e.target.value) || 0;
                 setNewItem(prev => ({ ...prev, position: [prev.position[0], val, prev.position[2]] }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-            <label htmlFor="">Position Z</label>
-            <input type="number" placeholder='Position Z' value={newItem.position[2]} onChange={(e) => {
+            <label htmlFor="position-z-input">Position Z</label>
+            <input id='position-z-input' name='position-z-input' type="number" placeholder='Position Z' value={newItem.position[2]} onChange={(e) => {
                 const val = parseFloat(e.target.value) || 0;
                 setNewItem(prev => ({ ...prev, position: [prev.position[0], prev.position[1], val] }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-            <label htmlFor="">Scale</label>
-            <input type="number" min={0} placeholder='Scale' value={newItem.scale} onChange={(e) => {
+            <label htmlFor="scale-input">Scale</label>
+            <input id='scale-input' name='scale-input' type="number" min={0} placeholder='Scale' value={newItem.scale} onChange={(e) => {
                 setNewItem(prev => ({ ...prev, scale: parseFloat(e.target.value) || 0 }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"

@@ -21,10 +21,12 @@ const UserModal = ({ onClose }: { onClose: () => void }) => {
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 bg-opacity-50 z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-start gap-2">
                 <h2 className="text-2xl font-bold mb-4">Your Profile</h2>
-                <label htmlFor="">Pfp</label>
+                <label htmlFor="pfp-input">Pfp</label>
                 <input
+                    id='pfp-input'
+                    name='pfp-input'
                     type="file"
-                    accept='png/jpg/jpeg'
+                    accept='.png, .jpg, .jpeg'
                     onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
@@ -38,8 +40,10 @@ const UserModal = ({ onClose }: { onClose: () => void }) => {
                     className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
                 />
                 <Image alt='New Item Image' src={user?.pfp || "www.starksfamilyfh.com"} width={100} height={100} className='rounded-full mx-auto' />
-                <label htmlFor="">Username</label>
+                <label htmlFor="username-input">Username</label>
                 <input
+                    id='username-input'
+                    name='username-input'
                     type="text"
                     placeholder="Username"
                     value={user?.username || ""}
@@ -48,8 +52,10 @@ const UserModal = ({ onClose }: { onClose: () => void }) => {
                     }
                     className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
                 />
-                <label htmlFor="">Email</label>
+                <label htmlFor="email-input">Email</label>
                 <input
+                    id='email-input'
+                    name='email-input'
                     type="email"
                     placeholder="Email"
                     value={user?.email || ""}
@@ -58,8 +64,10 @@ const UserModal = ({ onClose }: { onClose: () => void }) => {
                     }
                     className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
                 />
-                <label htmlFor="">Password</label>
+                <label htmlFor="password-input">Password</label>
                 <input
+                    id='password-input'
+                    name='password-input'
                     type="password"
                     placeholder="Password"
                     value={user?.password || ""}

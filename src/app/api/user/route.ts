@@ -1,16 +1,16 @@
-import { getClothingFromDb, getOutfitFromDb } from "@/lib/database";
+import { getUserClothesFromDb, getUserOutfitsFromDb } from "@/lib/database";
 
 export async function GET(request: Request): Promise<Response> {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("user");
+    const userId = searchParams.get("userId");
 
     if (!userId) return new Response(JSON.stringify({ success: false, message: 'Cannot retrieve user' }), {
         status: 400,
         headers: { "Content-Type": "application/json" }
     });
 
-    const clothes = await getClothingFromDb({ creator: userId });
-    const outfits = await getOutfitFromDb({ creator: userId });
+    const clothes = await getUserClothesFromDb({ creator: userId });
+    const outfits = await getUserOutfitsFromDb({ creator: userId });
     
     return new Response(JSON.stringify({
             success: true, 

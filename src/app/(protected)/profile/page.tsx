@@ -18,7 +18,7 @@ const page = () => {
   const [isItemModalOpen, setIsItemModalOpen] = useState<boolean>(false);
 
   const fetchUserDetails = async () => {
-    const response = await axios.get('/api/user', { params: { user: user?._id } });
+    const response = await axios.get('/api/user', { params: { userId: user?._id } });
     const data = response.data;
 
     setClothes(data.clothes);
@@ -105,29 +105,29 @@ const page = () => {
         <section id='clothes-section' className='w-full h-full flex flex-col justify-center items-center mt-32 mb-10'>
           <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent py-10'>Your Clothes</h1>
           <div className='flex flex-col justify-center items-center w-full h-full'>
-            {clothes && clothes[0] ? (
-              (clothes.map((clothing, idx) => (
-                <div key={idx} className='grid grid-cols-3 w-full h-full px-5 p-10'>
-                  <Clothing item={clothing} onOpen={handleOpenItemModal} />
-                </div>
-              )))
-            ) : (
-              <div className='font-bold text-2xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent my-10'>No clothes found</div>
-            )}
+            <div className='grid grid-cols-3 w-full h-full px-5 p-10 gap-10'>
+              {clothes && clothes[0] ? (
+                (clothes.map((clothing, idx) => (
+                  <Clothing key={idx} item={clothing} onOpen={handleOpenItemModal} />
+                )))
+              ) : (
+                <div className='font-bold text-2xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent my-10'>No clothes found</div>
+              )}
+            </div>
           </div>
         </section>
         <section id='outfit-section' className='w-full h-full flex flex-col justify-center items-center my-10'>
           <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Your Outfits</h1>
           <div className='flex flex-col justify-center items-center'>
-            {outfits && outfits[0] ? (
-              (outfits.map((outfit, idx) => (
-                <div key={idx} className='grid grid-cols-3 w-full h-full px-5 p-10'>
-                  <Outfit item={outfit} />
-                </div>
-              )))
-            ) : (
-              <div className='font-bold text-2xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent my-10'>No outfits found</div>
-            )}
+            <div className='grid grid-cols-3 w-full h-full px-5 p-10 gap-10'>
+              {outfits && outfits[0] ? (
+                (outfits.map((outfit, idx) => (
+                  <Outfit key={idx} item={outfit} />
+                )))
+              ) : (
+                <div className='font-bold text-2xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent my-10'>No outfits found</div>
+              )}
+            </div>
           </div>
         </section>
       </section>

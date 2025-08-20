@@ -6,7 +6,7 @@ import gsap from "gsap";
 import ItemModel from '@/app/components/ItemModal';
 import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
-import { clothesType, Position } from '@/lib/types';
+import { clothesType, EditableClothesType, Position } from '@/lib/types';
 import OptionController from '@/app/components/OptionController';
 import Toast from '@/app/components/Toast';
 
@@ -81,14 +81,36 @@ const page = () => {
     console.table(outfit);
   };
 
-  const importItem = async (newItem: clothesType) => {
-    const response = await axios.post('/api/import', {
-      item: newItem
-    });
-    const data = response.data;
+  const importItem = async (item: EditableClothesType) => {
+    try {
+      const formData = new FormData();
+      formData.append("item", JSON.stringify(item));
 
-    setIsModalOpen(false);
-    setAllItems(prev => [...prev, data.item]);
+      if (item.imageFile) formData.append("image", item.imageFile);
+      if (item.modelFileFile) formData.append("model", item.modelFileFile);
+
+      // append other fields
+      formData.append("name", item.name);
+      formData.append("scale", String(item.scale));
+      formData.append("description", item.description);
+      formData.append("position", JSON.stringify(item.position));
+      if (item.type) formData.append("type", item.type);
+
+      const response = await axios.post("/api/import", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const data = response.data;
+      if (data.success) {
+        setIsModalOpen(false);
+        setAllItems(prev => [...prev, data.item]);
+      } else {
+        alert("Error while updating item! Try again");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading item");
+    }
   };
 
   useEffect(() => {

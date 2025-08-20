@@ -93,12 +93,22 @@ export const getAllClothesFromDb = async () => {
 /**
  * Finds clothing item in DB based on name/type
  *
+ * @param {criteria} criteria - The criteria (format: { creator: userId })
+ * @returns {Clothes} Clothes - A clothing item saved in the DB for that specific user
+ */
+export const getUserClothesFromDb = async (criteria: any) => {
+    await connectDB();
+    return await Clothes.find(criteria);
+};
+/**
+ * Finds clothing item in DB based on name/type
+ *
  * @param {criteria} criteria - The criteria(name/type)
  * @returns {Clothes} Clothes - A clothing item saved in the DB
  */
 export const getClothingFromDb = async (criteria: any) => {
     await connectDB();
-    return await Clothes.findOne(criteria); // Ensure you're passing the correct criteria
+    return await Clothes.findOne(criteria);
 };
 /**
  * Creates clothing item in DB 
@@ -147,6 +157,16 @@ export const deleteClothingFromDb = async (clothes: IClothes) => {
     }
 };
 /**
+ * Finds outfit in DB based on id
+ *
+ * @param {criteria} criteria - The criteria (in format: { creator: userId })
+ * @returns {Outfit} Outfit - A outfit saved in the DB
+ */
+export const getUserOutfitsFromDb = async (criteria: any) => {
+    await connectDB();
+    return await Outfit.findOne(criteria);
+};
+/**
  * Helper function to get every outfit from MongoDB
  */
 export const getOutfitsFromDb = async () => {
@@ -161,7 +181,7 @@ export const getOutfitsFromDb = async () => {
  */
 export const getOutfitFromDb = async (criteria: any) => {
     await connectDB();
-    return await Outfit.findOne(criteria); // Ensure you're passing the correct criteria
+    return await Outfit.findOne(criteria);
 };
 /**
  * Creates outfit in DB

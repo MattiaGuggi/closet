@@ -8,6 +8,7 @@ import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
 import { clothesType, Position } from '@/lib/types';
 import OptionController from '@/app/components/OptionController';
+import Toast from '@/app/components/Toast';
 
 const page = () => {
   const { user } = useUser();
@@ -19,6 +20,7 @@ const page = () => {
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
+  const [message, setMessage] = useState<string | null>(null);
   
   const fetchItems = async () => {
     try {
@@ -66,6 +68,11 @@ const page = () => {
   };
 
   const buildOutfit = () => {
+    if (!currentItemState.top || !currentItemState.mid || !currentItemState.bottom) {
+      setMessage('Cannot build item without all 3 parts!');
+      return;
+    }
+
     const outfit: Record<Position, clothesType | undefined> = {
       top: allItems.filter(item => item.type === "top")[currentItemState.top],
       mid: allItems.filter(item => item.type === "mid")[currentItemState.mid],
@@ -110,6 +117,13 @@ const page = () => {
     <>
       <section id='closet-section' className="w-full min-h-screen flex flex-col items-center justify-center overflow-hidden pt-10">
         <h1 className='font-bold text-5xl text-center mb-12 bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Closet</h1>
+        {message && (
+          <Toast
+            message={message}
+            type={'error'}
+            onClose={() => setMessage('')}
+          />
+        )}
         <OptionController setThree={setThree} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />
         <div className='w-full h-full'>
           <ClosetRows

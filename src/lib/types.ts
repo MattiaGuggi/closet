@@ -12,6 +12,15 @@ export type clothesType = {
     type: Position | null;
 };
 
+export type EditableClothesType = clothesType & {
+  imageFile?: File;
+  modelFileFile?: File;        // <- actual File object
+  imagePreview?: string;       // <- for previews
+  modelFilePreview?: string;   // <- for previews
+};
+
+
+
 export type outfitType = {
     top: clothesType | undefined;
     mid: clothesType | undefined;

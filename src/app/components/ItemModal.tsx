@@ -1,23 +1,22 @@
 import Image from 'next/image';
-import React, { useState } from 'react'
-import { clothesType, Position } from '@/lib/types';
+import React, { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls } from '@react-three/drei';
 import Model from './model';
 import { Loader } from './Loader';
+import { clothesType, EditableClothesType, Position } from '@/lib/types';
 
-const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (newItem: clothesType) => void, item: clothesType }) => {
-  const [newItem, setNewItem] = useState<clothesType>(item);
+const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (newItem: EditableClothesType) => void, item: clothesType }) => {
+  const [newItem, setNewItem] = useState<EditableClothesType>(item);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/70 bg-opacity-50 z-50 min-h-screen">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 min-h-screen">
       <div className='bg-white shadow-lg rounded-lg p-6'>
         <div className="grid grid-cols-2 gap-20 place-content-center">
           <div className='flex flex-col items-start gap-2'>
             <h2 className="text-2xl font-bold mb-4">Import New Item</h2>
             <select
               id="item-type"
-              name="type"
               value={newItem.type ?? ""}
               className='border border-gray-300 rounded-lg p-2 mb-4 w-full'
               onChange={(e) => setNewItem(prev => ({ ...prev, type: e.target.value as Position }))}
@@ -27,116 +26,84 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
               <option value="mid">Mid</option>
               <option value="bottom">Bottom</option>
             </select>
+
+            {/* IMAGE UPLOAD */}
             <label htmlFor="image-input">Image</label>
             <input
               id='image-input'
-              name='image-input'
               type="file"
               accept='.png, .jpg, .jpeg, .webp'
-              onChange={(e) => setNewItem(prev => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                    setNewItem({ ...prev, image: e.target?.result as string });
-                  };
-                  reader.readAsDataURL(file);
+                  setNewItem(prev => ({
+                    ...prev,
+                    imageFile: file,
+                    image: URL.createObjectURL(file) // preview only
+                  }));
                 }
-                return { ...prev, image: file ? URL.createObjectURL(file) : '' };
-              })}
+              }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-            {newItem?.image && <Image alt='New Item Image' src={newItem.image} width={176} height={176} className='w-44 h-44 object-cover mx-auto mb-2' /> }
+            {newItem?.image && <Image alt='Preview' src={newItem.image} width={176} height={176} className='w-44 h-44 object-cover mx-auto mb-2' /> }
+
+            {/* 3D MODEL UPLOAD */}
             <label htmlFor="3d-input">3D Model</label>
             <input
               id='3d-input'
-              name='3d-input'
               type="file"
-              accept=".glb, .gltf"
-              onChange={(e) => setNewItem(prev => {
+              accept=".glb,.gltf"
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                    setNewItem({ ...prev, modelFile: e.target?.result as string });
-                  };
-                  reader.readAsDataURL(file);
+                  setNewItem(prev => ({
+                    ...prev,
+                    modelFileFile: file, // Keep the File separately
+                    modelFilePreview: URL.createObjectURL(file), // Preview URL
+                  }));
                 }
-                return { ...prev, modelFile: file ? URL.createObjectURL(file) : '' };
-              })}
+              }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-            {newItem?.modelFile && (
+            {newItem?.modelFilePreview && (
               <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
                 <React.Suspense fallback={<Loader />}>
                   <Environment preset="sunset" />
-                  <Model item={newItem} />
+                  <Model item={{ ...newItem, modelFile: newItem.modelFilePreview }} />
                   <OrbitControls enableDamping dampingFactor={0.05} enableZoom={true} />
                 </React.Suspense>
               </Canvas>
             )}
           </div>
+
+          {/* TEXT FIELDS */}
           <div className='flex flex-col items-start gap-2'>
-            <label htmlFor="name-input">Name</label>
-            <input id='name-input' name='name-input' type="text" placeholder='Name' value={newItem.name} onChange={(e) => {
-                setNewItem(prev => ({ ...prev, name: e.target.value }));
-              }}
-              className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
-            />
-            <label htmlFor="description-input">Description</label>
-            <input id='description-input' name='description-input' type="text" placeholder='Description' value={newItem.description} onChange={(e) => {
-                setNewItem(prev => ({ ...prev, description: e.target.value }));
-              }}
-              className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
-            />
-            <label htmlFor="position-x-input">Position X</label>
-            <input  id='position-x-input' name='position-x-input' type="number" placeholder='Position X' value={newItem.position[0]} onChange={(e) => {
-                const val = parseFloat(e.target.value) || 0;
-                setNewItem(prev => ({ ...prev, position: [val, prev.position[1], prev.position[2]] }));
-              }}
-              className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
-            />
-            <label htmlFor="position-y-input">Position Y</label>
-            <input  id='position-y-input' name='position-y-input' type="number" placeholder='Position Y' value={newItem.position[1]} onChange={(e) => {
-                const val = parseFloat(e.target.value) || 0;
-                setNewItem(prev => ({ ...prev, position: [prev.position[0], val, prev.position[2]] }));
-              }}
-              className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
-            />
-            <label htmlFor="position-z-input">Position Z</label>
-            <input id='position-z-input' name='position-z-input' type="number" placeholder='Position Z' value={newItem.position[2]} onChange={(e) => {
-                const val = parseFloat(e.target.value) || 0;
-                setNewItem(prev => ({ ...prev, position: [prev.position[0], prev.position[1], val] }));
-              }}
-              className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
-            />
-            <label htmlFor="scale-input">Scale</label>
-            <input id='scale-input' name='scale-input' type="number" min={0} placeholder='Scale' value={newItem.scale} onChange={(e) => {
-                setNewItem(prev => ({ ...prev, scale: parseFloat(e.target.value) || 0 }));
-              }}
-              className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
-            />
+            <label>Name</label>
+            <input type="text" value={newItem.name} onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))} className="border p-2 mb-4 w-full" />
+
+            <label>Description</label>
+            <input type="text" value={newItem.description} onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))} className="border p-2 mb-4 w-full" />
+
+            <label>Position X</label>
+            <input type="number" value={newItem.position[0]} onChange={(e) => setNewItem(prev => ({ ...prev, position: [parseFloat(e.target.value)||0, prev.position[1], prev.position[2]] }))} className="border p-2 mb-4 w-full" />
+            <label>Position Y</label>
+            <input type="number" value={newItem.position[1]} onChange={(e) => setNewItem(prev => ({ ...prev, position: [prev.position[0], parseFloat(e.target.value)||0, prev.position[2]] }))} className="border p-2 mb-4 w-full" />
+            <label>Position Z</label>
+            <input type="number" value={newItem.position[2]} onChange={(e) => setNewItem(prev => ({ ...prev, position: [prev.position[0], prev.position[1], parseFloat(e.target.value)||0] }))} className="border p-2 mb-4 w-full" />
+
+            <label>Scale</label>
+            <input type="number" value={newItem.scale} onChange={(e) => setNewItem(prev => ({ ...prev, scale: parseFloat(e.target.value)||0 }))} className="border p-2 mb-4 w-full" />
           </div>
         </div>
+
+        {/* ACTION BUTTONS */}
         <div className='flex w-full justify-around mt-4'>
-          <button
-              className="cursor-pointer w-1/4 mt-4 px-4 py-2 text-lg font-semibold bg-gradient-to-br from-blue-500 to-indigo-800 text-white rounded-lg hover:bg-gradient-to-br
-              shadow-lg hover:from-blue-600 hover:to-indigo-900 duration-200 transition-all hover:scale-105"
-              onClick={() => onSave(newItem)}
-          >
-              Save
-          </button>
-          <button
-              className="cursor-pointer w-1/4 mt-4 px-4 py-2 font-semibold text-lg text-transparent bg-clip-text bg-gradient-to-br from-blue-500 to-indigo-800 rounded-lg hover:bg-gradient-to-br
-              shadow-lg hover:from-blue-600 hover:to-indigo-900 duration-200 transition-all hover:scale-105"
-              onClick={onClose}
-          >
-              Close
-          </button>
+          <button className="w-1/4 px-4 py-2 text-lg font-semibold bg-gradient-to-br from-blue-500 to-indigo-800 text-white rounded-lg" onClick={() => onSave(newItem)}>Save</button>
+          <button className="w-1/4 px-4 py-2 text-lg font-semibold text-red-500" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ItemModal
+export default ItemModal;

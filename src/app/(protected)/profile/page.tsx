@@ -7,7 +7,7 @@ import UserModal from '@/app/components/UserModal';
 import Outfit from '@/app/components/Outfit';
 import Clothing from '@/app/components/Clothing';
 import ItemModal from '@/app/components/ItemModal';
-import { clothesType, outfitType } from '@/lib/types';
+import { clothesType, EditableClothesType, outfitType } from '@/lib/types';
 
 const page = () => {
   const { user, logout } = useUser();
@@ -25,18 +25,36 @@ const page = () => {
     setOutfits(data.outfits);
   };
   
-  const saveItem = async (newItem: clothesType) => {
-    const response = await axios.post('/api/updateItem', {
-      item: newItem
-    });
-    const data = response.data;
+  const saveItem = async (item: EditableClothesType) => {
+    try {
+      const formData = new FormData();
+      formData.append("item", JSON.stringify(item));
 
-    if (data.success) {
-      setIsItemModalOpen(false);
-      fetchUserDetails();
+      if (item.imageFile) formData.append("image", item.imageFile);
+      if (item.modelFileFile) formData.append("model", item.modelFileFile);
+
+      // append other fields
+      formData.append("name", item.name);
+      formData.append("scale", String(item.scale));
+      formData.append("description", item.description);
+      formData.append("position", JSON.stringify(item.position));
+      if (item.type) formData.append("type", item.type);
+
+      const response = await axios.post("/api/updateItem", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const data = response.data;
+      if (data.success) {
+        setIsItemModalOpen(false);
+        fetchUserDetails();
+      } else {
+        alert("Error while updating item! Try again");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading item");
     }
-
-    else alert('Error while updating item! Try again');
   };
 
   const handleOpenItemModal = (item: clothesType) => {

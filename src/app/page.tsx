@@ -35,7 +35,7 @@ const Home = () => {
       <Header />
       <div id='home-section' className="w-full min-h-screen flex flex-col items-center justify-start overflow-hidden">
         {/* Hero */}
-        <div className="w-full h-[40vh] flex flex-col items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-32 text-center">
+        <div className="w-full h-[40vh] flex flex-col items-center justify-center bg-gradient-to-tr from-blue-300 via-slate-800 to-stone-950 text-white py-32 text-center">
           <h1 className="text-5xl font-bold mb-4">Build Your Perfect Outfit</h1>
           <p className="text-xl mb-8">Upload clothes or use our 3D library to create outfits.</p>
           <div className="flex justify-center gap-4">

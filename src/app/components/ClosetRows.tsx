@@ -3,21 +3,17 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { MoveLeft, MoveRight } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Environment, useProgress, Html, useGLTF  } from "@react-three/drei";
+import { OrbitControls, Environment, useGLTF  } from "@react-three/drei";
 import Image from "next/image";
 import Model from "./model";
 import { clothesType, Position } from "@/lib/types";
+import { Loader } from "./Loader";
 
 type ClosetRowsProps = {
   currentItemState: { top: number; mid: number; bottom: number };
   handleClick: (dir: "left" | "right", pos: Position) => void;
   three: boolean;
 }
-
-const Loader = () => {
-  const { progress } = useProgress();
-  return <Html className="absolute" center>Loading {progress.toFixed(0)}%</Html>;
-};
 
 export default function ClosetRows({ currentItemState, handleClick, three }: ClosetRowsProps) {
   const [loaded, setLoaded] = useState(false);

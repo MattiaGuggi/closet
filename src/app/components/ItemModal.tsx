@@ -1,6 +1,10 @@
 import Image from 'next/image';
 import React, { useState } from 'react'
 import { clothesType, Position } from '@/lib/types';
+import { Canvas } from '@react-three/fiber';
+import { Environment, OrbitControls } from '@react-three/drei';
+import Model from './model';
+import { Loader } from './Loader';
 
 const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (newItem: clothesType) => void, item: clothesType }) => {
   const [newItem, setNewItem] = useState<clothesType>(item);
@@ -40,7 +44,7 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
               })}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-            <Image alt='New Item Image' src={newItem.image} width={176} height={176} className='w-44 h-44 object-cover mx-auto mb-2' />
+            {newItem?.image && <Image alt='New Item Image' src={newItem.image} width={176} height={176} className='w-44 h-44 object-cover mx-auto mb-2' /> }
             <label htmlFor="">3D Model</label>
             <input
               type="file"
@@ -58,6 +62,15 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
               })}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
+            {newItem?.modelFile && (
+              <Canvas camera={{ position: [0, 1.5, 5], fov: 50 }}>
+                <React.Suspense fallback={<Loader />}>
+                  <Environment preset="sunset" />
+                  <Model item={newItem} />
+                  <OrbitControls enableDamping dampingFactor={0.05} enableZoom={true} />
+                </React.Suspense>
+              </Canvas>
+            )}
           </div>
           <div className='flex flex-col items-start gap-2'>
             <label htmlFor="">3D Model</label>

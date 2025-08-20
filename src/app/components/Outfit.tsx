@@ -20,7 +20,7 @@ const Outfit = ({ item }: { item: outfitType }) => {
     }, []);
 
     return (
-        <div className='w-full h-full flex flex-col items-center justify-center shadow-lg rounded-2xl'>
+        <div className='w-full h-full flex flex-col items-center justify-center shadow-lg rounded-2xl bg-white'>
             {item && (
                 <>
                     <Image

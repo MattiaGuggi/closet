@@ -19,7 +19,7 @@ const UserModal = ({ onClose }: { onClose: () => void }) => {
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
+            <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-start gap-2">
                 <h2 className="text-2xl font-bold mb-4">Your Profile</h2>
                 <label htmlFor="">Pfp</label>
                 <input
@@ -37,7 +37,8 @@ const UserModal = ({ onClose }: { onClose: () => void }) => {
                     }}
                     className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
                 />
-                <Image alt='New Item Image' src={user?.pfp || "www.starksfamilyfh.com"} width={100} height={100} className='my-5 rounded-full' />
+                <Image alt='New Item Image' src={user?.pfp || "www.starksfamilyfh.com"} width={100} height={100} className='rounded-full mx-auto' />
+                <label htmlFor="">Username</label>
                 <input
                     type="text"
                     placeholder="Username"
@@ -47,7 +48,7 @@ const UserModal = ({ onClose }: { onClose: () => void }) => {
                     }
                     className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
                 />
-
+                <label htmlFor="">Email</label>
                 <input
                     type="email"
                     placeholder="Email"
@@ -57,7 +58,7 @@ const UserModal = ({ onClose }: { onClose: () => void }) => {
                     }
                     className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
                 />
-
+                <label htmlFor="">Password</label>
                 <input
                     type="password"
                     placeholder="Password"

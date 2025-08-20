@@ -9,7 +9,7 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
     <div className="fixed inset-0 flex items-center justify-center bg-black/70 bg-opacity-50 z-50 min-h-screen">
       <div className='bg-white shadow-lg rounded-lg p-6'>
         <div className="grid grid-cols-2 gap-20 place-content-center">
-          <div className='flex flex-col items-center'>
+          <div className='flex flex-col items-start gap-2'>
             <h2 className="text-2xl font-bold mb-4">Import New Item</h2>
             <select
               name="type"
@@ -40,7 +40,7 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
               })}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-            <Image alt='New Item Image' src={newItem.image} width={175} height={175} />
+            <Image alt='New Item Image' src={newItem.image} width={176} height={176} className='w-44 h-44 object-cover mx-auto mb-2' />
             <label htmlFor="">3D Model</label>
             <input
               type="file"
@@ -59,38 +59,41 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
           </div>
-          <div className='flex flex-col items-center'>
+          <div className='flex flex-col items-start gap-2'>
+            <label htmlFor="">3D Model</label>
             <input type="text" placeholder='Name' value={newItem.name} onChange={(e) => {
                 setNewItem(prev => ({ ...prev, name: e.target.value }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
+            <label htmlFor="">Description</label>
             <input type="text" placeholder='Description' value={newItem.description} onChange={(e) => {
                 setNewItem(prev => ({ ...prev, description: e.target.value }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
+            <label htmlFor="">Position X</label>
             <input type="number" placeholder='Position X' value={newItem.position[0]} onChange={(e) => {
                 const val = parseFloat(e.target.value) || 0;
                 setNewItem(prev => ({ ...prev, position: [val, prev.position[1], prev.position[2]] }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-
+            <label htmlFor="">Position Y</label>
             <input type="number" placeholder='Position Y' value={newItem.position[1]} onChange={(e) => {
                 const val = parseFloat(e.target.value) || 0;
                 setNewItem(prev => ({ ...prev, position: [prev.position[0], val, prev.position[2]] }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-
+            <label htmlFor="">Position Z</label>
             <input type="number" placeholder='Position Z' value={newItem.position[2]} onChange={(e) => {
                 const val = parseFloat(e.target.value) || 0;
                 setNewItem(prev => ({ ...prev, position: [prev.position[0], prev.position[1], val] }));
               }}
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
-
+            <label htmlFor="">Scale</label>
             <input type="number" min={0} placeholder='Scale' value={newItem.scale} onChange={(e) => {
                 setNewItem(prev => ({ ...prev, scale: parseFloat(e.target.value) || 0 }));
               }}

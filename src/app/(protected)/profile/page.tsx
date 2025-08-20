@@ -31,9 +31,12 @@ const page = () => {
     });
     const data = response.data;
 
-    console.log(data);
+    if (data.success) {
+      setIsItemModalOpen(false);
+      fetchUserDetails();
+    }
 
-    setIsItemModalOpen(false);
+    else alert('Error while updating item! Try again');
   };
 
   const handleOpenItemModal = (item: clothesType) => {

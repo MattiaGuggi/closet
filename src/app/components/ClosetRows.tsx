@@ -61,42 +61,42 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
 
                 <div className="scene-wrapper w-full h-full flex justify-center items-center relative" id={`${pos}-wrapper`}>
                     {three ? (
-                        <>
-                            {currentItem && currentItem.modelFile ? (
-                                <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
-                                    <React.Suspense fallback={<Loader />}>
-                                    <Environment preset="sunset" />
-                                    <Model item={currentItem} />
-                                    <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
-                                    </React.Suspense>
-                                </Canvas>
-                            ) : (
-                                <div className="text-blue-600 text-xl font-bold">No 3D model available</div>
-                            )}
-                        </>
+                      <>
+                        {currentItem && currentItem.modelFile ? (
+                          <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
+                            <React.Suspense fallback={<Loader />}>
+                            <Environment preset="sunset" />
+                            <Model item={currentItem} />
+                            <OrbitControls enableDamping dampingFactor={0.05} enableZoom={false} />
+                            </React.Suspense>
+                          </Canvas>
+                        ) : (
+                          <div className="text-blue-600 text-xl font-bold">No 3D model available</div>
+                        )}
+                      </>
                     ) : (
-                        <>
-                            {itemsOfType.length === 0 && (
-                                <div className="text-blue-600 text-xl font-bold">No items available</div>
-                            )}
-                            {currentItem && (
-                                <div className="relative w-64 h-64">
-                                    {!loaded && (
-                                        <div className="absolute w-64 h-64 inset-0 animate-pulse bg-gray-300 rounded-lg" />
-                                    )}
-                                    <Image
-                                        src={currentItem.image}
-                                        alt={currentItem.name}
-                                        className={`closet-image w-64 h-64 object-cover rounded-lg shadow-lg transition-all duration-500 ${
-                                            loaded ? "opacity-100" : "opacity-0"
-                                        }`}
-                                        width={256}
-                                        height={256}
-                                        onLoad={() => setLoaded(true)}
-                                    />
-                                </div>
-                            )}
-                        </>
+                      <>
+                          {itemsOfType.length === 0 && (
+                            <div className="text-blue-600 text-xl font-bold">No items available</div>
+                          )}
+                          {currentItem && (
+                            <div className="relative w-64 h-64">
+                              {!loaded && (
+                                <div className="absolute w-64 h-64 inset-0 animate-pulse bg-gray-300 rounded-lg" />
+                              )}
+                              <Image
+                                src={currentItem.image}
+                                alt={currentItem.name}
+                                className={`closet-image w-64 h-64 object-cover rounded-lg shadow-lg transition-all duration-500 ${
+                                    loaded ? "opacity-100" : "opacity-0"
+                                }`}
+                                width={256}
+                                height={256}
+                                onLoad={() => setLoaded(true)}
+                              />
+                            </div>
+                          )}
+                      </>
                     )}
                 </div>
 

@@ -119,12 +119,18 @@ export const createClothingInDb = async (newClothes: IClothes) => {
  * @returns {void}
  */
 export const updateClothingInDb = async (clothes: IClothes) => {
-    await connectDB();
-    try  {
-        await Clothes.findByIdAndUpdate(clothes._id, { $set: clothes }, { new: true }); // Update the clothing item and return the updated document
-    } catch (err) {
-        console.error('Error updating clothes', err);
-    }
+  await connectDB();
+  try {
+    const updated = await Clothes.findByIdAndUpdate(
+      clothes._id,
+      { $set: clothes },
+      { new: true } // return the updated document
+    );
+    return updated;
+  } catch (err) {
+    console.error("Error updating clothes", err);
+    throw err;
+  }
 };
 /**
  * Updates every clothes' outfit reference from the oldName to the newName

@@ -67,7 +67,7 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
               className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
             />
             {newItem?.modelFile && (
-              <Canvas camera={{ position: [0, 1.5, 5], fov: 50 }}>
+              <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
                 <React.Suspense fallback={<Loader />}>
                   <Environment preset="sunset" />
                   <Model item={newItem} />

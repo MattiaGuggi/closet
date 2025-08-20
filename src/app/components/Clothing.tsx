@@ -21,8 +21,7 @@ const Clothing = ({ item, onOpen }: { item: clothesType, onOpen: (item: clothesT
 
   return (
     <>
-      <div className='clothing-card w-full h-full flex flex-col items-center justify-center shadow-lg rounded-2xl py-5 bg-white'
-      >
+      <div className='clothing-card w-full h-full flex flex-col items-center justify-center shadow-lg rounded-2xl py-5 bg-white'>
           <h1 className='font-bold text-xl my-3'>{item?.name}</h1>
           <p className='font-semibold text-base mb-8'>{item?.description}</p>
           <Image alt='Outfit image' src={item?.image || ''} width={120} height={120} className='' />

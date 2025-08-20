@@ -43,6 +43,15 @@ const page = () => {
     setCurrentItem(item);
     setIsItemModalOpen(true);
   };
+  
+  const handleClose = () => {
+    try {
+      setIsItemModalOpen(false);
+    } catch(err) {
+      alert('Error uploading the image: ' + err);
+      setIsItemModalOpen(false);
+    }
+  };
 
   useEffect(() => {
     if (user?._id) fetchUserDetails();
@@ -51,7 +60,7 @@ const page = () => {
   return (
     <>
       {isItemModalOpen && (
-        <ItemModal onSave={(item) => saveItem(item)} onClose={() => setIsItemModalOpen(false)} item={currentItem} />
+        <ItemModal onSave={(item) => saveItem(item)} onClose={handleClose} item={currentItem} />
       )}
       {isUserModalOpen && (
         <UserModal onClose={() => setIsUserModalOpen(false)} />
@@ -75,8 +84,8 @@ const page = () => {
             Exit
           </button>
         </div>
-        <section id='clothes-section' className='w-full h-full flex flex-col justify-center items-center my-32'>
-          <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Your Clothes</h1>
+        <section id='clothes-section' className='w-full h-full flex flex-col justify-center items-center mt-32 mb-10'>
+          <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent py-10'>Your Clothes</h1>
           <div className='flex flex-col justify-center items-center w-full h-full'>
             {clothes && clothes[0] ? (
               (clothes.map((clothing, idx) => (

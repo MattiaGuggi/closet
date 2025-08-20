@@ -83,7 +83,7 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
                               <Image
                                 src={currentItem.image}
                                 alt={currentItem.name}
-                                className={`closet-image w-64 h-64 object-cover rounded-lg shadow-lg transition-all duration-500 ${
+                                className={`closet-image w-full h-full object-cover rounded-lg shadow-lg transition-all duration-500 ${
                                     loaded ? "opacity-100" : "opacity-0"
                                 }`}
                                 width={256}

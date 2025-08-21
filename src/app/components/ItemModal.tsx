@@ -99,7 +99,13 @@ const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (ne
         {/* ACTION BUTTONS */}
         <div className='flex w-full justify-around mt-4'>
           <button className="w-1/4 px-4 py-2 text-lg font-semibold bg-gradient-to-br from-blue-500 to-indigo-800 text-white rounded-lg" onClick={() => onSave(newItem)}>Save</button>
-          <button className="w-1/4 px-4 py-2 text-lg font-semibold text-red-500" onClick={onClose}>Close</button>
+          <button
+              className="cursor-pointer hover:scale-105 duration-200 transition-all w-1/4 px-4 py-2 text-lg font-semibold
+              text-transparent bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text shadow-lg rounded-xl"
+              onClick={onClose}
+          >
+              Close
+          </button>
         </div>
       </div>
     </div>

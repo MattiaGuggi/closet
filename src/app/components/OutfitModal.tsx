@@ -10,96 +10,98 @@ type modalType = {
 };
 
 const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
-  const [newOutfit, setNewOutfit] = useState<outfitType>(outfit);
+    const [newOutfit, setNewOutfit] = useState<outfitType>(outfit);
+    const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 min-h-screen">
-        <div className='bg-white shadow-lg rounded-lg p-6 flex flex-col'>
-            <div className='flex flex-col items-start gap-2'>
+    const handleSelect = (key: "top" | "mid" | "bottom", selectedId: string) => {
+        if (!items) return;
+        const selectedItem = items.find((item) => String(item._id) === selectedId);
+        setNewOutfit((prev) => ({ ...prev, [key]: selectedItem || null }));
+    };
+
+
+    return (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 min-h-screen">
+            <div className='bg-white shadow-lg rounded-lg p-6 flex flex-col w-1/3'>
                 <h2 className="text-2xl font-bold mb-4">Create An Outfit</h2>
-            </div>
-            <div className='flex items-center justify-center'>
-                <select
-                    name="top-input"
-                    id="top-input"
-                    value={newOutfit.top?.type ?? ""}
-                    onChange={(e) => {
-                        const option = e.target.value;
-                        setNewOutfit(prev => {
-                            return ({ ...prev, top: JSON.parse(option) })
-                        });
-                    }}
-                >
-                    <option value="">Choose</option>
-                    {items && items.map((item) => {
-                        if (item.type != "top") return;
 
-                        return <option key={item._id} value={JSON.stringify(item)}>{item.name}</option>
-                    })}
-                </select>
-                <Image src={newOutfit.top?.image || ''} width={100} height={100} alt='top-image' />
-            </div>
-            <div className='flex items-center justify-center'>
-                <select
-                    name="mid-input"
-                    id="mid-input"
-                    value={newOutfit.mid?.type ?? ""}
-                    onChange={(e) => {
-                        const option = e.target.value;
-                        setNewOutfit(prev => {
-                            return ({ ...prev, mid: JSON.parse(option) })
-                        });
-                    }}
-                >
-                    <option value="">Choose</option>
-                    {items && items.map((item) => {
-                        if (item.type != "mid") return;
+                {/* TOP */}
+                <div className='flex items-center justify-start py-5'>
+                    <select
+                        id="top-input"
+                        value={newOutfit.top?._id ?? ""}
+                        onFocus={() => setIsOpen(true)}
+                        onBlur={() => setIsOpen(false)}
+                        onChange={(e) => handleSelect("top", e.target.value)}
+                        className={`w-1/2 mx-6 border rounded-lg px-4 py-2 text-lg ${isOpen} ? 'rounded-t-md rounded-b-none' : 'rounded-md'`}
+                    >
+                        {items?.filter(item => item.type === "top").map((item, idx) => (
+                            <option key={item._id} value={item._id} className={idx === items.length - 1 ? 'rounded-b-md' : ''}>
+                                {item.name}
+                            </option>
+                        ))}
+                    </select>
+                    <Image src={newOutfit.top?.image || ''} width={100} height={100} alt='top-image' className='mx-5 w-32 h-32' />
+                </div>
 
-                        return <option key={item._id} value={JSON.stringify(item)}>{item.name}</option>
-                    })}
-                </select>
-                <Image src={newOutfit.mid?.image || ''} width={100} height={100} alt='mid-image' />
-            </div>
-            <div className='flex items-center justify-center'>
-                <select
-                    name="bottom-input"
-                    id="bottom-input"
-                    value={newOutfit.bottom?.type ?? ""}
-                    onChange={(e) => {
-                        const option = e.target.value;
-                        setNewOutfit(prev => {
-                            return ({ ...prev, bottom: JSON.parse(option) })
-                        });
-                    }}
-                >
-                    <option value="">Choose</option>
-                    {items && items.map((item) => {
-                        if (item.type != "bottom") return;
+                {/* MID */}
+                <div className='flex items-center justify-start py-5'>
+                    <select
+                        id="mid-input"
+                        value={newOutfit.mid?._id ?? ""}
+                        onFocus={() => setIsOpen(true)}
+                        onBlur={() => setIsOpen(false)}
+                        onChange={(e) => handleSelect("mid", e.target.value)}
+                        className={`w-1/2 mx-6 border rounded-lg px-4 py-2 text-lg ${isOpen} ? 'rounded-t-md rounded-b-none' : 'rounded-md'`}
+                    >
+                        {items?.filter(item => item.type === "mid").map((item, idx) => (
+                            <option key={item._id} value={item._id} className={idx === items.length - 1 ? 'rounded-b-md' : ''}>
+                                {item.name}
+                            </option>
+                        ))}
+                    </select>
+                    <Image src={newOutfit.mid?.image || ''} width={100} height={100} alt='mid-image' className='mx-5 w-32 h-32' />
+                </div>
 
-                        return <option key={item._id} value={JSON.stringify(item)}>{item.name}</option>
-                    })}
-                </select>
-                <Image src={newOutfit.bottom?.image || ''} width={100} height={100} alt='bottom-image' />
-            </div>
+                {/* BOTTOM */}
+                <div className='flex items-center justify-start py-5'>
+                    <select
+                        id="bottom-input"
+                        value={newOutfit.bottom?._id ?? ""}
+                        onFocus={() => setIsOpen(true)}
+                        onBlur={() => setIsOpen(false)}
+                        onChange={(e) => handleSelect("bottom", e.target.value)}
+                        className={`w-1/2 mx-6 border rounded-lg px-4 py-2 text-lg ${isOpen} ? 'rounded-t-md rounded-b-none' : 'rounded-md'`}
+                    >
+                        {items?.filter(item => item.type === "bottom").map((item, idx) => (
+                            <option key={item._id} value={item._id} className={idx === items.length - 1 ? 'rounded-b-md' : ''}>
+                                {item.name}
+                            </option>
+                        ))}
+                    </select>
+                    <Image src={newOutfit.bottom?.image || ''} width={100} height={100} alt='bottom-image' className='mx-5 w-32 h-32' />
+                </div>
 
-            {/* ACTION BUTTONS */}
-            <div className='flex w-full justify-around mt-4'>
-                <button className="cursor-pointer hover:scale-105 duration-200 transition-all w-1/4 px-4 py-2 text-lg font-semibold
-                    bg-gradient-to-br from-blue-500 to-indigo-800 text-white rounded-lg"
-                    onClick={() => onSave(newOutfit)}
-                >
-                    Save
-                </button>
-                <button className="cursor-pointer hover:scale-105 duration-200 transition-all w-1/4 px-4 py-2 text-lg font-semibold
-                    text-red-500"
-                    onClick={onClose}
-                >
-                    Close
-                </button>
+                {/* ACTION BUTTONS */}
+                <div className='flex w-full justify-around mt-4'>
+                    <button
+                        className="cursor-pointer hover:scale-105 duration-200 transition-all w-1/4 px-4 py-2 text-lg font-semibold
+                        bg-gradient-to-br from-blue-500 to-indigo-800 text-white rounded-lg"
+                        onClick={() => onSave(newOutfit)}
+                    >
+                        Save
+                    </button>
+                    <button
+                        className="cursor-pointer hover:scale-105 duration-200 transition-all w-1/4 px-4 py-2 text-lg font-semibold
+                        text-transparent bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text shadow-lg rounded-xl"
+                        onClick={onClose}
+                    >
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-  ); 
+    ); 
 };
 
 export default OutfitModal;

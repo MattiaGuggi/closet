@@ -159,7 +159,7 @@ const page = () => {
         </section>
         <section id='outfit-section' className='w-full h-full flex flex-col justify-center items-center my-10'>
           <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Your Outfits</h1>
-          <div className='flex flex-col justify-center items-center'>
+          <div className='flex flex-col justify-center items-center w-full h-full'>
             <div className='grid grid-cols-3 w-full h-full px-5 p-10 gap-10'>
               {outfits && outfits[0] ? (
                 (outfits.map((outfit, idx) => (

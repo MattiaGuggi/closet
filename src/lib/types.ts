@@ -22,6 +22,7 @@ export type EditableClothesType = clothesType & {
 
 
 export type outfitType = {
+    creator: userType | null;
     top: clothesType | undefined;
     mid: clothesType | undefined;
     bottom: clothesType | undefined;

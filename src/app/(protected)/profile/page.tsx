@@ -8,14 +8,17 @@ import Outfit from '@/app/components/Outfit';
 import Clothing from '@/app/components/Clothing';
 import ItemModal from '@/app/components/ItemModal';
 import { clothesType, EditableClothesType, outfitType } from '@/lib/types';
+import OutfitModal from '@/app/components/OutfitModal';
 
 const page = () => {
   const { user, logout } = useUser();
-  const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
   const [clothes, setClothes] = useState<clothesType[] | null>(null);
-  const [currentItem, setCurrentItem] = useState<clothesType>({ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user });
   const [outfits, setOutfits] = useState<outfitType[] | null>(null);
+  const [currentItem, setCurrentItem] = useState<clothesType>({ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user });
+  const [currentOutfit, setCurrentOutfit] = useState<outfitType>({ creator: user, top: undefined, mid: undefined, bottom: undefined });
+  const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState<boolean>(false);
+  const [isOutfitModalOpen, setIsOutfitModalOpen] = useState<boolean>(false);
 
   const fetchUserDetails = async () => {
     const response = await axios.get('/api/user', { params: { userId: user?._id } });
@@ -53,7 +56,28 @@ const page = () => {
       }
     } catch (err) {
       console.error(err);
-      alert("Error uploading item");
+      alert("Error updating item");
+    }
+  };
+
+  const saveOutfit = async (outfit: outfitType) => {
+    try {
+      const formData = new FormData();
+      formData.append("outfit", JSON.stringify(outfit));
+
+      const response = await axios.post("/api/updateOutfit", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const data = response.data;
+      if (data.success) {
+        setIsOutfitModalOpen(false);
+        fetchUserDetails();
+      } else {
+        alert("Error while updating item! Try again");
+      }
+    } catch(err) {
+      console.error('Error updating outfit', err);
     }
   };
 
@@ -61,13 +85,27 @@ const page = () => {
     setCurrentItem(item);
     setIsItemModalOpen(true);
   };
+
+  const handleOpenOutfitModal = (outfit: outfitType) => {
+    setCurrentOutfit(outfit);
+    setIsOutfitModalOpen(true);
+  };
   
-  const handleClose = () => {
+  const handleCloseItemModal = () => {
     try {
       setIsItemModalOpen(false);
     } catch(err) {
       alert('Error uploading the image: ' + err);
       setIsItemModalOpen(false);
+    }
+  };
+  
+  const handleCloseOutfitModal = () => {
+    try {
+      setIsOutfitModalOpen(false);
+    } catch(err) {
+      alert('Error uploading the image: ' + err);
+      setIsOutfitModalOpen(false);
     }
   };
 
@@ -77,11 +115,14 @@ const page = () => {
 
   return (
     <>
-      {isItemModalOpen && (
-        <ItemModal onSave={(item) => saveItem(item)} onClose={handleClose} item={currentItem} />
-      )}
       {isUserModalOpen && (
         <UserModal onClose={() => setIsUserModalOpen(false)} />
+      )}
+      {isItemModalOpen && (
+        <ItemModal onSave={(item) => saveItem(item)} onClose={handleCloseItemModal} item={currentItem} />
+      )}
+      {isOutfitModalOpen && (
+        <OutfitModal onSave={(outfit) => saveOutfit(outfit)} onClose={handleCloseOutfitModal} outfit={currentOutfit} items={clothes} />
       )}
       <section id='profile-section' className="w-full min-h-screen flex flex-col items-center justify-start overflow-hidden py-10">
         <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Profile</h1>
@@ -122,7 +163,7 @@ const page = () => {
             <div className='grid grid-cols-3 w-full h-full px-5 p-10 gap-10'>
               {outfits && outfits[0] ? (
                 (outfits.map((outfit, idx) => (
-                  <Outfit key={idx} item={outfit} />
+                  <Outfit key={idx} item={outfit} onOpen={handleOpenOutfitModal} />
                 )))
               ) : (
                 <div className='font-bold text-2xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent my-10'>No outfits found</div>

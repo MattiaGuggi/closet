@@ -9,7 +9,7 @@ const Model = ({ item }: { item: clothesType }) => {
     const { scene } = useGLTF<any>(item.modelFile) as { scene: Group };
 
     return (
-        <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]} dispose={null}>
+        <group ref={groupRef} position={[0, 0, 0]} rotation={[0, -Math.PI/2, 0]} dispose={null}>
             <primitive object={scene} scale={item.scale} position={item.position} />
         </group>
     )

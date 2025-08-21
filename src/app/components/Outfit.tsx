@@ -3,7 +3,7 @@ import Image from 'next/image'
 import gsap from 'gsap';
 import { outfitType } from '@/lib/types'
 
-const Outfit = ({ item }: { item: outfitType }) => {
+const Outfit = ({ item, onOpen }: { item: outfitType, onOpen: (item: outfitType) => void }) => {
 
     useEffect(() => {
         gsap.set('.clothing-card', {
@@ -20,7 +20,7 @@ const Outfit = ({ item }: { item: outfitType }) => {
     }, []);
 
     return (
-        <div className='w-full h-full flex flex-col items-center justify-center shadow-lg rounded-2xl bg-white'>
+        <div className='clothing-card w-full h-full flex flex-col items-center justify-center shadow-lg rounded-2xl py-5 bg-white'>
             {item && (
                 <>
                     <Image
@@ -44,6 +44,13 @@ const Outfit = ({ item }: { item: outfitType }) => {
                         width={120}
                         height={120}
                     />
+                    <button
+                        className='my-4 px-6 py-3 rounded-xl font-semibold bg-gradient-to-br from-blue-500 to-indigo-700 text-white duration-200 transition-all hover:scale-105
+                        cursor-pointer hover:bg-gradient-to-br hover:from-blue-600 hover:to-indigo-800'
+                        onClick={() => onOpen(item)}
+                    >
+                        Modify
+                    </button>
                 </>
             )}
         </div>

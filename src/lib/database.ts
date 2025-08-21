@@ -164,7 +164,7 @@ export const deleteClothingFromDb = async (clothes: IClothes) => {
  */
 export const getUserOutfitsFromDb = async (criteria: any) => {
     await connectDB();
-    return await Outfit.findOne(criteria);
+    return await Outfit.find(criteria);
 };
 /**
  * Helper function to get every outfit from MongoDB
@@ -186,12 +186,15 @@ export const getOutfitFromDb = async (criteria: any) => {
 /**
  * Creates outfit in DB
  *
- * @param {newOutfit} newOutfit - Outfit to create in DB
+ * @param {top, mid, bottom, creator} params of an outfit - Outfit to create in DB
+ * @returns {Outfit} Outfit - The created outfit
 */
-export const createOutfitInDb = async ({ top, mid, bottom }: outfitType) => {
+export const createOutfitInDb = async ({ top, mid, bottom, creator }: outfitType) => {
     await connectDB();
-    const outfit = new Outfit({ top, mid, bottom });
+    const outfit = new Outfit({ top, mid, bottom, creator });
     await outfit.save();
+
+    return outfit;
 };
 /**
  * Updates an existing outfit

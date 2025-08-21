@@ -6,9 +6,9 @@ import gsap from "gsap";
 import ItemModel from '@/app/components/ItemModal';
 import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
-import { clothesType, EditableClothesType, Position } from '@/lib/types';
 import OptionController from '@/app/components/OptionController';
 import Toast from '@/app/components/Toast';
+import { clothesType, EditableClothesType, userType, Position } from '@/lib/types';
 
 const page = () => {
   const { user } = useUser();
@@ -20,7 +20,7 @@ const page = () => {
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ message: string, type: string } | null>(null);
   
   const fetchItems = async () => {
     try {
@@ -67,18 +67,25 @@ const page = () => {
     });
   };
 
-  const buildOutfit = () => {
-    if (!currentItemState.top || !currentItemState.mid || !currentItemState.bottom) {
-      setMessage('Cannot build item without all 3 parts!');
+  const buildOutfit = async () => {
+    const top = allItems.filter(item => item.type === "top")[currentItemState.top] || null;
+    const mid = allItems.filter(item => item.type === "mid")[currentItemState.mid] || null;
+    const bottom = allItems.filter(item => item.type === "bottom")[currentItemState.bottom] || null;
+
+    if (!top || !mid || !bottom) {
+      setMessage({ message: 'Cannot build item without all 3 parts!', type: 'error' });
       return;
     }
+    
+    try {
+      const response = await axios.post('/api/outfit', { top, mid, bottom, creator: user });
+      const data = response.data;
 
-    const outfit: Record<Position, clothesType | undefined> = {
-      top: allItems.filter(item => item.type === "top")[currentItemState.top],
-      mid: allItems.filter(item => item.type === "mid")[currentItemState.mid],
-      bottom: allItems.filter(item => item.type === "bottom")[currentItemState.bottom],
-    };
-    console.table(outfit);
+      setMessage({ message: 'Outfit created successfully', type: 'success' });
+      console.table(data.outfit);
+    } catch(err) {
+      setMessage({ message: 'Outfit already created! Check your outfits in your profile', type: 'error' });
+    }
   };
 
   const importItem = async (item: EditableClothesType) => {
@@ -141,9 +148,9 @@ const page = () => {
         <h1 className='font-bold text-5xl text-center mb-12 bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Closet</h1>
         {message && (
           <Toast
-            message={message}
-            type={'error'}
-            onClose={() => setMessage('')}
+            message={message.message}
+            type={message.type}
+            onClose={() => setMessage(null)}
           />
         )}
         <OptionController setThree={setThree} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />

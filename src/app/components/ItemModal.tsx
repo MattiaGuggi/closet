@@ -9,107 +9,184 @@ import { clothesType, EditableClothesType, Position } from '@/lib/types';
 const ItemModal = ({ onClose, onSave, item }: { onClose: () => void, onSave: (newItem: EditableClothesType) => void, item: clothesType }) => {
   const [newItem, setNewItem] = useState<EditableClothesType>(item);
 
+  // Common styles for consistency
+  const inputStyle = "w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-800 bg-white";
+  const labelStyle = "text-sm font-semibold text-gray-700 mb-1 block";
+  const fileInputStyle = "w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-gray-300 rounded-lg p-1 bg-white";
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 min-h-screen">
-      <div className='bg-white shadow-lg rounded-lg p-6'>
-        <div className="grid grid-cols-2 gap-20 place-content-center">
-          <div className='flex flex-col items-start gap-2'>
-            <h2 className="text-2xl font-bold mb-4">Import New Item</h2>
-            <select
-              id="item-type"
-              value={newItem.type ?? ""}
-              className='border border-gray-300 rounded-lg p-2 mb-4 w-full'
-              onChange={(e) => setNewItem(prev => ({ ...prev, type: e.target.value as Position }))}
-            >
-              <option value="">Select item type</option>
-              <option value="top">Top</option>
-              <option value="mid">Mid</option>
-              <option value="bottom">Bottom</option>
-            </select>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50 p-4">
+      <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <h2 className="text-3xl font-extrabold text-gray-800 mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
+          Import / Edit Item
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* LEFT COLUMN: TYPE & MEDIA UPLOADS */}
+          <div className="flex flex-col gap-4">
+            <div>
+              <label htmlFor="item-type" className={labelStyle}>Item Type</label>
+              <select
+                id="item-type"
+                value={newItem.type ?? ""}
+                className={inputStyle}
+                onChange={(e) => setNewItem(prev => ({ ...prev, type: e.target.value as Position }))}
+              >
+                <option value="">Select item type</option>
+                <option value="top">Top</option>
+                <option value="mid">Mid</option>
+                <option value="bottom">Bottom</option>
+              </select>
+            </div>
 
             {/* IMAGE UPLOAD */}
-            <label htmlFor="image-input">Image</label>
-            <input
-              id='image-input'
-              type="file"
-              accept='.png, .jpg, .jpeg, .webp'
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setNewItem(prev => ({
-                    ...prev,
-                    imageFile: file,
-                    image: URL.createObjectURL(file) // preview only
-                  }));
-                }
-              }}
-              className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
-            />
-            {newItem?.image && <Image alt='Preview' src={newItem.image} width={176} height={176} className='w-44 h-44 object-cover mx-auto mb-2' /> }
+            <div>
+              <label htmlFor="image-input" className={labelStyle}>Image</label>
+              <input
+                id="image-input"
+                type="file"
+                accept=".png, .jpg, .jpeg, .webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setNewItem(prev => ({
+                      ...prev,
+                      imageFile: file,
+                      image: URL.createObjectURL(file) // preview only
+                    }));
+                  }
+                }}
+                className={fileInputStyle}
+              />
+              {newItem?.image && (
+                <div className="mt-3 relative w-44 h-44 mx-auto rounded-xl overflow-hidden border border-gray-200 shadow-md">
+                  <Image alt="Preview" src={newItem.image} fill className="object-cover" />
+                </div>
+              )}
+            </div>
 
             {/* 3D MODEL UPLOAD */}
-            <label htmlFor="3d-input">3D Model</label>
-            <input
-              id='3d-input'
-              type="file"
-              accept=".glb,.gltf"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setNewItem(prev => ({
-                    ...prev,
-                    modelFileFile: file, // Keep the File separately
-                    modelFilePreview: URL.createObjectURL(file), // Preview URL
-                  }));
-                }
-              }}
-              className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
-            />
-            {newItem?.modelFilePreview && (
-              <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
-                <React.Suspense fallback={<Loader />}>
-                  <Environment preset="sunset" />
-                  <Model item={{ ...newItem, modelFile: newItem.modelFilePreview }} />
-                  <OrbitControls enableDamping dampingFactor={0.05} enableZoom={true} />
-                </React.Suspense>
-              </Canvas>
-            )}
+            <div>
+              <label htmlFor="3d-input" className={labelStyle}>3D Model (.glb / .gltf)</label>
+              <input
+                id="3d-input"
+                type="file"
+                accept=".glb,.gltf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setNewItem(prev => ({
+                      ...prev,
+                      modelFileFile: file,
+                      modelFilePreview: URL.createObjectURL(file),
+                    }));
+                  }
+                }}
+                className={fileInputStyle}
+              />
+              {newItem?.modelFilePreview && (
+                <div className="mt-3 h-48 w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-inner">
+                  <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
+                    <React.Suspense fallback={<Loader />}>
+                      <Environment preset="sunset" />
+                      <Model item={{ ...newItem, modelFile: newItem.modelFilePreview }} />
+                      <OrbitControls enableDamping dampingFactor={0.05} enableZoom={true} />
+                    </React.Suspense>
+                  </Canvas>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* TEXT FIELDS */}
-          <div className='flex flex-col items-start gap-2'>
-            <label>Name</label>
-            <input type="text" value={newItem.name} onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))} className="border p-2 mb-4 w-full" />
+          {/* RIGHT COLUMN: TEXT & NUMERIC FIELDS */}
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className={labelStyle}>Name</label>
+              <input
+                type="text"
+                value={newItem.name}
+                onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Item name"
+                className={inputStyle}
+              />
+            </div>
 
-            <label>Description</label>
-            <input type="text" value={newItem.description} onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))} className="border p-2 mb-4 w-full" />
+            <div>
+              <label className={labelStyle}>Description</label>
+              <textarea
+                rows={3}
+                value={newItem.description}
+                onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Item description"
+                className={inputStyle}
+              />
+            </div>
 
-            <label>Position X</label>
-            <input type="number" value={newItem.position[0]} onChange={(e) => setNewItem(prev => ({ ...prev, position: [parseFloat(e.target.value)||0, prev.position[1], prev.position[2]] }))} className="border p-2 mb-4 w-full" />
-            <label>Position Y</label>
-            <input type="number" value={newItem.position[1]} onChange={(e) => setNewItem(prev => ({ ...prev, position: [prev.position[0], parseFloat(e.target.value)||0, prev.position[2]] }))} className="border p-2 mb-4 w-full" />
-            <label>Position Z</label>
-            <input type="number" value={newItem.position[2]} onChange={(e) => setNewItem(prev => ({ ...prev, position: [prev.position[0], prev.position[1], parseFloat(e.target.value)||0] }))} className="border p-2 mb-4 w-full" />
+            {/* POSITION FIELDS IN GRID */}
+            <div>
+              <label className={labelStyle}>Position (X, Y, Z)</label>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <span className="text-xs font-medium text-gray-500 mb-1 block">X</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={newItem.position[0]}
+                    onChange={(e) => setNewItem(prev => ({ ...prev, position: [parseFloat(e.target.value) || 0, prev.position[1], prev.position[2]] }))}
+                    className={inputStyle}
+                  />
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-gray-500 mb-1 block">Y</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={newItem.position[1]}
+                    onChange={(e) => setNewItem(prev => ({ ...prev, position: [prev.position[0], parseFloat(e.target.value) || 0, prev.position[2]] }))}
+                    className={inputStyle}
+                  />
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-gray-500 mb-1 block">Z</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={newItem.position[2]}
+                    onChange={(e) => setNewItem(prev => ({ ...prev, position: [prev.position[0], prev.position[1], parseFloat(e.target.value) || 0] }))}
+                    className={inputStyle}
+                  />
+                </div>
+              </div>
+            </div>
 
-            <label>Scale</label>
-            <input type="number" value={newItem.scale} onChange={(e) => setNewItem(prev => ({ ...prev, scale: parseFloat(e.target.value)||0 }))} className="border p-2 mb-4 w-full" />
+            <div>
+              <label className={labelStyle}>Scale</label>
+              <input
+                type="number"
+                step="0.1"
+                value={newItem.scale}
+                onChange={(e) => setNewItem(prev => ({ ...prev, scale: parseFloat(e.target.value) || 0 }))}
+                className={inputStyle}
+              />
+            </div>
           </div>
         </div>
 
         {/* ACTION BUTTONS */}
-        <div className='flex w-full justify-around mt-4'>
-          <button className="w-1/4 px-4 py-2 hover:scale-105 duration-200 transition-all cursor-pointer text-lg font-semibold bg-gradient-to-br from-blue-500
-          to-indigo-800 text-white rounded-lg"
-            onClick={() => onSave(newItem)}
+        <div className="flex w-full justify-end gap-4 mt-8 pt-4 border-t border-gray-100">
+          <button
+            type="button"
+            className="px-6 py-2.5 cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-800 rounded-xl transition-all"
+            onClick={onClose}
           >
-            Save
+            Close
           </button>
           <button
-              className="cursor-pointer hover:scale-105 duration-200 transition-all w-1/4 px-4 py-2 text-lg font-semibold
-              text-transparent bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text shadow-lg rounded-xl"
-              onClick={onClose}
+            type="button"
+            className="px-6 py-2.5 hover:scale-105 duration-200 transition-all cursor-pointer text-sm font-semibold bg-gradient-to-br from-blue-500 to-indigo-800 text-white rounded-xl shadow-md hover:shadow-lg"
+            onClick={() => onSave(newItem)}
           >
-              Close
+            Save Item
           </button>
         </div>
       </div>

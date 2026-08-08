@@ -193,10 +193,10 @@ const page = () => {
                         e.stopPropagation();
                         deleteItem(clothing._id);
                       }}
-                      className="absolute top-3 right-3 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg hover:scale-110 transition-all cursor-pointer z-10"
+                      className="absolute top-3 right-3 p-2 bg-white hover:bg-red-50 text-red-600 rounded-full hover:scale-110 transition-all cursor-pointer z-10"
                       title="Delete item"
                     >
-                      <Trash2Icon size={12} />
+                      <Trash2Icon size={18} className="text-red-600 stroke-[2]" />
                     </button>
                   </div>
                 ))
@@ -221,10 +221,10 @@ const page = () => {
                         e.stopPropagation();
                         deleteOutfit(outfit._id);
                       }}
-                      className="absolute top-3 right-3 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg hover:scale-110 transition-all cursor-pointer z-10"
+                      className="absolute top-3 right-3 p-2 bg-white hover:bg-red-50 text-red-600 rounded-full hover:scale-110 transition-all cursor-pointer z-10"
                       title="Delete outfit"
                     >
-                      <Trash2Icon size={12} />
+                      <Trash2Icon size={18} className="text-red-600 stroke-[2]" />
                     </button>
                   </div>
                 ))

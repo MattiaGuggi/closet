@@ -19,7 +19,6 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
         setNewOutfit((prev) => ({ ...prev, [key]: selectedItem || null }));
     };
 
-
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 min-h-screen">
             <div className='bg-white shadow-lg rounded-lg p-6 flex flex-col w-1/3'>

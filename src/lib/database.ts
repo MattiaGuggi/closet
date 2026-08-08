@@ -213,14 +213,33 @@ export const updateOutfitInDb = async (outfit: IOutfit) => {
 /**
  * Deletes a outfit from the database
  *
- * @param {outfit} outfit - the outfit you need to delete
+ * @param {id} id - the ID of the outfit you need to delete
  * @returns {void}
  */
-export const deleteOutfitFromDb = async (outfit: IOutfit) => {
+export const deleteOutfitFromDb = async (id: string) => {
     await connectDB();
     try {
-        await Outfit.findByIdAndDelete(outfit._id); // Delete the user by ID
+        const result = await Outfit.findByIdAndDelete(id);
+        return { success: true, data: result };
     } catch (err) {
         console.error('Error deleting outfit', err);
+        return { success: false, error: 'Errore nel server' };
     }
 };
+/**
+ * Deletes a item from the database
+ *
+ * @param {id} id - the ID of the item you need to delete
+ * @returns {void}
+ */
+export const deleteItemFromDb = async (id: string) => {
+    await connectDB();
+
+    try {
+        const result = await Clothes.findByIdAndDelete(id);
+        return { success: true, data: result };
+    } catch (err) {
+        console.error('Error deleting item', err);
+        return { success: false, error: 'Errore nel server' };
+    }
+}

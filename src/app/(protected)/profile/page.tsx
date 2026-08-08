@@ -1,6 +1,6 @@
 'use client'
 import axios from 'axios';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/app/context/UserContext';
 import UserModal from '@/app/components/UserModal';
@@ -9,18 +9,24 @@ import Clothing from '@/app/components/Clothing';
 import ItemModal from '@/app/components/ItemModal';
 import { clothesType, EditableClothesType, outfitType } from '@/lib/types';
 import OutfitModal from '@/app/components/OutfitModal';
+import { Trash2Icon } from 'lucide-react';
 
 const page = () => {
   const { user, logout } = useUser();
   const [clothes, setClothes] = useState<clothesType[] | null>(null);
   const [outfits, setOutfits] = useState<outfitType[] | null>(null);
-  const [currentItem, setCurrentItem] = useState<clothesType>({ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user });
-  const [currentOutfit, setCurrentOutfit] = useState<outfitType>({ creator: user, top: undefined, mid: undefined, bottom: undefined });
+  const [currentItem, setCurrentItem] = useState<clothesType>({ 
+    name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user 
+  });
+  const [currentOutfit, setCurrentOutfit] = useState<outfitType>({ 
+    creator: user, top: undefined, mid: undefined, bottom: undefined 
+  });
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState<boolean>(false);
   const [isOutfitModalOpen, setIsOutfitModalOpen] = useState<boolean>(false);
 
   const fetchUserDetails = async () => {
+    if (!user?._id) return;
     const response = await axios.get('/api/user', { params: { userId: user?._id } });
     const data = response.data;
 
@@ -36,7 +42,6 @@ const page = () => {
       if (item.imageFile) formData.append("image", item.imageFile);
       if (item.modelFileFile) formData.append("model", item.modelFileFile);
 
-      // append other fields
       formData.append("name", item.name);
       formData.append("scale", String(item.scale));
       formData.append("description", item.description);
@@ -74,7 +79,7 @@ const page = () => {
         setIsOutfitModalOpen(false);
         fetchUserDetails();
       } else {
-        alert("Error while updating item! Try again");
+        alert("Error while updating outfit! Try again");
       }
     } catch(err) {
       console.error('Error updating outfit', err);
@@ -92,26 +97,56 @@ const page = () => {
   };
   
   const handleCloseItemModal = () => {
-    try {
-      setIsItemModalOpen(false);
-    } catch(err) {
-      alert('Error uploading the image: ' + err);
-      setIsItemModalOpen(false);
-    }
+    setIsItemModalOpen(false);
   };
   
   const handleCloseOutfitModal = () => {
+    setIsOutfitModalOpen(false);
+  };
+
+  const deleteItem = async (id?: number) => {
+    if (!id) {
+      alert('Item ID is missing');
+      return;
+    }
+
+    if (!confirm('Sei sicuro di voler eliminare questo capo?')) return;
+
     try {
-      setIsOutfitModalOpen(false);
-    } catch(err) {
-      alert('Error uploading the image: ' + err);
-      setIsOutfitModalOpen(false);
+      const response = await axios.delete(`/api/deleteItem?id=${id}`);
+      if (response.data.success) {
+        fetchUserDetails();
+      } else {
+        alert('Errore durante l\'eliminazione del capo');
+      }
+    } catch (err) {
+      console.error('Error deleting item', err);
+    }
+  };
+
+  const deleteOutfit = async (id?: number) => {
+    if (!id) {
+      alert('Outfit ID is missing');
+      return;
+    }
+
+    if (!confirm('Sei sicuro di voler eliminare questo outfit?')) return;
+
+    try {
+      const response = await axios.delete(`/api/deleteOutfit?id=${id}`);
+      if (response.data.success) {
+        fetchUserDetails();
+      } else {
+        alert('Errore durante l\'eliminazione dell\'outfit');
+      }
+    } catch (err) {
+      console.error('Error deleting outfit', err);
     }
   };
 
   useEffect(() => {
     if (user?._id) fetchUserDetails();
-  }, []);
+  }, [user?._id]);
 
   return (
     <>
@@ -126,7 +161,7 @@ const page = () => {
       )}
       <section id='profile-section' className="w-full min-h-screen flex flex-col items-center justify-start overflow-hidden py-10">
         <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Profile</h1>
-        <Image priority src={user?.pfp || "www.starksfamilyfh.com"} alt='Pfp' width={150} height={150} className='mt-12 rounded-full' />
+        <Image priority src={user?.pfp || "/default-pfp.png"} alt='Pfp' width={150} height={150} className='mt-12 rounded-full' />
         <div className='flex gap-20 w-full h-full justify-center items-center my-12'>
           <button
             className="cursor-pointer w-32 px-4 py-2 text-lg font-semibold bg-gradient-to-br from-blue-500 to-indigo-800 text-white rounded-lg hover:bg-gradient-to-br
@@ -143,28 +178,56 @@ const page = () => {
             Exit
           </button>
         </div>
+
+        {/* Clothes Section */}
         <section id='clothes-section' className='w-full h-full flex flex-col justify-center items-center mt-32 mb-10'>
           <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent py-10'>Your Clothes</h1>
           <div className='flex flex-col justify-center items-center w-full h-full'>
             <div className='grid grid-cols-3 w-full h-full px-5 p-10 gap-10'>
-              {clothes && clothes[0] ? (
-                (clothes.map((clothing, idx) => (
-                  <Clothing key={idx} item={clothing} onOpen={handleOpenItemModal} />
-                )))
+              {clothes && clothes.length > 0 ? (
+                clothes.map((clothing, idx) => (
+                  <div key={clothing._id || idx} className="relative group">
+                    <Clothing item={clothing} onOpen={handleOpenItemModal} />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteItem(clothing._id);
+                      }}
+                      className="absolute top-3 right-3 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg hover:scale-110 transition-all cursor-pointer z-10"
+                      title="Delete item"
+                    >
+                      <Trash2Icon size={12} />
+                    </button>
+                  </div>
+                ))
               ) : (
                 <div className='font-bold text-2xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent my-10'>No clothes found</div>
               )}
             </div>
           </div>
         </section>
+
+        {/* Outfit Section */}
         <section id='outfit-section' className='w-full h-full flex flex-col justify-center items-center my-10'>
           <h1 className='font-bold text-5xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Your Outfits</h1>
           <div className='flex flex-col justify-center items-center w-full h-full'>
             <div className='grid grid-cols-3 w-full h-full px-5 p-10 gap-10'>
-              {outfits && outfits[0] ? (
-                (outfits.map((outfit, idx) => (
-                  <Outfit key={idx} item={outfit} onOpen={handleOpenOutfitModal} />
-                )))
+              {outfits && outfits.length > 0 ? (
+                outfits.map((outfit, idx) => (
+                  <div key={outfit._id || idx} className="relative group">
+                    <Outfit item={outfit} onOpen={handleOpenOutfitModal} />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteOutfit(outfit._id);
+                      }}
+                      className="absolute top-3 right-3 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg hover:scale-110 transition-all cursor-pointer z-10"
+                      title="Delete outfit"
+                    >
+                      <Trash2Icon size={12} />
+                    </button>
+                  </div>
+                ))
               ) : (
                 <div className='font-bold text-2xl bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent my-10'>No outfits found</div>
               )}
@@ -173,7 +236,7 @@ const page = () => {
         </section>
       </section>
     </>
-  )
-}
+  );
+};
 
-export default page
+export default page;

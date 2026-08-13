@@ -1,4 +1,5 @@
 'use client';
+
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import gsap from "gsap";
@@ -7,7 +8,6 @@ import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
 import OptionController from '@/app/components/OptionController';
 import Toast from '@/app/components/Toast';
-import Header from '@/app/components/header';
 import { clothesType, EditableClothesType, Position } from '@/lib/types';
 import { Sparkles } from 'lucide-react';
 
@@ -31,7 +31,7 @@ const ClosetPage = () => {
     } catch (error) {
       console.error('Error fetching items:', error);
     }
-  }
+  };
 
   const handleClick = (arrow: string, position: Position) => {
     const wrapper = document.getElementById(`${position}-wrapper`);
@@ -50,7 +50,9 @@ const ClosetPage = () => {
           const currentIndex = prev[position];
           const maxIndex = itemsOfType.length - 1;
 
-          const newIndex = arrow === 'left' ? currentIndex === 0 ? maxIndex : currentIndex - 1 : currentIndex === maxIndex ? 0 : currentIndex + 1;
+          const newIndex = arrow === 'left' 
+            ? currentIndex === 0 ? maxIndex : currentIndex - 1 
+            : currentIndex === maxIndex ? 0 : currentIndex + 1;
 
           return { ...prev, [position]: newIndex };
         });
@@ -108,9 +110,28 @@ const ClosetPage = () => {
       });
 
       const data = response.data;
-      if (data.success) {
+      if (data.success && data.item) {
+        const newItem: clothesType = data.item;
+
+        // 1. Aggiorna lo stato globale dei capi
+        setAllItems(prev => {
+          const updatedList = [...prev, newItem];
+          
+          // 2. Seleziona automaticamente il nuovo capo appena importato nel carosello
+          if (newItem.type) {
+            const itemType = newItem.type as Position;
+            const itemsOfType = updatedList.filter(i => i.type === itemType);
+            setCurrentItemState(posPrev => ({
+              ...posPrev,
+              [itemType]: itemsOfType.length - 1 // imposta l'indice sull'ultimo elemento aggiunto
+            }));
+          }
+
+          return updatedList;
+        });
+
         setIsModalOpen(false);
-        setAllItems(prev => [...prev, data.item]);
+        setMessage({ message: 'Item imported successfully!', type: 'success' });
       } else {
         alert("Error while updating item! Try again");
       }
@@ -165,9 +186,10 @@ const ClosetPage = () => {
         {/* Option HUD Controls */}
         <OptionController setThree={setThree} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />
 
-        {/* Carousel Rows */}
+        {/* Carousel Rows: Passiamo allItems come prop */}
         <div className='w-full'>
           <ClosetRows
+            items={allItems}
             currentItemState={currentItemState}
             handleClick={handleClick}
             three={three}
@@ -183,7 +205,7 @@ const ClosetPage = () => {
         />
       )}
     </>
-  )
-}
+  );
+};
 
 export default ClosetPage;

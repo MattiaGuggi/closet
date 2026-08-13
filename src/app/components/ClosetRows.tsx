@@ -1,6 +1,5 @@
 'use client';
 
-import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Tag } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
@@ -11,34 +10,24 @@ import { clothesType, Position } from "@/lib/types";
 import { Loader } from "./Loader";
 
 type ClosetRowsProps = {
+  items: clothesType[]; // Riceve i capi direttamente dal padre
   currentItemState: { top: number; mid: number; bottom: number };
   handleClick: (dir: "left" | "right", pos: Position) => void;
   three: boolean;
 };
 
-export default function ClosetRows({ currentItemState, handleClick, three }: ClosetRowsProps) {
-  const [items, setItems] = useState<clothesType[]>([]);
+export default function ClosetRows({ items, currentItemState, handleClick, three }: ClosetRowsProps) {
   const [loadedImages, setLoadedImages] = useState<{ [key: string]: boolean }>({});
   const positions: Position[] = ["top", "mid", "bottom"];
 
-  const fetchItems = async () => {
-    try {
-      const response = await axios.get('/api/items');
-      setItems(response.data.clothes);
-
-      for (const item of response.data.clothes) {
-        if (item.modelFile) {
-          useGLTF.preload(item.modelFile);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching items:', error);
-    }
-  };
-
+  // Pre-carica i modelli 3D quando la prop items cambia
   useEffect(() => {
-    fetchItems();
-  }, []);
+    for (const item of items) {
+      if (item.modelFile) {
+        useGLTF.preload(item.modelFile);
+      }
+    }
+  }, [items]);
 
   const handleImageLoad = (itemKey: string) => {
     setLoadedImages((prev) => ({ ...prev, [itemKey]: true }));
@@ -49,8 +38,6 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
       {positions.map((pos: Position) => {
         const itemsOfType = items.filter(item => item.type === pos);
         const currentItem = itemsOfType[currentItemState[pos]];
-        
-        // CHIAVE COERENTE PER IL CARICAMENTO
         const itemKey = currentItem ? String(currentItem._id || currentItem.name) : '';
 
         return (
@@ -58,7 +45,7 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
             key={pos} 
             className="closet-row relative flex items-center justify-between w-full h-[28vh] min-h-[220px] sm:min-h-[260px] px-4 py-2 rounded-2xl bg-zinc-950/50 border border-white/5 hover:border-white/15 transition-all overflow-hidden group shadow-inner"
           >
-            {/* Label indicatore di livello (TOP, MID, BOTTOM) */}
+            {/* Label indicatore di livello */}
             <div className="absolute top-3 left-4 flex items-center gap-2 z-10">
               <span className="px-2.5 py-1 rounded-lg bg-zinc-900/80 border border-white/10 text-[11px] font-bold uppercase tracking-wider text-indigo-400 backdrop-blur-md shadow-sm">
                 {pos}
@@ -85,8 +72,6 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
 
             {/* Stage Canvas / Image Container */}
             <div className="scene-wrapper w-full h-full flex justify-center items-center relative py-2" id={`${pos}-wrapper`}>
-              
-              {/* Effetto Luce di Sfondo (Spotlight effect) */}
               <div className="absolute inset-0 bg-radial from-indigo-500/10 via-transparent to-transparent opacity-60 pointer-events-none" />
 
               {three ? (
@@ -114,12 +99,11 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
                   )}
                   {currentItem && (
                     <div className="relative w-full h-full max-w-[340px] flex items-center justify-center p-2">
-                      {/* Skeleton Loader */}
                       {!loadedImages[itemKey] && (
                         <div className="absolute inset-4 animate-pulse bg-zinc-800/40 rounded-2xl border border-white/5" />
                       )}
                       <Image
-                        key={itemKey} // Forza il rimontaggio e il calcolo dell'onLoad ad ogni cambio capo
+                        key={itemKey}
                         src={currentItem.image}
                         alt={currentItem.name}
                         fill

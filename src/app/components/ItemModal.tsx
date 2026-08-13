@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls } from '@react-three/drei';
 import { removeBackground } from '@imgly/background-removal';
@@ -35,8 +35,22 @@ const ItemModal = ({
 }) => {
   const [newItem, setNewItem] = useState<EditableClothesType>(item);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
 
-  // Custom Input Styles (includes hiding default spin buttons)
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsTypeDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Custom Input Styles
   const baseInputStyle = 
     'w-full px-3.5 py-2.5 bg-zinc-950/60 border border-white/10 rounded-xl shadow-inner text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all';
   
@@ -97,6 +111,12 @@ const ItemModal = ({
     }
   };
 
+  const typeOptions: { label: string; value: Position }[] = [
+    { label: 'Top', value: 'top' },
+    { label: 'Mid', value: 'mid' },
+    { label: 'Bottom', value: 'bottom' },
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-zinc-900/95 border border-white/10 shadow-2xl rounded-3xl p-6 sm:p-8 text-white backdrop-blur-2xl flex flex-col gap-6">
@@ -129,25 +149,49 @@ const ItemModal = ({
           {/* LEFT COLUMN: TYPE & MEDIA UPLOADS */}
           <div className="flex flex-col gap-5">
             
-            {/* Item Type */}
-            <div>
-              <label htmlFor="item-type" className={labelStyle}>
+            {/* Custom Styled Select Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <label className={labelStyle}>
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 Item Type
               </label>
-              <select
-                id="item-type"
-                value={newItem.type ?? ''}
-                className={baseInputStyle}
-                onChange={(e) =>
-                  setNewItem((prev) => ({ ...prev, type: e.target.value as Position }))
-                }
+              <button
+                type="button"
+                onClick={() => setIsTypeDropdownOpen((prev) => !prev)}
+                className={`${baseInputStyle} flex items-center justify-between cursor-pointer text-left`}
               >
-                <option value="" className="bg-zinc-900 text-zinc-400">Select item type</option>
-                <option value="top" className="bg-zinc-900 text-white">Top</option>
-                <option value="mid" className="bg-zinc-900 text-white">Mid</option>
-                <option value="bottom" className="bg-zinc-900 text-white">Bottom</option>
-              </select>
+                <span className={newItem.type ? 'text-zinc-100 font-medium capitalize' : 'text-zinc-500'}>
+                  {newItem.type || 'Select item type'}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isTypeDropdownOpen ? 'rotate-180 text-indigo-400' : ''}`} />
+              </button>
+
+              {/* Custom Options Menu */}
+              {isTypeDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 z-30 p-1.5 bg-zinc-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
+                  {typeOptions.map((opt) => {
+                    const isSelected = newItem.type === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          setNewItem((prev) => ({ ...prev, type: opt.value }));
+                          setIsTypeDropdownOpen(false);
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                            : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-white'
+                        }`}
+                      >
+                        <span>{opt.label}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* 2D Image Upload */}

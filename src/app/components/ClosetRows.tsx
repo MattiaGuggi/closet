@@ -40,8 +40,8 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
     fetchItems();
   }, []);
 
-  const handleImageLoad = (itemId: string) => {
-    setLoadedImages((prev) => ({ ...prev, [itemId]: true }));
+  const handleImageLoad = (itemKey: string) => {
+    setLoadedImages((prev) => ({ ...prev, [itemKey]: true }));
   };
 
   return (
@@ -49,6 +49,9 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
       {positions.map((pos: Position) => {
         const itemsOfType = items.filter(item => item.type === pos);
         const currentItem = itemsOfType[currentItemState[pos]];
+        
+        // CHIAVE COERENTE PER IL CARICAMENTO
+        const itemKey = currentItem ? String(currentItem._id || currentItem.name) : '';
 
         return (
           <section 
@@ -111,19 +114,21 @@ export default function ClosetRows({ currentItemState, handleClick, three }: Clo
                   )}
                   {currentItem && (
                     <div className="relative w-full h-full max-w-[340px] flex items-center justify-center p-2">
-                      {!loadedImages[currentItem._id || currentItem.name] && (
+                      {/* Skeleton Loader */}
+                      {!loadedImages[itemKey] && (
                         <div className="absolute inset-4 animate-pulse bg-zinc-800/40 rounded-2xl border border-white/5" />
                       )}
                       <Image
+                        key={itemKey} // Forza il rimontaggio e il calcolo dell'onLoad ad ogni cambio capo
                         src={currentItem.image}
                         alt={currentItem.name}
                         fill
                         sizes="(max-width: 768px) 80vw, 40vw"
                         priority
                         className={`closet-image object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-all duration-300 hover:scale-105 ${
-                          loadedImages[currentItem._id || currentItem.name] ? "opacity-100 scale-100" : "opacity-0 scale-95"
+                          loadedImages[itemKey] ? "opacity-100 scale-100" : "opacity-0 scale-95"
                         }`}
-                        onLoad={() => handleImageLoad(currentItem.name)}
+                        onLoad={() => handleImageLoad(itemKey)}
                       />
                     </div>
                   )}

@@ -1,16 +1,17 @@
 'use client';
 import axios from 'axios';
-import React, { useState } from 'react'
-import { useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import gsap from "gsap";
 import ItemModel from '@/app/components/ItemModal';
 import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
 import OptionController from '@/app/components/OptionController';
 import Toast from '@/app/components/Toast';
-import { clothesType, EditableClothesType, userType, Position } from '@/lib/types';
+import Header from '@/app/components/header';
+import { clothesType, EditableClothesType, Position } from '@/lib/types';
+import { Sparkles } from 'lucide-react';
 
-const page = () => {
+const ClosetPage = () => {
   const { user } = useUser();
   const [allItems, setAllItems] = useState<clothesType[]>([]);
   const [currentItemState, setCurrentItemState] = useState<{ top: number; mid: number; bottom: number }>({
@@ -41,8 +42,8 @@ const page = () => {
     const tl = gsap.timeline();
     tl.to(wrapper, {
       opacity: 0,
-      x: arrow === 'left' ? -500 : 500,
-      duration: 0.4,
+      x: arrow === 'left' ? -300 : 300,
+      duration: 0.35,
       ease: 'power2.inOut',
       onComplete: () => {
         setCurrentItemState(prev => {
@@ -56,13 +57,13 @@ const page = () => {
       }
     });
     tl.set(wrapper, {
-      x: arrow === 'right' ? -500 : 500,
+      x: arrow === 'right' ? -300 : 300,
       opacity: 0,
     });
     tl.to(wrapper, {
       opacity: 1,
       x: 0,
-      duration: 0.4,
+      duration: 0.35,
       ease: 'power2.inOut',
     });
   };
@@ -73,7 +74,7 @@ const page = () => {
     const bottom = allItems.filter(item => item.type === "bottom")[currentItemState.bottom] || null;
 
     if (!top || !mid || !bottom) {
-      setMessage({ message: 'Cannot build item without all 3 parts!', type: 'error' });
+      setMessage({ message: 'Cannot build outfit without all 3 parts!', type: 'error' });
       return;
     }
     
@@ -96,7 +97,6 @@ const page = () => {
       if (item.imageFile) formData.append("image", item.imageFile);
       if (item.modelFileFile) formData.append("model", item.modelFileFile);
 
-      // append other fields
       formData.append("name", item.name);
       formData.append("scale", String(item.scale));
       formData.append("description", item.description);
@@ -132,7 +132,7 @@ const page = () => {
       
       tl.fromTo(section, {
           opacity: 0,
-          y: 50
+          y: 40
         }, {
           opacity: 1,
           y: 0,
@@ -144,8 +144,16 @@ const page = () => {
 
   return (
     <>
-      <section id='closet-section' className="w-full min-h-screen flex flex-col items-center justify-center overflow-hidden pt-10">
-        <h1 className='font-bold text-5xl text-center mb-12 bg-gradient-to-br from-blue-500 to-indigo-700 bg-clip-text text-transparent'>Closet</h1>
+      <section id='closet-section' className="w-full max-w-7xl mx-auto px-6 py-8 flex flex-col items-center">
+        
+        {/* Title Header */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            <Sparkles className="w-3.5 h-3.5" /> Interactive Studio
+          </div>
+          <h1 className='text-3xl sm:text-4xl font-extrabold text-white tracking-tight'>Closet Canvas</h1>
+        </div>
+
         {message && (
           <Toast
             message={message.message}
@@ -153,8 +161,12 @@ const page = () => {
             onClose={() => setMessage(null)}
           />
         )}
+
+        {/* Option HUD Controls */}
         <OptionController setThree={setThree} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />
-        <div className='w-full h-full'>
+
+        {/* Carousel Rows */}
+        <div className='w-full'>
           <ClosetRows
             currentItemState={currentItemState}
             handleClick={handleClick}
@@ -162,11 +174,16 @@ const page = () => {
           />
         </div>
       </section>
+
       {isModalOpen && (
-        <ItemModel onClose={() => setIsModalOpen(false)} onSave={(newItem) => importItem(newItem)} item={{ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user }} />
+        <ItemModel 
+          onClose={() => setIsModalOpen(false)} 
+          onSave={(newItem) => importItem(newItem)} 
+          item={{ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user }} 
+        />
       )}
     </>
   )
 }
 
-export default page
+export default ClosetPage;

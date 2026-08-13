@@ -8,6 +8,21 @@ import { removeBackground } from '@imgly/background-removal';
 import Model from './model';
 import { Loader } from './Loader';
 import { clothesType, EditableClothesType, Position } from '@/lib/types';
+import { 
+  X, 
+  Sparkles, 
+  Box, 
+  Tag, 
+  FileText, 
+  Layers, 
+  Move, 
+  Maximize2, 
+  Upload, 
+  Loader2, 
+  Check,
+  ChevronUp,
+  ChevronDown
+} from 'lucide-react';
 
 const ItemModal = ({
   onClose,
@@ -21,10 +36,37 @@ const ItemModal = ({
   const [newItem, setNewItem] = useState<EditableClothesType>(item);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
 
-  // Common styles for consistency
-  const inputStyle = 'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-800 bg-white';
-  const labelStyle = 'text-sm font-semibold text-gray-700 mb-1 block';
-  const fileInputStyle = 'w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-gray-300 rounded-lg p-1 bg-white disabled:opacity-50';
+  // Custom Input Styles (includes hiding default spin buttons)
+  const baseInputStyle = 
+    'w-full px-3.5 py-2.5 bg-zinc-950/60 border border-white/10 rounded-xl shadow-inner text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all';
+  
+  const numberInputStyle = 
+    `${baseInputStyle} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`;
+
+  const labelStyle = 
+    'text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5 flex items-center gap-1.5';
+  
+  const fileInputStyle = 
+    'w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700 cursor-pointer border border-white/10 rounded-xl p-1 bg-zinc-950/40 disabled:opacity-50 transition-all';
+
+  // Helper function to update position smoothly
+  const handlePositionStep = (axisIndex: number, delta: number) => {
+    setNewItem((prev) => {
+      const newPos = [...prev.position] as [number, number, number];
+      const currentVal = newPos[axisIndex] || 0;
+      newPos[axisIndex] = parseFloat((currentVal + delta).toFixed(2));
+      return { ...prev, position: newPos };
+    });
+  };
+
+  // Helper function to update scale smoothly
+  const handleScaleStep = (delta: number) => {
+    setNewItem((prev) => {
+      const currentVal = prev.scale || 0;
+      const updated = Math.max(0, parseFloat((currentVal + delta).toFixed(2)));
+      return { ...prev, scale: updated };
+    });
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,15 +75,11 @@ const ItemModal = ({
     setIsRemovingBg(true);
 
     try {
-      // 1. Remove background directly in browser
       const blob = await removeBackground(file);
-
-      // 2. Convert transparent blob back into a PNG File object
       const cleanFileName = file.name.replace(/\.[^/.]+$/, '') + '-nobg.png';
       const cleanFile = new File([blob], cleanFileName, { type: 'image/png' });
-
-      // 3. Update state with transparent PNG preview
       const previewUrl = URL.createObjectURL(cleanFile);
+
       setNewItem((prev) => ({
         ...prev,
         imageFile: cleanFile,
@@ -49,7 +87,6 @@ const ItemModal = ({
       }));
     } catch (error) {
       console.error('Failed to remove background, falling back to original image:', error);
-      // Fallback to raw file if processing fails
       setNewItem((prev) => ({
         ...prev,
         imageFile: file,
@@ -61,38 +98,63 @@ const ItemModal = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50 p-4">
-      <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-3xl font-extrabold text-gray-800 mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
-          Import / Edit Item
-        </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-zinc-900/95 border border-white/10 shadow-2xl rounded-3xl p-6 sm:p-8 text-white backdrop-blur-2xl flex flex-col gap-6">
+        
+        {/* Header Section */}
+        <div className="flex items-center justify-between pb-4 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                {item._id ? 'Edit Item' : 'Import New Item'}
+              </h2>
+              <p className="text-xs text-zinc-400">Customize item details, 2D preview, and 3D model</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-xl text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-800 border border-white/5 transition-all cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Form Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
           {/* LEFT COLUMN: TYPE & MEDIA UPLOADS */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5">
+            
+            {/* Item Type */}
             <div>
               <label htmlFor="item-type" className={labelStyle}>
+                <Layers className="w-3.5 h-3.5 text-indigo-400" />
                 Item Type
               </label>
               <select
                 id="item-type"
                 value={newItem.type ?? ''}
-                className={inputStyle}
+                className={baseInputStyle}
                 onChange={(e) =>
                   setNewItem((prev) => ({ ...prev, type: e.target.value as Position }))
                 }
               >
-                <option value="">Select item type</option>
-                <option value="top">Top</option>
-                <option value="mid">Mid</option>
-                <option value="bottom">Bottom</option>
+                <option value="" className="bg-zinc-900 text-zinc-400">Select item type</option>
+                <option value="top" className="bg-zinc-900 text-white">Top</option>
+                <option value="mid" className="bg-zinc-900 text-white">Mid</option>
+                <option value="bottom" className="bg-zinc-900 text-white">Bottom</option>
               </select>
             </div>
 
-            {/* IMAGE UPLOAD WITH BG REMOVAL */}
+            {/* 2D Image Upload */}
             <div>
               <label htmlFor="image-input" className={labelStyle}>
-                Image (Background automatically removed)
+                <Upload className="w-3.5 h-3.5 text-indigo-400" />
+                Image (Auto AI Background Removal)
               </label>
               <input
                 id="image-input"
@@ -103,30 +165,31 @@ const ItemModal = ({
                 className={fileInputStyle}
               />
 
-              {/* LOADING STATE */}
+              {/* Loading Indicator for AI Background Removal */}
               {isRemovingBg && (
-                <div className="mt-3 flex items-center justify-center gap-2 text-sm text-indigo-600 font-medium py-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
-                  <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <div className="mt-3 flex items-center justify-center gap-3 text-xs text-indigo-400 font-medium py-6 px-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 backdrop-blur-md animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
                   Removing background...
                 </div>
               )}
 
-              {/* IMAGE PREVIEW */}
+              {/* Image Preview Area */}
               {!isRemovingBg && newItem?.image && (
-                <div className="mt-3 relative w-44 h-44 mx-auto rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:12px_12px]">
+                <div className="mt-3 relative w-full h-44 rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/80 shadow-inner flex items-center justify-center bg-[radial-gradient(#ffffff0d_1px,transparent_1px)] [background-size:12px_12px]">
                   <Image
                     alt="Preview"
                     src={newItem.image}
                     fill
-                    className="object-contain p-2"
+                    className="object-contain p-3 drop-shadow-lg"
                   />
                 </div>
               )}
             </div>
 
-            {/* 3D MODEL UPLOAD */}
+            {/* 3D Model Upload */}
             <div>
               <label htmlFor="3d-input" className={labelStyle}>
+                <Box className="w-3.5 h-3.5 text-indigo-400" />
                 3D Model (.glb / .gltf)
               </label>
               <input
@@ -145,8 +208,9 @@ const ItemModal = ({
                 }}
                 className={fileInputStyle}
               />
+
               {newItem?.modelFilePreview && (
-                <div className="mt-3 h-48 w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-inner">
+                <div className="mt-3 h-48 w-full rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 shadow-inner relative">
                   <Canvas camera={{ position: [0, 1.5, 5], fov: 20 }}>
                     <React.Suspense fallback={<Loader />}>
                       <Environment preset="sunset" />
@@ -160,113 +224,144 @@ const ItemModal = ({
           </div>
 
           {/* RIGHT COLUMN: TEXT & NUMERIC FIELDS */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5">
+            
+            {/* Name */}
             <div>
-              <label className={labelStyle}>Name</label>
+              <label className={labelStyle}>
+                <Tag className="w-3.5 h-3.5 text-indigo-400" />
+                Item Name
+              </label>
               <input
                 type="text"
                 value={newItem.name}
                 onChange={(e) => setNewItem((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="Item name"
-                className={inputStyle}
+                placeholder="e.g. Vintage Denim Jacket"
+                className={baseInputStyle}
               />
             </div>
 
+            {/* Description */}
             <div>
-              <label className={labelStyle}>Description</label>
+              <label className={labelStyle}>
+                <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                Description
+              </label>
               <textarea
                 rows={3}
                 value={newItem.description}
                 onChange={(e) => setNewItem((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Item description"
-                className={inputStyle}
+                placeholder="Add details about fabric, fit, style..."
+                className={`${baseInputStyle} resize-none`}
               />
             </div>
 
-            {/* POSITION FIELDS IN GRID */}
+            {/* Position (X, Y, Z) with Custom Spin Buttons */}
             <div>
-              <label className={labelStyle}>Position (X, Y, Z)</label>
+              <label className={labelStyle}>
+                <Move className="w-3.5 h-3.5 text-indigo-400" />
+                Position (X, Y, Z)
+              </label>
               <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <span className="text-xs font-medium text-gray-500 mb-1 block">X</span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={newItem.position[0]}
-                    onChange={(e) =>
-                      setNewItem((prev) => ({
-                        ...prev,
-                        position: [parseFloat(e.target.value) || 0, prev.position[1], prev.position[2]],
-                      }))
-                    }
-                    className={inputStyle}
-                  />
-                </div>
-                <div>
-                  <span className="text-xs font-medium text-gray-500 mb-1 block">Y</span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={newItem.position[1]}
-                    onChange={(e) =>
-                      setNewItem((prev) => ({
-                        ...prev,
-                        position: [prev.position[0], parseFloat(e.target.value) || 0, prev.position[2]],
-                      }))
-                    }
-                    className={inputStyle}
-                  />
-                </div>
-                <div>
-                  <span className="text-xs font-medium text-gray-500 mb-1 block">Z</span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={newItem.position[2]}
-                    onChange={(e) =>
-                      setNewItem((prev) => ({
-                        ...prev,
-                        position: [prev.position[0], prev.position[1], parseFloat(e.target.value) || 0],
-                      }))
-                    }
-                    className={inputStyle}
-                  />
+                {['X', 'Y', 'Z'].map((axis, index) => (
+                  <div key={axis} className="relative flex items-center">
+                    <span className="absolute left-3 text-xs font-bold text-zinc-500 pointer-events-none select-none">
+                      {axis}
+                    </span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={newItem.position[index]}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setNewItem((prev) => {
+                          const newPos = [...prev.position] as [number, number, number];
+                          newPos[index] = val;
+                          return { ...prev, position: newPos };
+                        });
+                      }}
+                      className={`${numberInputStyle} pl-7 pr-7 text-center`}
+                    />
+                    {/* Custom Up/Down Arrows */}
+                    <div className="absolute right-1.5 flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handlePositionStep(index, 0.1)}
+                        className="p-0.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                      >
+                        <ChevronUp className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePositionStep(index, -0.1)}
+                        className="p-0.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                      >
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Scale with Custom Spin Buttons */}
+            <div>
+              <label className={labelStyle}>
+                <Maximize2 className="w-3.5 h-3.5 text-indigo-400" />
+                3D Model Scale
+              </label>
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={newItem.scale}
+                  onChange={(e) => setNewItem((prev) => ({ ...prev, scale: parseFloat(e.target.value) || 0 }))}
+                  className={`${numberInputStyle} pr-8`}
+                />
+                {/* Custom Up/Down Arrows */}
+                <div className="absolute right-1.5 flex flex-col gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleScaleStep(0.1)}
+                    className="p-0.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                  >
+                    <ChevronUp className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleScaleStep(-0.1)}
+                    className="p-0.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                  >
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
             </div>
 
-            <div>
-              <label className={labelStyle}>Scale</label>
-              <input
-                type="number"
-                step="0.1"
-                value={newItem.scale}
-                onChange={(e) => setNewItem((prev) => ({ ...prev, scale: parseFloat(e.target.value) || 0 }))}
-                className={inputStyle}
-              />
-            </div>
           </div>
         </div>
 
-        {/* ACTION BUTTONS */}
-        <div className="flex w-full justify-end gap-4 mt-8 pt-4 border-t border-gray-100">
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10 mt-2">
           <button
             type="button"
             disabled={isRemovingBg}
-            className="px-6 py-2.5 cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-800 rounded-xl transition-all disabled:opacity-50"
             onClick={onClose}
+            className="px-5 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer disabled:opacity-50"
           >
-            Close
+            Cancel
           </button>
           <button
             type="button"
             disabled={isRemovingBg}
-            className="px-6 py-2.5 hover:scale-105 duration-200 transition-all cursor-pointer text-sm font-semibold bg-gradient-to-br from-blue-500 to-indigo-800 text-white rounded-xl shadow-md hover:shadow-lg disabled:opacity-50"
             onClick={() => onSave(newItem)}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
           >
+            <Check className="w-4 h-4" />
             Save Item
           </button>
         </div>
+
       </div>
     </div>
   );

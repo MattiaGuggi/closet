@@ -39,7 +39,7 @@ const UserModal = ({ onClose }: { onClose: () => void }) => {
                     }}
                     className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
                 />
-                <Image alt='New Item Image' src={user?.pfp || "www.starksfamilyfh.com"} width={100} height={100} className='rounded-full mx-auto' />
+                <Image alt='New Item Image' src={user?.pfp || "https://it.pinterest.com/pin/863706034818497453/"} width={100} height={100} className='rounded-full mx-auto' />
                 <label htmlFor="username-input">Username</label>
                 <input
                     id='username-input'

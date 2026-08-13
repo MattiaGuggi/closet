@@ -2,9 +2,10 @@ import mongoose from "mongoose";
 import { Outfit, User, Clothes } from "./models";
 import { IClothes, IOutfit, IUser } from "./interfaces";
 import { outfitType } from "./types";
+import bcrypt from "bcrypt";
 
 /**
- * Connects to MongoDB
+ * Connette l'applicazione al database MongoDB
  */
 export const connectDB = async () => {
     const uri = process.env.MONGODB_URI;
@@ -22,39 +23,52 @@ export const connectDB = async () => {
     }
 };
 /**
- * Helper function to get every user from MongoDB
+ * Helper per recuperare tutti gli utenti da MongoDB
  */
 export const getUsersFromDb = async () => {
     await connectDB();
     return await User.find({});
-}
+};
 /**
- * Finds user in DB based on email/username
+ * Trova un utente nel DB tramite email
  *
- * @param {email} email - The email
- * @returns {User} User - A user saved in the DB
+ * @param {string} email - L'email dell'utente
+ * @returns {Promise<User | null>} Utente trovato o null
  */
 export const getUserFromDb = async (email: string) => {
     await connectDB();
     return await User.findOne({ email: email });
 };
 /**
- * Creates user in DB 
+ * Crea un nuovo utente nel DB memorizzando la password cifrata tramite bcrypt
  *
- * @param {username} username - Username of the new user
- * @param {email} email - Email of the new user
- * @param {password} password - Password of the new user
-*/
+ * @param {string} username - Nome utente
+ * @param {string} email - Indirizzo email
+ * @param {string} password - Password in chiaro (verrà sottoposta ad hash)
+ */
 export const createUserInDb = async (username: string, email: string, password: string) => {
     await connectDB();
+    
+    // Verifica se l'utente esiste già
     const existingUser = await User.find({ email: email });
-    // Check if the user already exists
     if (existingUser.length > 0) {
         throw new Error('User already exists');
     }
-    const user = new User({ username, email, password });
+
+    // Generazione hash bcrypt per la password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const user = new User({ 
+        username, 
+        email, 
+        password: hashedPassword 
+    });
+    
     await user.save();
+    return user;
 };
+
 /**
  * Updates an existing user
  *

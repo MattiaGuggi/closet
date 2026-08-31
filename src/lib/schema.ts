@@ -3,7 +3,7 @@ import { relations } from "drizzle-orm";
 
 // Users Table
 export const users = pgTable("users", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  _id: uuid("_id").defaultRandom().primaryKey(),
   username: varchar("username", { length: 255 }).notNull().unique(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: text("password").notNull(),
@@ -12,10 +12,10 @@ export const users = pgTable("users", {
 
 // Clothes Table
 export const clothes = pgTable("clothes", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  creatorId: uuid("creator_id")
+  _id: uuid("_id").defaultRandom().primaryKey(),
+  creator: uuid("creator")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users._id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
   image: text("image").default(""),
   modelFile: text("model_file").default(""),
@@ -25,54 +25,50 @@ export const clothes = pgTable("clothes", {
   type: varchar("type", { enum: ["top", "mid", "bottom"] }).notNull(),
 });
 
-// Outfits Table (references Clothes for top, mid, bottom)
+// Outfits Table
 export const outfits = pgTable("outfits", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  creatorId: uuid("creator_id")
+  _id: uuid("_id").defaultRandom().primaryKey(),
+  creator: uuid("creator")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  topId: uuid("top_id")
+    .references(() => users._id, { onDelete: "cascade" }),
+  top: uuid("top")
     .notNull()
-    .references(() => clothes.id, { onDelete: "cascade" }),
-  midId: uuid("mid_id")
+    .references(() => clothes._id, { onDelete: "cascade" }),
+  mid: uuid("mid")
     .notNull()
-    .references(() => clothes.id, { onDelete: "cascade" }),
-  bottomId: uuid("bottom_id")
+    .references(() => clothes._id, { onDelete: "cascade" }),
+  bottom: uuid("bottom")
     .notNull()
-    .references(() => clothes.id, { onDelete: "cascade" }),
+    .references(() => clothes._id, { onDelete: "cascade" }),
 });
 
-// Relational Definitions (Allows populated queries similar to Mongoose)
+// Relational Definitions for nested outfit queries
 export const clothesRelations = relations(clothes, ({ one }) => ({
-  creator: one(users, {
-    fields: [clothes.creatorId],
-    references: [users.id],
+  creatorUser: one(users, {
+    fields: [clothes.creator],
+    references: [users._id],
   }),
 }));
 
 export const outfitsRelations = relations(outfits, ({ one }) => ({
-  creator: one(users, {
-    fields: [outfits.creatorId],
-    references: [users.id],
+  creatorUser: one(users, {
+    fields: [outfits.creator],
+    references: [users._id],
   }),
-  top: one(clothes, {
-    fields: [outfits.topId],
-    references: [clothes.id],
+  topItem: one(clothes, {
+    fields: [outfits.top],
+    references: [clothes._id],
   }),
-  mid: one(clothes, {
-    fields: [outfits.midId],
-    references: [clothes.id],
+  midItem: one(clothes, {
+    fields: [outfits.mid],
+    references: [clothes._id],
   }),
-  bottom: one(clothes, {
-    fields: [outfits.bottomId],
-    references: [clothes.id],
+  bottomItem: one(clothes, {
+    fields: [outfits.bottom],
+    references: [clothes._id],
   }),
 }));
 
-// Export inferred TypeScript types
-export type UserSelect = typeof users.$inferSelect;
-export type UserInsert = typeof users.$inferInsert;
-export type ClothesSelect = typeof clothes.$inferSelect;
-export type ClothesInsert = typeof clothes.$inferInsert;
-export type OutfitSelect = typeof outfits.$inferSelect;
-export type OutfitInsert = typeof outfits.$inferInsert;
+export type IUser = typeof users.$inferSelect;
+export type IClothes = typeof clothes.$inferSelect;
+export type IOutfit = typeof outfits.$inferSelect;

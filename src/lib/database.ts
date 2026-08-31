@@ -1,44 +1,45 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import * as schema from "./schema";
 import { users, clothes, outfits } from "./schema";
 
-const sql = neon(process.env.DATABASE_URL!);
+const dbUrl = process.env.DATABASE_URL || process.env.MONGODB_URI || "";
+const sql = neon(dbUrl);
 export const db = drizzle(sql, { schema });
 
 /**
- * Neon serverless connections are stateless HTTP requests,
- * so explicit connection logic is no longer required.
+ * Normalizes input to extract string IDs whether passed as a string or an object
  */
+const getId = (val: any): string => {
+  if (!val) return "";
+  if (typeof val === "string") return val;
+  return val._id || val.id || val.creator || "";
+};
+
 export const connectDB = async () => {
-  if (!process.env.DATABASE_URL) {
+  if (!dbUrl) {
     throw new Error(
-      "DATABASE_URL is not set. Add it to .env or .env.local and restart the server."
+      "DATABASE_URL or MONGODB_URI is not set in environment variables."
     );
   }
 };
 
-/**
- * Recupera tutti gli utenti dal database Postgres
- */
 export const getUsersFromDb = async () => {
+  await connectDB();
   return await db.select().from(users);
 };
 
-/**
- * Trova un utente nel DB tramite email
- */
 export const getUserFromDb = async (email: string) => {
+  await connectDB();
   const result = await db.select().from(users).where(eq(users.email, email));
   return result[0] || null;
 };
 
-/**
- * Crea un nuovo utente nel DB memorizzando la password cifrata
- */
 export const createUserInDb = async (username: string, email: string, password: string) => {
+  await connectDB();
+
   const existingUser = await getUserFromDb(email);
   if (existingUser) {
     throw new Error("User already exists");
@@ -47,7 +48,7 @@ export const createUserInDb = async (username: string, email: string, password: 
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-  const [newUser] = await db
+  const [user] = await db
     .insert(users)
     .values({
       username,
@@ -56,76 +57,99 @@ export const createUserInDb = async (username: string, email: string, password: 
     })
     .returning();
 
-  return newUser;
+  return user;
 };
 
-/**
- * Updates an existing user
- */
-export const updateUserInDb = async (user: schema.UserSelect) => {
+export const updateUserInDb = async (user: any) => {
+  await connectDB();
   try {
+    const userId = getId(user);
     const [updated] = await db
       .update(users)
       .set(user)
-      .where(eq(users.id, user.id))
+      .where(eq(users._id, userId))
       .returning();
     return updated;
   } catch (err) {
     console.error("Error updating user", err);
-    throw err;
   }
 };
 
-/**
- * Deletes a user from the DB
- */
-export const deleteUserFromDb = async (user: schema.UserSelect) => {
+export const deleteUserFromDb = async (user: any) => {
+  await connectDB();
   try {
-    await db.delete(users).where(eq(users.id, user.id));
+    const userId = getId(user);
+    await db.delete(users).where(eq(users._id, userId));
   } catch (err) {
     console.error("Error deleting user", err);
   }
 };
 
-/**
- * Helper function to get every clothing item from DB
- */
 export const getAllClothesFromDb = async () => {
+  await connectDB();
   return await db.select().from(clothes);
 };
 
-/**
- * Finds clothing items in DB based on creator ID
- */
-export const getUserClothesFromDb = async (creatorId: string) => {
-  return await db.select().from(clothes).where(eq(clothes.creatorId, creatorId));
+export const getUserClothesFromDb = async (criteria: any) => {
+  await connectDB();
+  const creatorId = getId(criteria?.creator || criteria);
+  return await db.select().from(clothes).where(eq(clothes.creator, creatorId));
 };
 
-/**
- * Finds a clothing item in DB based on item ID
- */
-export const getClothingFromDb = async (id: string) => {
-  const result = await db.select().from(clothes).where(eq(clothes.id, id));
-  return result[0] || null;
+export const getClothingFromDb = async (criteria: any) => {
+  await connectDB();
+  if (typeof criteria === "string") {
+    const result = await db.select().from(clothes).where(eq(clothes._id, criteria));
+    return result[0] || null;
+  }
+  if (criteria?._id || criteria?.id) {
+    const id = getId(criteria);
+    const result = await db.select().from(clothes).where(eq(clothes._id, id));
+    return result[0] || null;
+  }
+  if (criteria?.name && criteria?.type) {
+    const result = await db
+      .select()
+      .from(clothes)
+      .where(and(eq(clothes.name, criteria.name), eq(clothes.type, criteria.type)));
+    return result[0] || null;
+  }
+  return null;
 };
 
-/**
- * Creates clothing item in DB
- */
-export const createClothingInDb = async (newClothes: schema.ClothesInsert) => {
-  const [created] = await db.insert(clothes).values(newClothes).returning();
-  return created;
+export const createClothingInDb = async (newClothes: any) => {
+  await connectDB();
+
+  const creatorId = getId(newClothes.creator || newClothes.creatorId);
+  if (!creatorId) {
+    throw new Error("Missing creator ID in clothing item creation.");
+  }
+
+  const payload: any = {
+    creator: creatorId,
+    name: newClothes.name,
+    image: newClothes.image || "",
+    modelFile: newClothes.modelFile || newClothes.model_file || "",
+    scale: newClothes.scale ?? 1,
+    position: newClothes.position || [0, 0, 0],
+    description: newClothes.description || "",
+    type: newClothes.type,
+  };
+
+  if (newClothes._id) payload._id = newClothes._id;
+
+  const [item] = await db.insert(clothes).values(payload).returning();
+  return item;
 };
 
-/**
- * Updates an existing clothes item
- */
-export const updateClothingInDb = async (clothesItem: schema.ClothesSelect) => {
+export const updateClothingInDb = async (clothesItem: any) => {
+  await connectDB();
   try {
+    const itemId = getId(clothesItem);
     const [updated] = await db
       .update(clothes)
       .set(clothesItem)
-      .where(eq(clothes.id, clothesItem.id))
+      .where(eq(clothes._id, itemId))
       .returning();
     return updated;
   } catch (err) {
@@ -134,89 +158,109 @@ export const updateClothingInDb = async (clothesItem: schema.ClothesSelect) => {
   }
 };
 
-/**
- * Deletes clothing item from DB
- */
-export const deleteClothingFromDb = async (clothesItem: schema.ClothesSelect) => {
+export const deleteClothingFromDb = async (clothesItem: any) => {
+  await connectDB();
   try {
-    await db.delete(clothes).where(eq(clothes.id, clothesItem.id));
+    const itemId = getId(clothesItem);
+    await db.delete(clothes).where(eq(clothes._id, itemId));
   } catch (err) {
     console.error("Error deleting clothes", err);
   }
 };
 
-/**
- * Finds outfits for a specific user, populating top, mid, and bottom references
- */
-export const getUserOutfitsFromDb = async (creatorId: string) => {
-  return await db.query.outfits.findMany({
-    where: eq(outfits.creatorId, creatorId),
+export const getUserOutfitsFromDb = async (criteria: any) => {
+  await connectDB();
+  const creatorId = getId(criteria?.creator || criteria);
+  const rows = await db.query.outfits.findMany({
+    where: eq(outfits.creator, creatorId),
     with: {
-      top: true,
-      mid: true,
-      bottom: true,
+      topItem: true,
+      midItem: true,
+      bottomItem: true,
     },
   });
+
+  return rows.map((o) => ({
+    _id: o._id,
+    creator: o.creator,
+    top: o.topItem,
+    mid: o.midItem,
+    bottom: o.bottomItem,
+  }));
 };
 
-/**
- * Gets all outfits from DB with populated relations
- */
 export const getOutfitsFromDb = async () => {
-  return await db.query.outfits.findMany({
+  await connectDB();
+  const rows = await db.query.outfits.findMany({
     with: {
-      top: true,
-      mid: true,
-      bottom: true,
+      topItem: true,
+      midItem: true,
+      bottomItem: true,
     },
   });
+
+  return rows.map((o) => ({
+    _id: o._id,
+    creator: o.creator,
+    top: o.topItem,
+    mid: o.midItem,
+    bottom: o.bottomItem,
+  }));
 };
 
-/**
- * Finds a single outfit in DB based on ID
- */
-export const getOutfitFromDb = async (id: string) => {
-  return await db.query.outfits.findFirst({
-    where: eq(outfits.id, id),
+export const getOutfitFromDb = async (criteria: any) => {
+  await connectDB();
+  const id = getId(criteria);
+  const o = await db.query.outfits.findFirst({
+    where: eq(outfits._id, id),
     with: {
-      top: true,
-      mid: true,
-      bottom: true,
+      topItem: true,
+      midItem: true,
+      bottomItem: true,
     },
   });
+
+  if (!o) return null;
+
+  return {
+    _id: o._id,
+    creator: o.creator,
+    top: o.topItem,
+    mid: o.midItem,
+    bottom: o.bottomItem,
+  };
 };
 
-/**
- * Creates outfit in DB storing relations by ID
- */
-export const createOutfitInDb = async ({
-  creatorId,
-  topId,
-  midId,
-  bottomId,
-}: {
-  creatorId: string;
-  topId: string;
-  midId: string;
-  bottomId: string;
-}) => {
-  const [outfit] = await db
+export const createOutfitInDb = async ({ top, mid, bottom, creator }: any) => {
+  await connectDB();
+
+  const creatorId = getId(creator);
+  const topId = getId(top);
+  const midId = getId(mid);
+  const bottomId = getId(bottom);
+
+  const [created] = await db
     .insert(outfits)
-    .values({ creatorId, topId, midId, bottomId })
+    .values({
+      creator: creatorId,
+      top: topId,
+      mid: midId,
+      bottom: bottomId,
+    })
     .returning();
 
-  return outfit;
+  const fullOutfit = await getOutfitFromDb(created._id);
+  return fullOutfit || created;
 };
 
-/**
- * Updates an existing outfit
- */
-export const updateOutfitInDb = async (outfit: schema.OutfitSelect) => {
+export const updateOutfitInDb = async (outfit: any) => {
+  await connectDB();
   try {
+    const outfitId = getId(outfit);
     const [updated] = await db
       .update(outfits)
       .set(outfit)
-      .where(eq(outfits.id, outfit.id))
+      .where(eq(outfits._id, outfitId))
       .returning();
     return updated;
   } catch (err) {
@@ -224,12 +268,11 @@ export const updateOutfitInDb = async (outfit: schema.OutfitSelect) => {
   }
 };
 
-/**
- * Deletes an outfit from the database
- */
-export const deleteOutfitFromDb = async (id: string) => {
+export const deleteOutfitFromDb = async (id: any) => {
+  await connectDB();
   try {
-    const [deleted] = await db.delete(outfits).where(eq(outfits.id, id)).returning();
+    const outfitId = getId(id);
+    const [deleted] = await db.delete(outfits).where(eq(outfits._id, outfitId)).returning();
     return { success: true, data: deleted };
   } catch (err) {
     console.error("Error deleting outfit", err);
@@ -237,12 +280,11 @@ export const deleteOutfitFromDb = async (id: string) => {
   }
 };
 
-/**
- * Deletes a clothing item from the database by ID
- */
-export const deleteItemFromDb = async (id: string) => {
+export const deleteItemFromDb = async (id: any) => {
+  await connectDB();
   try {
-    const [deleted] = await db.delete(clothes).where(eq(clothes.id, id)).returning();
+    const itemId = getId(id);
+    const [deleted] = await db.delete(clothes).where(eq(clothes._id, itemId)).returning();
     return { success: true, data: deleted };
   } catch (err) {
     console.error("Error deleting item", err);

@@ -1,259 +1,251 @@
-import mongoose from "mongoose";
-import { Outfit, User, Clothes } from "./models";
-import { IClothes, IOutfit, IUser } from "./interfaces";
-import { outfitType } from "./types";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import * as schema from "./schema";
+import { users, clothes, outfits } from "./schema";
+
+const sql = neon(process.env.DATABASE_URL!);
+export const db = drizzle(sql, { schema });
 
 /**
- * Connette l'applicazione al database MongoDB
+ * Neon serverless connections are stateless HTTP requests,
+ * so explicit connection logic is no longer required.
  */
 export const connectDB = async () => {
-    const uri = process.env.MONGODB_URI;
-    if (!uri) {
-        throw new Error(
-            'MONGODB_URI is not set. Add it to .env.local or set it in your environment variables and restart the dev server.'
-        );
-    }
-    try {
-        await mongoose.connect(uri);
-        console.log('MongoDB connected');
-    } catch (error) {
-        console.error('MongoDB connection error:', error);
-        process.exit(1);
-    }
+  if (!process.env.DATABASE_URL) {
+    throw new Error(
+      "DATABASE_URL is not set. Add it to .env or .env.local and restart the server."
+    );
+  }
 };
+
 /**
- * Helper per recuperare tutti gli utenti da MongoDB
+ * Recupera tutti gli utenti dal database Postgres
  */
 export const getUsersFromDb = async () => {
-    await connectDB();
-    return await User.find({});
+  return await db.select().from(users);
 };
+
 /**
  * Trova un utente nel DB tramite email
- *
- * @param {string} email - L'email dell'utente
- * @returns {Promise<User | null>} Utente trovato o null
  */
 export const getUserFromDb = async (email: string) => {
-    await connectDB();
-    return await User.findOne({ email: email });
+  const result = await db.select().from(users).where(eq(users.email, email));
+  return result[0] || null;
 };
+
 /**
- * Crea un nuovo utente nel DB memorizzando la password cifrata tramite bcrypt
- *
- * @param {string} username - Nome utente
- * @param {string} email - Indirizzo email
- * @param {string} password - Password in chiaro (verrà sottoposta ad hash)
+ * Crea un nuovo utente nel DB memorizzando la password cifrata
  */
 export const createUserInDb = async (username: string, email: string, password: string) => {
-    await connectDB();
-    
-    // Verifica se l'utente esiste già
-    const existingUser = await User.find({ email: email });
-    if (existingUser.length > 0) {
-        throw new Error('User already exists');
-    }
+  const existingUser = await getUserFromDb(email);
+  if (existingUser) {
+    throw new Error("User already exists");
+  }
 
-    // Generazione hash bcrypt per la password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const user = new User({ 
-        username, 
-        email, 
-        password: hashedPassword 
-    });
-    
-    await user.save();
-    return user;
+  const [newUser] = await db
+    .insert(users)
+    .values({
+      username,
+      email,
+      password: hashedPassword,
+    })
+    .returning();
+
+  return newUser;
 };
 
 /**
  * Updates an existing user
- *
- * @param {user} user - the user you need to update
- * @returns {void}
  */
-export const updateUserInDb = async (user: IUser) => {
-    await connectDB();
-    try  {
-        await User.findByIdAndUpdate(user._id, { $set: user }, { new: true }); // Update the user and return the updated document
-    } catch (err) {
-        console.error('Error updating user', err);
-    }
+export const updateUserInDb = async (user: schema.UserSelect) => {
+  try {
+    const [updated] = await db
+      .update(users)
+      .set(user)
+      .where(eq(users.id, user.id))
+      .returning();
+    return updated;
+  } catch (err) {
+    console.error("Error updating user", err);
+    throw err;
+  }
 };
+
 /**
- * Updates every users' outfit reference from the oldName to the newName
- *
- * @param {user} user - the user you need to delete
- * @returns {void}
+ * Deletes a user from the DB
  */
-export const deleteUserFromDb = async (user: IUser) => {
-    await connectDB();
-    try {
-        await User.findByIdAndDelete(user._id); // Delete the user by ID
-    } catch (err) {
-        console.error('Error deleting user', err);
-    }
+export const deleteUserFromDb = async (user: schema.UserSelect) => {
+  try {
+    await db.delete(users).where(eq(users.id, user.id));
+  } catch (err) {
+    console.error("Error deleting user", err);
+  }
 };
+
 /**
- * Helper function to get every clothing item from MongoDB
+ * Helper function to get every clothing item from DB
  */
 export const getAllClothesFromDb = async () => {
-    await connectDB();
-    return await Clothes.find({});
-}
-/**
- * Finds clothing item in DB based on name/type
- *
- * @param {criteria} criteria - The criteria (format: { creator: userId })
- * @returns {Clothes} Clothes - A clothing item saved in the DB for that specific user
- */
-export const getUserClothesFromDb = async (criteria: any) => {
-    await connectDB();
-    return await Clothes.find(criteria);
+  return await db.select().from(clothes);
 };
+
 /**
- * Finds clothing item in DB based on name/type
- *
- * @param {criteria} criteria - The criteria(name/type)
- * @returns {Clothes} Clothes - A clothing item saved in the DB
+ * Finds clothing items in DB based on creator ID
  */
-export const getClothingFromDb = async (criteria: any) => {
-    await connectDB();
-    return await Clothes.findOne(criteria);
+export const getUserClothesFromDb = async (creatorId: string) => {
+  return await db.select().from(clothes).where(eq(clothes.creatorId, creatorId));
 };
+
 /**
- * Creates clothing item in DB 
- *
- * @param {newClothes} newClothes - Clothing item to create in DB
- * @returns {Clothes} - The created clothing item
-*/
-export const createClothingInDb = async (newClothes: IClothes) => {
-    await connectDB();
-    const clothes = new Clothes(newClothes);
-    await clothes.save();
-    return clothes; // Return the created clothing item
-};
-/**
- * Updates an existing clothes
- *
- * @param {clothes} clothes - the clothing item you need to update
- * @returns {void}
+ * Finds a clothing item in DB based on item ID
  */
-export const updateClothingInDb = async (clothes: IClothes) => {
-  await connectDB();
+export const getClothingFromDb = async (id: string) => {
+  const result = await db.select().from(clothes).where(eq(clothes.id, id));
+  return result[0] || null;
+};
+
+/**
+ * Creates clothing item in DB
+ */
+export const createClothingInDb = async (newClothes: schema.ClothesInsert) => {
+  const [created] = await db.insert(clothes).values(newClothes).returning();
+  return created;
+};
+
+/**
+ * Updates an existing clothes item
+ */
+export const updateClothingInDb = async (clothesItem: schema.ClothesSelect) => {
   try {
-    const updated = await Clothes.findByIdAndUpdate(
-      clothes._id,
-      { $set: clothes },
-      { new: true } // return the updated document
-    );
+    const [updated] = await db
+      .update(clothes)
+      .set(clothesItem)
+      .where(eq(clothes.id, clothesItem.id))
+      .returning();
     return updated;
   } catch (err) {
     console.error("Error updating clothes", err);
     throw err;
   }
 };
+
 /**
- * Updates every clothes' outfit reference from the oldName to the newName
- *
- * @param {clothes} clothes - the clothes you need to delete
- * @returns {void}
+ * Deletes clothing item from DB
  */
-export const deleteClothingFromDb = async (clothes: IClothes) => {
-    await connectDB();
-    try {
-        await Clothes.findByIdAndDelete(clothes._id); // Delete the clothing item by ID
-    } catch (err) {
-        console.error('Error deleting clothes', err);
-    }
+export const deleteClothingFromDb = async (clothesItem: schema.ClothesSelect) => {
+  try {
+    await db.delete(clothes).where(eq(clothes.id, clothesItem.id));
+  } catch (err) {
+    console.error("Error deleting clothes", err);
+  }
 };
+
 /**
- * Finds outfit in DB based on id
- *
- * @param {criteria} criteria - The criteria (in format: { creator: userId })
- * @returns {Outfit} Outfit - A outfit saved in the DB
+ * Finds outfits for a specific user, populating top, mid, and bottom references
  */
-export const getUserOutfitsFromDb = async (criteria: any) => {
-    await connectDB();
-    return await Outfit.find(criteria);
+export const getUserOutfitsFromDb = async (creatorId: string) => {
+  return await db.query.outfits.findMany({
+    where: eq(outfits.creatorId, creatorId),
+    with: {
+      top: true,
+      mid: true,
+      bottom: true,
+    },
+  });
 };
+
 /**
- * Helper function to get every outfit from MongoDB
+ * Gets all outfits from DB with populated relations
  */
 export const getOutfitsFromDb = async () => {
-    await connectDB();
-    return await Outfit.find({});
-}
-/**
- * Finds outfit in DB based on id
- *
- * @param {criteria} criteria - The criteria(id)
- * @returns {Outfit} Outfit - A outfit saved in the DB
- */
-export const getOutfitFromDb = async (criteria: any) => {
-    await connectDB();
-    return await Outfit.findOne(criteria);
+  return await db.query.outfits.findMany({
+    with: {
+      top: true,
+      mid: true,
+      bottom: true,
+    },
+  });
 };
-/**
- * Creates outfit in DB
- *
- * @param {top, mid, bottom, creator} params of an outfit - Outfit to create in DB
- * @returns {Outfit} Outfit - The created outfit
-*/
-export const createOutfitInDb = async ({ top, mid, bottom, creator }: outfitType) => {
-    await connectDB();
-    const outfit = new Outfit({ top, mid, bottom, creator });
-    await outfit.save();
 
-    return outfit;
+/**
+ * Finds a single outfit in DB based on ID
+ */
+export const getOutfitFromDb = async (id: string) => {
+  return await db.query.outfits.findFirst({
+    where: eq(outfits.id, id),
+    with: {
+      top: true,
+      mid: true,
+      bottom: true,
+    },
+  });
 };
+
+/**
+ * Creates outfit in DB storing relations by ID
+ */
+export const createOutfitInDb = async ({
+  creatorId,
+  topId,
+  midId,
+  bottomId,
+}: {
+  creatorId: string;
+  topId: string;
+  midId: string;
+  bottomId: string;
+}) => {
+  const [outfit] = await db
+    .insert(outfits)
+    .values({ creatorId, topId, midId, bottomId })
+    .returning();
+
+  return outfit;
+};
+
 /**
  * Updates an existing outfit
- *
- * @param {outfit} outfit - the outfit you need to update
- * @returns {void}
  */
-export const updateOutfitInDb = async (outfit: IOutfit) => {
-    await connectDB();
-    try  {
-        await Outfit.findByIdAndUpdate(outfit._id, { $set: outfit }, { new: true }); // Update the user and return the updated document
-    } catch (err) {
-        console.error('Error updating outfit', err);
-    }
+export const updateOutfitInDb = async (outfit: schema.OutfitSelect) => {
+  try {
+    const [updated] = await db
+      .update(outfits)
+      .set(outfit)
+      .where(eq(outfits.id, outfit.id))
+      .returning();
+    return updated;
+  } catch (err) {
+    console.error("Error updating outfit", err);
+  }
 };
+
 /**
- * Deletes a outfit from the database
- *
- * @param {id} id - the ID of the outfit you need to delete
- * @returns {void}
+ * Deletes an outfit from the database
  */
 export const deleteOutfitFromDb = async (id: string) => {
-    await connectDB();
-    try {
-        const result = await Outfit.findByIdAndDelete(id);
-        return { success: true, data: result };
-    } catch (err) {
-        console.error('Error deleting outfit', err);
-        return { success: false, error: 'Errore nel server' };
-    }
+  try {
+    const [deleted] = await db.delete(outfits).where(eq(outfits.id, id)).returning();
+    return { success: true, data: deleted };
+  } catch (err) {
+    console.error("Error deleting outfit", err);
+    return { success: false, error: "Errore nel server" };
+  }
 };
+
 /**
- * Deletes a item from the database
- *
- * @param {id} id - the ID of the item you need to delete
- * @returns {void}
+ * Deletes a clothing item from the database by ID
  */
 export const deleteItemFromDb = async (id: string) => {
-    await connectDB();
-
-    try {
-        const result = await Clothes.findByIdAndDelete(id);
-        return { success: true, data: result };
-    } catch (err) {
-        console.error('Error deleting item', err);
-        return { success: false, error: 'Errore nel server' };
-    }
-}
+  try {
+    const [deleted] = await db.delete(clothes).where(eq(clothes.id, id)).returning();
+    return { success: true, data: deleted };
+  } catch (err) {
+    console.error("Error deleting item", err);
+    return { success: false, error: "Errore nel server" };
+  }
+};

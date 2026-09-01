@@ -92,18 +92,18 @@ const ClosetPage = () => {
   };
 
   const importItem = async (item: EditableClothesType) => {
+    const formData = new FormData();
+    formData.append("item", JSON.stringify(item));
+
+    if (item.imageFile) formData.append("image", item.imageFile);
+    if (item.modelFileFile) formData.append("model", item.modelFileFile);
+
+    formData.append("name", item.name);
+    formData.append("scale", String(item.scale));
+    formData.append("description", item.description);
+    formData.append("position", JSON.stringify(item.position));
+    if (item.type) formData.append("type", item.type);
     try {
-      const formData = new FormData();
-      formData.append("item", JSON.stringify(item));
-
-      if (item.imageFile) formData.append("image", item.imageFile);
-      if (item.modelFileFile) formData.append("model", item.modelFileFile);
-
-      formData.append("name", item.name);
-      formData.append("scale", String(item.scale));
-      formData.append("description", item.description);
-      formData.append("position", JSON.stringify(item.position));
-      if (item.type) formData.append("type", item.type);
 
       const response = await axios.post("/api/import", formData, {
         headers: { "Content-Type": "multipart/form-data" },

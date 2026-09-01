@@ -1,4 +1,6 @@
-import { createClothingInDb } from '@/lib/database';
+import { createClothingInDb, db, connectDB } from '@/lib/database';
+import { users } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
 import path from "path";
 import fs from "fs/promises";
 
@@ -6,7 +8,42 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const formData = await request.formData();
     const itemJson = formData.get("item") as string;
+
+    if (!itemJson) {
+      return new Response(
+        JSON.stringify({ success: false, message: 'Missing item data in form' }),
+        { status: 400 }
+      );
+    }
+
     const item = JSON.parse(itemJson);
+
+    // 1. Extract creator ID (handles both raw string and object shapes)
+    const creatorId = typeof item.creator === 'object' ? item.creator?._id : item.creator;
+
+    if (!creatorId) {
+      return new Response(
+        JSON.stringify({ success: false, message: 'Missing creator ID in item payload' }),
+        { status: 400 }
+      );
+    }
+
+    // 2. Validate user exists in PostgreSQL before attempting insert
+    await connectDB();
+    const existingUsers = await db.select().from(users).where(eq(users._id, creatorId));
+
+    if (existingUsers.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: `User with ID '${creatorId}' does not exist in database. Please log out and re-login.`
+        }),
+        { status: 400 }
+      );
+    }
+
+    // Normalize creator to string UUID
+    item.creator = creatorId;
 
     // Ensure upload directory exists to prevent ENOENT errors
     const uploadDir = path.join(process.cwd(), "public/uploads");

@@ -29,7 +29,7 @@ const Clothing = ({ item, onOpen }: { item: clothesType, onOpen: (item: clothesT
 
       <div className="relative w-36 h-36 my-2 flex items-center justify-center bg-zinc-950/40 rounded-2xl border border-white/5 p-2">
         {item?.image ? (
-          <Image alt={item.name} src={item.image} fill className='object-contain p-2' />
+          <Image alt={item.name} src={item.image} fill className='object-contain p-2' style={{ transform: `scale(${item.scale || 1})` }} />
         ) : (
           <div className="text-xs text-zinc-600">No Image</div>
         )}

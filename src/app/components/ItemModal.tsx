@@ -21,7 +21,9 @@ import {
   Loader2, 
   Check,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  MoveDiagonal,
+  ZoomIn
 } from 'lucide-react';
 
 const ItemModal = ({
@@ -33,11 +35,19 @@ const ItemModal = ({
   onSave: (newItem: EditableClothesType) => void;
   item: clothesType;
 }) => {
-  const [newItem, setNewItem] = useState<EditableClothesType>(item);
+  const [newItem, setNewItem] = useState<EditableClothesType>({
+    ...item,
+    scale: item.scale || 1,
+  });
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Drag scaling refs
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const startScaleRef = useRef(1);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -76,10 +86,45 @@ const ItemModal = ({
   // Helper function to update scale smoothly
   const handleScaleStep = (delta: number) => {
     setNewItem((prev) => {
-      const currentVal = prev.scale || 0;
-      const updated = Math.max(0, parseFloat((currentVal + delta).toFixed(2)));
+      const currentVal = prev.scale || 1;
+      const updated = Math.max(0.1, parseFloat((currentVal + delta).toFixed(2)));
       return { ...prev, scale: updated };
     });
+  };
+
+  // Scroll wheel scaling handler for image preview
+  const handleImageWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.05 : -0.05;
+    handleScaleStep(delta);
+  };
+
+  // Pointer drag scaling handlers (drag handle at bottom-right of preview)
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingRef.current = true;
+    startXRef.current = e.clientX;
+    startScaleRef.current = newItem.scale || 1;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    const deltaX = e.clientX - startXRef.current;
+    const newScale = Math.max(0.1, Math.min(3, parseFloat((startScaleRef.current + deltaX * 0.01).toFixed(2))));
+    setNewItem((prev) => ({ ...prev, scale: newScale }));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      try {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch (err) {
+        // Ignore if pointer capture already released
+      }
+    }
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,7 +239,7 @@ const ItemModal = ({
               )}
             </div>
 
-            {/* 2D Image Upload */}
+            {/* 2D Image Upload & Interactive Canvas */}
             <div>
               <label htmlFor="image-input" className={labelStyle}>
                 <Upload className="w-3.5 h-3.5 text-indigo-400" />
@@ -209,7 +254,7 @@ const ItemModal = ({
                 className={fileInputStyle}
               />
 
-              {/* Loading Indicator for AI Background Removal */}
+              {/* Loading Indicator */}
               {isRemovingBg && (
                 <div className="mt-3 flex items-center justify-center gap-3 text-xs text-indigo-400 font-medium py-6 px-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 backdrop-blur-md animate-pulse">
                   <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
@@ -217,15 +262,41 @@ const ItemModal = ({
                 </div>
               )}
 
-              {/* Image Preview Area */}
+              {/* Interactive Image Scaling Preview Container */}
               {!isRemovingBg && newItem?.image && (
-                <div className="mt-3 relative w-full h-44 rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/80 shadow-inner flex items-center justify-center bg-[radial-gradient(#ffffff0d_1px,transparent_1px)] [background-size:12px_12px]">
-                  <Image
-                    alt="Preview"
-                    src={newItem.image}
-                    fill
-                    className="object-contain p-3 drop-shadow-lg"
-                  />
+                <div 
+                  onWheel={handleImageWheel}
+                  className="mt-3 relative w-full h-48 rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/80 shadow-inner flex items-center justify-center bg-[radial-gradient(#ffffff0d_1px,transparent_1px)] [background-size:12px_12px] group select-none"
+                >
+                  {/* Visual scale hint badge */}
+                  <div className="absolute top-2.5 left-2.5 z-10 px-2 py-1 rounded-lg bg-zinc-900/80 border border-white/10 text-[10px] font-medium text-zinc-400 backdrop-blur-md flex items-center gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <ZoomIn className="w-3 h-3 text-indigo-400" />
+                    <span>Scroll or drag handle to scale ({newItem.scale || 1}x)</span>
+                  </div>
+
+                  {/* Resizable Image */}
+                  <div 
+                    className="relative w-full h-full flex items-center justify-center transition-transform duration-75"
+                    style={{ transform: `scale(${newItem.scale || 1})` }}
+                  >
+                    <Image
+                      alt="Preview"
+                      src={newItem.image}
+                      fill
+                      className="object-contain p-4 drop-shadow-xl pointer-events-none"
+                    />
+                  </div>
+
+                  {/* Corner Drag Scale Handle */}
+                  <div
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    className="absolute bottom-2 right-2 z-20 p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg cursor-nwse-resize transition-all active:scale-95 flex items-center justify-center group/handle"
+                    title="Drag horizontally to scale image"
+                  >
+                    <MoveDiagonal className="w-4 h-4 group-hover/handle:scale-110 transition-transform" />
+                  </div>
                 </div>
               )}
             </div>
@@ -300,7 +371,7 @@ const ItemModal = ({
               />
             </div>
 
-            {/* Position (X, Y, Z) with Custom Spin Buttons */}
+            {/* Position (X, Y, Z) */}
             <div>
               <label className={labelStyle}>
                 <Move className="w-3.5 h-3.5 text-indigo-400" />
@@ -326,7 +397,6 @@ const ItemModal = ({
                       }}
                       className={`${numberInputStyle} pl-7 pr-7 text-center`}
                     />
-                    {/* Custom Up/Down Arrows */}
                     <div className="absolute right-1.5 flex flex-col gap-0.5">
                       <button
                         type="button"
@@ -348,21 +418,20 @@ const ItemModal = ({
               </div>
             </div>
 
-            {/* Scale with Custom Spin Buttons */}
+            {/* Scale Sync Field */}
             <div>
               <label className={labelStyle}>
                 <Maximize2 className="w-3.5 h-3.5 text-indigo-400" />
-                3D Model Scale
+                Scale (Image & 3D Model)
               </label>
               <div className="relative flex items-center">
                 <input
                   type="number"
                   step="0.1"
                   value={newItem.scale}
-                  onChange={(e) => setNewItem((prev) => ({ ...prev, scale: parseFloat(e.target.value) || 0 }))}
+                  onChange={(e) => setNewItem((prev) => ({ ...prev, scale: parseFloat(e.target.value) || 1 }))}
                   className={`${numberInputStyle} pr-8`}
                 />
-                {/* Custom Up/Down Arrows */}
                 <div className="absolute right-1.5 flex flex-col gap-0.5">
                   <button
                     type="button"

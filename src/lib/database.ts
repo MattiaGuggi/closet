@@ -3,7 +3,8 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { eq, and } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import * as schema from "./schema";
-import { users, clothes, outfits } from "./schema";
+import { users, clothes, outfits, IClothes, IOutfit } from "./schema";
+import { clothesType, outfitType } from "./types";
 
 const dbUrl = process.env.DATABASE_URL || process.env.MONGODB_URI || "";
 const sql = neon(dbUrl);
@@ -117,10 +118,10 @@ export const getClothingFromDb = async (criteria: any) => {
   return null;
 };
 
-export const createClothingInDb = async (newClothes: any) => {
+export const createClothingInDb = async (newClothes: clothesType) => {
   await connectDB();
 
-  const creatorId = getId(newClothes.creator || newClothes.creatorId);
+  const creatorId = getId(newClothes.creator);
   if (!creatorId) {
     throw new Error("Missing creator ID in clothing item creation.");
   }
@@ -129,7 +130,7 @@ export const createClothingInDb = async (newClothes: any) => {
     creator: creatorId,
     name: newClothes.name,
     image: newClothes.image || "",
-    modelFile: newClothes.modelFile || newClothes.model_file || "",
+    modelFile: newClothes.modelFile || "",
     scale: newClothes.scale ?? 1,
     position: newClothes.position || [0, 0, 0],
     description: newClothes.description || "",
@@ -142,13 +143,25 @@ export const createClothingInDb = async (newClothes: any) => {
   return item;
 };
 
-export const updateClothingInDb = async (clothesItem: any) => {
+export const updateClothingInDb = async (clothesItem: clothesType) => {
   await connectDB();
   try {
     const itemId = getId(clothesItem);
+    const creatorId = getId(clothesItem.creator);
+
+    const payload: Partial<IClothes> = {};
+    if (clothesItem.name !== undefined) payload.name = clothesItem.name;
+    if (clothesItem.image !== undefined) payload.image = clothesItem.image;
+    if (clothesItem.modelFile !== undefined) payload.modelFile = clothesItem.modelFile;
+    if (clothesItem.scale !== undefined) payload.scale = clothesItem.scale;
+    if (clothesItem.position !== undefined) payload.position = clothesItem.position;
+    if (clothesItem.description !== undefined) payload.description = clothesItem.description;
+    if (clothesItem.type !== null && clothesItem.type !== undefined) payload.type = clothesItem.type;
+    if (creatorId) payload.creator = creatorId;
+
     const [updated] = await db
       .update(clothes)
-      .set(clothesItem)
+      .set(payload)
       .where(eq(clothes._id, itemId))
       .returning();
     return updated;
@@ -158,7 +171,7 @@ export const updateClothingInDb = async (clothesItem: any) => {
   }
 };
 
-export const deleteClothingFromDb = async (clothesItem: any) => {
+export const deleteClothingFromDb = async (clothesItem: clothesType) => {
   await connectDB();
   try {
     const itemId = getId(clothesItem);
@@ -208,7 +221,7 @@ export const getOutfitsFromDb = async () => {
   }));
 };
 
-export const getOutfitFromDb = async (criteria: any) => {
+export const getOutfitFromDb = async (criteria: string | number) => {
   await connectDB();
   const id = getId(criteria);
   const o = await db.query.outfits.findFirst({
@@ -253,13 +266,20 @@ export const createOutfitInDb = async ({ top, mid, bottom, creator }: any) => {
   return fullOutfit || created;
 };
 
-export const updateOutfitInDb = async (outfit: any) => {
+export const updateOutfitInDb = async (outfit: outfitType) => {
   await connectDB();
   try {
     const outfitId = getId(outfit);
+
+    const payload: Partial<IOutfit> = {};
+    if (outfit.creator) payload.creator = getId(outfit.creator);
+    if (outfit.top) payload.top = getId(outfit.top);
+    if (outfit.mid) payload.mid = getId(outfit.mid);
+    if (outfit.bottom) payload.bottom = getId(outfit.bottom);
+
     const [updated] = await db
       .update(outfits)
-      .set(outfit)
+      .set(payload)
       .where(eq(outfits._id, outfitId))
       .returning();
     return updated;
@@ -268,7 +288,7 @@ export const updateOutfitInDb = async (outfit: any) => {
   }
 };
 
-export const deleteOutfitFromDb = async (id: any) => {
+export const deleteOutfitFromDb = async (id: string | number) => {
   await connectDB();
   try {
     const outfitId = getId(id);
@@ -280,7 +300,7 @@ export const deleteOutfitFromDb = async (id: any) => {
   }
 };
 
-export const deleteItemFromDb = async (id: any) => {
+export const deleteItemFromDb = async (id: string | number) => {
   await connectDB();
   try {
     const itemId = getId(id);

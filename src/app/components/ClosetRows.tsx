@@ -52,14 +52,6 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
               </span>
             </div>
 
-            {/* Nome del Capo Corrente */}
-            {currentItem?.name && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-zinc-900/80 border border-white/10 text-xs font-medium text-zinc-300 backdrop-blur-md z-10 flex items-center gap-1.5 shadow-md pointer-events-none">
-                <Tag className="w-3 h-3 text-indigo-400" />
-                <span>{currentItem.name}</span>
-              </div>
-            )}
-
             {/* Left Nav Button */}
             <button
               type="button"
@@ -76,17 +68,26 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
 
               {three ? (
                 <>
-                  {currentItem && currentItem.modelFile ? (
-                    <Canvas camera={{ position: [0, 0, 2.6], fov: 28 }}>
-                      <React.Suspense fallback={<Loader />}>
-                        <Environment preset="sunset" />
-                        <Model item={currentItem} />
-                        <OrbitControls enableDamping dampingFactor={0.05} enableZoom={true} />
-                      </React.Suspense>
-                    </Canvas>
-                  ) : (
-                    <div className="text-zinc-500 text-xs font-semibold uppercase tracking-wider bg-zinc-900/40 px-4 py-2 rounded-xl border border-white/5">
-                      No 3D model
+                  {currentItem && (
+                    <div className="relative w-full h-full max-w-md sm:max-w-lg flex items-center justify-center p-0">
+                      {!loadedImages[itemKey] && (
+                        <div className="absolute inset-2 animate-pulse bg-zinc-800/40 rounded-2xl border border-white/5" />
+                      )}
+                      <Image
+                        key={itemKey}
+                        src={currentItem.image}
+                        alt={currentItem.name}
+                        fill
+                        sizes="(max-width: 768px) 80vw, 40vw"
+                        priority
+                        className={`closet-image object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 hover:scale-105 ${
+                          loadedImages[itemKey] ? "opacity-100" : "opacity-0 scale-95"
+                        }`}
+                        style={{
+                          transform: `scale(${currentItem.scale || 1})`
+                        }}
+                        onLoad={() => handleImageLoad(itemKey)}
+                      />
                     </div>
                   )}
                 </>
@@ -98,9 +99,9 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
                     </div>
                   )}
                   {currentItem && (
-                    <div className="relative w-full h-full max-w-[340px] flex items-center justify-center p-2">
+                    <div className="relative w-full h-full max-w-md sm:max-w-lg flex items-center justify-center p-0">
                       {!loadedImages[itemKey] && (
-                        <div className="absolute inset-4 animate-pulse bg-zinc-800/40 rounded-2xl border border-white/5" />
+                        <div className="absolute inset-2 animate-pulse bg-zinc-800/40 rounded-2xl border border-white/5" />
                       )}
                       <Image
                         key={itemKey}
@@ -109,9 +110,12 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
                         fill
                         sizes="(max-width: 768px) 80vw, 40vw"
                         priority
-                        className={`closet-image object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-all duration-300 hover:scale-105 ${
-                          loadedImages[itemKey] ? "opacity-100 scale-100" : "opacity-0 scale-95"
+                        className={`closet-image object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 hover:scale-105 ${
+                          loadedImages[itemKey] ? "opacity-100" : "opacity-0 scale-95"
                         }`}
+                        style={{
+                          transform: `scale(${currentItem.scale || 1})`
+                        }}
                         onLoad={() => handleImageLoad(itemKey)}
                       />
                     </div>

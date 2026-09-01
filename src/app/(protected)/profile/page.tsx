@@ -294,7 +294,7 @@ export default function ProfilePage() {
               </div>
             </div>
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
-              {clothes?.length || 0} Items
+              {clothes?.length || 0} Item(s)
             </span>
           </div>
 
@@ -336,7 +336,7 @@ export default function ProfilePage() {
               </div>
             </div>
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
-              {outfits?.length || 0} Outfits
+              {outfits?.length || 0} Outfit(s)
             </span>
           </div>
 

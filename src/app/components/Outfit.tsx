@@ -21,7 +21,7 @@ const Outfit = ({ item, onOpen }: { item: outfitType, onOpen: (item: outfitType)
   }, []);
 
   return (
-    <div className='outfit-card w-full rounded-3xl bg-zinc-900/60 border border-white/10 hover:border-purple-500/40 p-6 flex flex-col items-center justify-between backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02]'>
+    <div className='outfit-card w-full rounded-3xl bg-zinc-900/60 border border-white/10 hover:border-indigo-500/40 p-6 flex flex-col items-center justify-between backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02]'>
       {item && (
         <>
           <div className="w-full flex flex-col items-center gap-2 p-3 bg-zinc-950/40 rounded-2xl border border-white/5 my-2">

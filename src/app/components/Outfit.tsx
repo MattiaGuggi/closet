@@ -1,25 +1,8 @@
-import React, { useEffect } from 'react'
 import Image from 'next/image'
-import gsap from 'gsap';
 import { outfitType } from '@/lib/types'
 import { Edit3 } from 'lucide-react'
 
 const Outfit = ({ item, onOpen }: { item: outfitType, onOpen: (item: outfitType) => void }) => {
-
-  useEffect(() => {
-    gsap.set('.outfit-card', {
-      opacity: 0,
-      y: 30,
-    });
-    gsap.to('.outfit-card', {
-      opacity: 1,
-      y: 0,
-      duration: 0.5,
-      stagger: 0.1,
-      ease: 'power2.out',
-    });
-  }, []);
-
   return (
     <div className='outfit-card w-full rounded-3xl bg-zinc-900/60 border border-white/10 hover:border-indigo-500/40 p-6 flex flex-col items-center justify-between backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02]'>
       {item && (

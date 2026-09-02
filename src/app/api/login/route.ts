@@ -1,41 +1,87 @@
-import { getUserFromDb } from "@/lib/database";
-import bcrypt from "bcrypt";
+// src/app/api/user/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { getUserFromDb } from '@/lib/database';
+import bcrypt from 'bcrypt';
 
-export async function POST(request: Request): Promise<Response> {
-    try {
-        const { email, password } = await request.json();
-        
-        if (!email || !password) {
-            return new Response(JSON.stringify({ success: false, message: "Email e password obbligatorie" }), {
-                status: 400,
-                headers: { "Content-Type": "application/json" },
-            });
-        }
+/**
+ * GET: Handles session verification on page refresh
+ * Route: /api/user?userId=...
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
 
-        const user = await getUserFromDb(email);
-
-        // Verifica della password in chiaro con l'hash bcrypt presente a DB
-        if (user && await bcrypt.compare(password, user.password)) {
-            const safeUser = {
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-            };
-
-            return new Response(JSON.stringify({ success: true, user: safeUser }), {
-                status: 200,
-                headers: { "Content-Type": "application/json" },
-            });
-        }
-        
-        return new Response(JSON.stringify({ success: false, message: "Invalid credentials" }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-        });
-    } catch (error) {
-        return new Response(JSON.stringify({ success: false, message: "Errore interno del server" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-        });
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: 'Missing userId parameter' },
+        { status: 400 }
+      );
     }
+
+    const user = await getUserFromDb({ _id: userId });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    const safeUser = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      pfp: user.pfp,
+    };
+
+    return NextResponse.json({ success: true, user: safeUser }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error in GET /api/user:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST: Handles login authentication
+ * Route: /api/user
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const { email, password } = await request.json();
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, message: 'Email and password required' },
+        { status: 400 }
+      );
+    }
+
+    const user = await getUserFromDb({ email });
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const safeUser = {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        pfp: user.pfp,
+      };
+
+      return NextResponse.json({ success: true, user: safeUser }, { status: 200 });
+    }
+
+    return NextResponse.json(
+      { success: false, message: 'Invalid credentials' },
+      { status: 401 }
+    );
+  } catch (error: any) {
+    console.error('Error in POST /api/user:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 }

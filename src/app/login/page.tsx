@@ -1,4 +1,5 @@
 'use client'
+
 import React, { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '../context/UserContext'
@@ -14,30 +15,38 @@ const Login = () => {
   const router = useRouter()
   const { isAuthenticated, login } = useUser()
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
     if (!email) {
       setError("Invalid email format");
       return;
     }
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    if (data.success) {
-      login(data.user);
-      router.push('/');
-    } else {
-      setError(data.message || "Login failed");
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.user) {
+        login(data.user);
+        router.push('/');
+      } else {
+        setError(data.message || "Login failed");
+      }
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
     }
   };
 
   useEffect(() => {
     if (isAuthenticated) router.push('/');
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   useGSAP(() => {
     gsap.fromTo(

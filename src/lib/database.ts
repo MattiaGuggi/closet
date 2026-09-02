@@ -32,16 +32,28 @@ export const getUsersFromDb = async () => {
   return await db.select().from(users);
 };
 
-export const getUserFromDb = async (email: string) => {
+export const getUserFromDb = async (criteria: { _id?: string; email?: string }) => {
   await connectDB();
-  const result = await db.select().from(users).where(eq(users.email, email));
-  return result[0] || null;
+
+  if (!criteria) return null;
+
+  if (criteria._id) {
+    const [user] = await db.select().from(users).where(eq(users._id, criteria._id));
+    return user || null;
+  }
+
+  if (criteria.email) {
+    const [user] = await db.select().from(users).where(eq(users.email, criteria.email));
+    return user || null;
+  }
+
+  return null;
 };
 
 export const createUserInDb = async (username: string, email: string, password: string) => {
   await connectDB();
 
-  const existingUser = await getUserFromDb(email);
+  const existingUser = await getUserFromDb({ email });
   if (existingUser) {
     throw new Error("User already exists");
   }

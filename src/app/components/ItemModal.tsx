@@ -137,23 +137,34 @@ const ItemModal = ({
       const blob = await removeBackground(file);
       const cleanFileName = file.name.replace(/\.[^/.]+$/, '') + '-nobg.png';
       const cleanFile = new File([blob], cleanFileName, { type: 'image/png' });
-      const previewUrl = URL.createObjectURL(cleanFile);
+      
+      // Convert to Base64
+      const base64Image = await fileToBase64(cleanFile);
 
       setNewItem((prev) => ({
         ...prev,
         imageFile: cleanFile,
-        image: previewUrl,
+        image: base64Image, // Persistent Data URL
       }));
     } catch (error) {
-      console.error('Failed to remove background, falling back to original image:', error);
+      const base64Image = await fileToBase64(file);
       setNewItem((prev) => ({
         ...prev,
         imageFile: file,
-        image: URL.createObjectURL(file),
+        image: base64Image,
       }));
     } finally {
       setIsRemovingBg(false);
     }
+  };
+
+  const fileToBase64 = (file: File | Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
   const typeOptions: { label: string; value: Position }[] = [

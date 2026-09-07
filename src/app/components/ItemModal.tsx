@@ -73,7 +73,6 @@ const ItemModal = ({
   const fileInputStyle = 
     'w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700 cursor-pointer border border-white/10 rounded-xl p-1 bg-zinc-950/40 disabled:opacity-50 transition-all';
 
-  // Helper function to update position smoothly
   const handlePositionStep = (axisIndex: number, delta: number) => {
     setNewItem((prev) => {
       const newPos = [...prev.position] as [number, number, number];
@@ -83,7 +82,6 @@ const ItemModal = ({
     });
   };
 
-  // Helper function to update scale smoothly
   const handleScaleStep = (delta: number) => {
     setNewItem((prev) => {
       const currentVal = prev.scale || 1;
@@ -92,14 +90,12 @@ const ItemModal = ({
     });
   };
 
-  // Scroll wheel scaling handler for image preview
   const handleImageWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY < 0 ? 0.05 : -0.05;
     handleScaleStep(delta);
   };
 
-  // Pointer drag scaling handlers (drag handle at bottom-right of preview)
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -122,7 +118,7 @@ const ItemModal = ({
       try {
         (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       } catch (err) {
-        // Ignore if pointer capture already released
+        // Ignore capture release error
       }
     }
   };
@@ -138,33 +134,23 @@ const ItemModal = ({
       const cleanFileName = file.name.replace(/\.[^/.]+$/, '') + '-nobg.png';
       const cleanFile = new File([blob], cleanFileName, { type: 'image/png' });
       
-      // Convert to Base64
-      const base64Image = await fileToBase64(cleanFile);
+      const previewUrl = URL.createObjectURL(cleanFile);
 
       setNewItem((prev) => ({
         ...prev,
         imageFile: cleanFile,
-        image: base64Image, // Persistent Data URL
+        image: previewUrl,
       }));
     } catch (error) {
-      const base64Image = await fileToBase64(file);
+      const previewUrl = URL.createObjectURL(file);
       setNewItem((prev) => ({
         ...prev,
         imageFile: file,
-        image: base64Image,
+        image: previewUrl,
       }));
     } finally {
       setIsRemovingBg(false);
     }
-  };
-
-  const fileToBase64 = (file: File | Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
   };
 
   const typeOptions: { label: string; value: Position }[] = [
@@ -279,13 +265,11 @@ const ItemModal = ({
                   onWheel={handleImageWheel}
                   className="mt-3 relative w-full h-48 rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/80 shadow-inner flex items-center justify-center bg-[radial-gradient(#ffffff0d_1px,transparent_1px)] [background-size:12px_12px] group select-none"
                 >
-                  {/* Visual scale hint badge */}
                   <div className="absolute top-2.5 left-2.5 z-10 px-2 py-1 rounded-lg bg-zinc-900/80 border border-white/10 text-[10px] font-medium text-zinc-400 backdrop-blur-md flex items-center gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     <ZoomIn className="w-3 h-3 text-indigo-400" />
                     <span>Scroll or drag handle to scale ({newItem.scale || 1}x)</span>
                   </div>
 
-                  {/* Resizable Image */}
                   <div 
                     className="relative w-full h-full flex items-center justify-center transition-transform duration-75"
                     style={{ transform: `scale(${newItem.scale || 1})` }}
@@ -298,7 +282,6 @@ const ItemModal = ({
                     />
                   </div>
 
-                  {/* Corner Drag Scale Handle */}
                   <div
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
@@ -351,8 +334,6 @@ const ItemModal = ({
 
           {/* RIGHT COLUMN: TEXT & NUMERIC FIELDS */}
           <div className="flex flex-col gap-5">
-            
-            {/* Name */}
             <div>
               <label className={labelStyle}>
                 <Tag className="w-3.5 h-3.5 text-indigo-400" />
@@ -367,7 +348,6 @@ const ItemModal = ({
               />
             </div>
 
-            {/* Description */}
             <div>
               <label className={labelStyle}>
                 <FileText className="w-3.5 h-3.5 text-indigo-400" />
@@ -382,7 +362,6 @@ const ItemModal = ({
               />
             </div>
 
-            {/* Position (X, Y, Z) */}
             <div>
               <label className={labelStyle}>
                 <Move className="w-3.5 h-3.5 text-indigo-400" />
@@ -429,7 +408,6 @@ const ItemModal = ({
               </div>
             </div>
 
-            {/* Scale Sync Field */}
             <div>
               <label className={labelStyle}>
                 <Maximize2 className="w-3.5 h-3.5 text-indigo-400" />
@@ -461,7 +439,6 @@ const ItemModal = ({
                 </div>
               </div>
             </div>
-
           </div>
         </div>
 

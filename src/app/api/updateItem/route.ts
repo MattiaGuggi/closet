@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import path from "path";
-import fs from "fs/promises";
 import { updateClothingInDb } from "@/lib/database";
+import { UTApi } from "uploadthing/server";
+
+const utapi = new UTApi({ token: process.env.UPLOADTHING_TOKEN! });
 
 export async function POST(request: Request) {
   try {
@@ -9,24 +10,22 @@ export async function POST(request: Request) {
     const itemJson = formData.get("item") as string;
     const item = JSON.parse(itemJson);
 
-    // IMAGE FILE
+    // Upload Image
     const imageFile = formData.get("image") as File | null;
-    if (imageFile) {
-      const bytes = Buffer.from(await imageFile.arrayBuffer());
-      const filename = `${Date.now()}-${imageFile.name}`;
-      const uploadPath = path.join(process.cwd(), "public/uploads", filename);
-      await fs.writeFile(uploadPath, bytes);
-      item.image = `/uploads/${filename}`;
+    if (imageFile && imageFile.size > 0) {
+      const uploadRes = await utapi.uploadFiles(imageFile);
+      if (uploadRes.data?.url) {
+        item.image = uploadRes.data.url;
+      }
     }
 
-    // MODEL FILE
+    // Upload 3D Model
     const modelFile = formData.get("model") as File | null;
-    if (modelFile) {
-      const bytes = Buffer.from(await modelFile.arrayBuffer());
-      const filename = `${Date.now()}-${modelFile.name}`;
-      const uploadPath = path.join(process.cwd(), "public/uploads", filename);
-      await fs.writeFile(uploadPath, bytes);
-      item.modelFile = `/uploads/${filename}`;
+    if (modelFile && modelFile.size > 0) {
+      const uploadRes = await utapi.uploadFiles(modelFile);
+      if (uploadRes.data?.url) {
+        item.modelFile = uploadRes.data.url;
+      }
     }
 
     const updated = await updateClothingInDb(item);

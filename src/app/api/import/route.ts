@@ -1,6 +1,9 @@
 import { createClothingInDb, db, connectDB } from '@/lib/database';
 import { users } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
+import { UTApi } from 'uploadthing/server';
+
+const utapi = new UTApi({ token: process.env.UPLOADTHING_TOKEN! });
 
 export async function POST(request: Request): Promise<Response> {
   try {
@@ -42,19 +45,22 @@ export async function POST(request: Request): Promise<Response> {
 
     item.creator = creatorId;
 
-    // 3. Convert Image to Base64 String (No local disk writing)
-    const imageFile = formData.get("image") as File | Blob | null;
-    if (imageFile) {
-      const buffer = Buffer.from(await imageFile.arrayBuffer());
-      const mimeType = (imageFile as File).type || 'image/png';
-      item.image = `data:${mimeType};base64,${buffer.toString('base64')}`;
+    // 3. Upload Image directly to Uploadthing
+    const imageFile = formData.get("image") as File | null;
+    if (imageFile && imageFile.size > 0) {
+      const uploadRes = await utapi.uploadFiles(imageFile);
+      if (uploadRes.data?.url) {
+        item.image = uploadRes.data.url;
+      }
     }
 
-    // 4. Convert 3D Model to Base64 String (No local disk writing)
-    const modelFile = formData.get("model") as File | Blob | null;
-    if (modelFile) {
-      const buffer = Buffer.from(await modelFile.arrayBuffer());
-      item.modelFile = `data:model/gltf-binary;base64,${buffer.toString('base64')}`;
+    // 4. Upload 3D Model directly to Uploadthing
+    const modelFile = formData.get("model") as File | null;
+    if (modelFile && modelFile.size > 0) {
+      const uploadRes = await utapi.uploadFiles(modelFile);
+      if (uploadRes.data?.url) {
+        item.modelFile = uploadRes.data.url;
+      }
     }
 
     const savedItem = await createClothingInDb(item);

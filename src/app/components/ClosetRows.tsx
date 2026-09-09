@@ -115,7 +115,7 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
                           loadedImages[itemKey] ? "opacity-100" : "opacity-0 scale-95"
                         }`}
                         style={{
-                          transform: `scale(${currentItem.scale || 1})`
+                          transform: `scale(${currentItem.scale || 1}) translate(${currentItem.position?.[0]* -65 || 0}px, ${currentItem.position?.[1]* -65 || 0}px)`
                         }}
                         onLoad={() => handleImageLoad(itemKey)}
                       />

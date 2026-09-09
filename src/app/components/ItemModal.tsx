@@ -43,6 +43,7 @@ const ItemModal = ({
   const [newItem, setNewItem] = useState<EditableClothesType>({
     ...item,
     scale: item.scale || 1,
+    position: item.position || [0, 0, 0]
   });
   
   const [isRemovingBg, setIsRemovingBg] = useState(false);
@@ -195,10 +196,9 @@ function ImageSection({
   const startXScaleRef = useRef(0);
   const startScaleValRef = useRef(1);
 
-  // Panning State & Refs
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  // Panning Refs (No state needed, we drive it directly into newItem.position)
   const isPanningRef = useRef(false);
-  const panStartRef = useRef({ x: 0, y: 0 });
+  const panStartRef = useRef({ mouseX: 0, mouseY: 0, startPosX: 0, startPosY: 0 });
 
   useEffect(() => {
     workerRef.current = new Worker(new URL('../../lib/bg-worker.ts', import.meta.url), { type: 'module' });
@@ -221,22 +221,40 @@ function ImageSection({
     handleScaleStep(delta);
   };
 
-  // PANNING HANDLERS
+  // PANNING HANDLERS - Now mapped directly to newItem.position
   const handlePanStart = (e: React.PointerEvent) => {
     // Ignore pan if they are clicking the scale handle button in the corner
     if ((e.target as Element).closest('.scale-handle')) return;
     
     e.preventDefault();
     isPanningRef.current = true;
-    panStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+    
+    // Record where the mouse started, and what the position values were at that moment
+    panStartRef.current = { 
+      mouseX: e.clientX, 
+      mouseY: e.clientY,
+      startPosX: newItem.position[0] || 0,
+      startPosY: newItem.position[1] || 0
+    };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const handlePanMove = (e: React.PointerEvent) => {
     if (!isPanningRef.current) return;
-    setPan({
-      x: e.clientX - panStartRef.current.x,
-      y: e.clientY - panStartRef.current.y,
+    
+    const deltaX = e.clientX - panStartRef.current.mouseX;
+    const deltaY = e.clientY - panStartRef.current.mouseY;
+
+    // Convert pixels to 3D units (e.g. 100 pixels = 1.0 unit)
+    // Note: DOM Y axis goes DOWN, 3D Y axis goes UP. So we invert Y.
+    const newPosX = parseFloat((panStartRef.current.startPosX + (deltaX / 100)).toFixed(2));
+    const newPosY = parseFloat((panStartRef.current.startPosY - (deltaY / 100)).toFixed(2));
+
+    setNewItem(prev => {
+      const newPos = [...prev.position] as [number, number, number];
+      newPos[0] = newPosX;
+      newPos[1] = newPosY;
+      return { ...prev, position: newPos };
     });
   };
 
@@ -245,6 +263,16 @@ function ImageSection({
       isPanningRef.current = false;
       try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch (err) {}
     }
+  };
+
+  // Double click resets position to 0,0
+  const handleResetPosition = () => {
+    setNewItem(prev => {
+      const newPos = [...prev.position] as [number, number, number];
+      newPos[0] = 0;
+      newPos[1] = 0;
+      return { ...prev, position: newPos };
+    });
   };
 
   // SCALING HANDLERS
@@ -288,8 +316,7 @@ function ImageSection({
     if (!file) return;
 
     setIsRemovingBg(true);
-    // Reset pan when a new image is uploaded
-    setPan({ x: 0, y: 0 });
+    handleResetPosition(); // Reset to center when a new image is loaded
 
     try {
       let finalFile = file;
@@ -322,6 +349,10 @@ function ImageSection({
       e.target.value = '';
     }
   };
+
+  // Convert 3D units back to pixel translation for the DOM (1 unit = 100px)
+  const visualTranslateX = (newItem.position[0] || 0) * 100;
+  const visualTranslateY = (newItem.position[1] || 0) * -100; // Inverted Y for DOM
 
   return (
     <div>
@@ -381,9 +412,9 @@ function ImageSection({
             onPointerMove={handlePanMove}
             onPointerUp={handlePanEnd}
             onPointerCancel={handlePanEnd}
-            onDoubleClick={() => setPan({x: 0, y: 0})} // Reset pan on double click!
+            onDoubleClick={handleResetPosition}
             className="relative w-full h-full flex items-center justify-center transition-transform duration-75 cursor-grab active:cursor-grabbing"
-            style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${newItem.scale || 1})` }}
+            style={{ transform: `translate(${visualTranslateX}px, ${visualTranslateY}px) scale(${newItem.scale || 1})` }}
           >
             <Image
               alt="Preview"
@@ -393,7 +424,6 @@ function ImageSection({
             />
           </div>
 
-          {/* Added .scale-handle class so the pan function knows to ignore this button */}
           <div
             onPointerDown={handleScaleStart}
             onPointerMove={handleScaleMove}

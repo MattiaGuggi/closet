@@ -300,7 +300,6 @@ export const createOutfitInDb = async ({ top, mid, bottom, creator }: any) => {
   const midId = getId(mid);
   const bottomId = getId(bottom);
 
-  // 1. PRE-CHECK: Does this exact outfit combination already exist for this user?
   const existingOutfit = await db.query.outfits.findFirst({
     where: and(
       eq(outfits.creator, creatorId),
@@ -314,7 +313,6 @@ export const createOutfitInDb = async ({ top, mid, bottom, creator }: any) => {
     throw new Error("This outfit combination already exists!");
   }
 
-  // 2. Insert if unique
   const [created] = await db
     .insert(outfits)
     .values({
@@ -350,7 +348,6 @@ export const updateOutfitInDb = async (outfit: outfitType) => {
     const mergedMid = payload.mid ?? currentOutfit.mid;
     const mergedBottom = payload.bottom ?? currentOutfit.bottom;
 
-    // 1. PRE-CHECK: Does this new combination clash with a DIFFERENT outfit already in the DB?
     const duplicate = await db.query.outfits.findFirst({
       where: and(
         eq(outfits.creator, mergedCreator),
@@ -364,7 +361,6 @@ export const updateOutfitInDb = async (outfit: outfitType) => {
       throw new Error("An outfit with this exact combination already exists!");
     }
 
-    // 2. Update if unique
     const [updated] = await db
       .update(outfits)
       .set(payload)

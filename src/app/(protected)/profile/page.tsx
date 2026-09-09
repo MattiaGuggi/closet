@@ -61,6 +61,12 @@ const ProfilePage = () => {
   }, [user?._id]);
 
   const saveItem = async (item: EditableClothesType) => {
+    setIsItemModalOpen(false);
+
+    const oldItem = clothes?.find((c) => c._id === item._id);
+
+    setClothes((prev) => prev?.map((c) => c._id === item._id ? (item as unknown as clothesType) : c) || []);
+
     try {
       const formData = new FormData();
       formData.append("item", JSON.stringify(item));
@@ -79,19 +85,28 @@ const ProfilePage = () => {
       });
 
       if (response.data.success) {
-        setIsItemModalOpen(false);
-        await fetchUserDetails();
+        // Silently sync in background to fetch actual image URLs
+        fetchUserDetails();
         showToast("Capo salvato con successo!", "success");
       } else {
-        showToast("Errore durante l'aggiornamento del capo", "error");
+        throw new Error("Failed to update item");
       }
     } catch (err) {
       console.error(err);
-      showToast("Errore durante il salvataggio del capo", "error");
+      // 4. Rollback on fail
+      if (oldItem) {
+        setClothes((prev) => prev?.map((c) => c._id === oldItem._id ? oldItem : c) || []);
+      }
+      showToast("Errore durante l'aggiornamento. Modifiche annullate.", "error");
     }
   };
 
   const saveOutfit = async (outfit: outfitType) => {
+    setIsOutfitModalOpen(false);
+    
+    const oldOutfit = outfits?.find((o) => o._id === outfit._id);
+    setOutfits((prev) => prev?.map((o) => o._id === outfit._id ? outfit : o) || []);
+
     try {
       const formData = new FormData();
       formData.append("outfit", JSON.stringify(outfit));
@@ -101,15 +116,17 @@ const ProfilePage = () => {
       });
 
       if (response.data.success) {
-        setIsOutfitModalOpen(false);
-        await fetchUserDetails();
+        fetchUserDetails();
         showToast("Outfit salvato con successo!", "success");
       } else {
-        showToast("Errore durante l'aggiornamento dell'outfit", "error");
+        throw new Error("Failed to update outfit");
       }
     } catch (err) {
       console.error('Error updating outfit', err);
-      showToast("Errore di connessione durante il salvataggio dell'outfit", "error");
+      if (oldOutfit) {
+        setOutfits((prev) => prev?.map((o) => o._id === oldOutfit._id ? oldOutfit : o) || []);
+      }
+      showToast("Errore di connessione. Modifiche annullate.", "error");
     }
   };
 
@@ -132,24 +149,37 @@ const ProfilePage = () => {
       return;
     }
 
+    // Keep a reference to roll back if needed
+    const itemToRestore = clothes?.find((c) => c._id === id);
+
     setConfirmModal({
       isOpen: true,
       title: 'Delete Item',
       description: 'Are you sure you want to delete this item? The action is irreversible.',
       onConfirm: async () => {
+        // 1. Instantly close the confirm modal
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+
+        // 2. Optimistic UI: Remove from screen immediately
+        setClothes((prev) => prev?.filter((c) => c._id !== id) || []);
+        showToast('Item deleted', 'success');
+
+        // 3. Fire network request in the background
         try {
           const response = await axios.delete(`/api/deleteItem?id=${id}`);
           if (response.data.success) {
-            await fetchUserDetails();
-            showToast('Item deleted', 'success');
+            fetchUserDetails(); // Silent background sync
           } else {
-            showToast('Error during deletion', 'error');
+            throw new Error("Server failed to delete item");
           }
         } catch (err) {
           console.error('Error deleting item', err);
-          showToast('Error during deletion', 'error');
-        } finally {
-          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+          
+          // 4. Rollback if the network request failed
+          if (itemToRestore) {
+            setClothes((prev) => (prev ? [...prev, itemToRestore] : [itemToRestore]));
+          }
+          showToast('Error during deletion. Item restored.', 'error');
         }
       },
     });
@@ -161,24 +191,37 @@ const ProfilePage = () => {
       return;
     }
 
+    // Keep a reference to roll back if needed
+    const outfitToRestore = outfits?.find((o) => o._id === id);
+
     setConfirmModal({
       isOpen: true,
       title: 'Elimina Outfit',
       description: 'Sei sicuro di voler eliminare questo outfit salvato?',
       onConfirm: async () => {
+        // 1. Instantly close the confirm modal
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+
+        // 2. Optimistic UI: Remove from screen immediately
+        setOutfits((prev) => prev?.filter((o) => o._id !== id) || []);
+        showToast('Outfit eliminato', 'success');
+
+        // 3. Fire network request in the background
         try {
           const response = await axios.delete(`/api/deleteOutfit?id=${id}`);
           if (response.data.success) {
-            await fetchUserDetails();
-            showToast('Outfit eliminato', 'success');
+            fetchUserDetails(); // Silent background sync
           } else {
-            showToast('Errore durante l\'eliminazione dell\'outfit', 'error');
+            throw new Error("Server failed to delete outfit");
           }
         } catch (err) {
           console.error('Error deleting outfit', err);
-          showToast('Errore durante l\'eliminazione dell\'outfit', 'error');
-        } finally {
-          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+          
+          // 4. Rollback if the network request failed
+          if (outfitToRestore) {
+            setOutfits((prev) => (prev ? [...prev, outfitToRestore] : [outfitToRestore]));
+          }
+          showToast("Errore durante l'eliminazione dell'outfit. Ripristinato.", 'error');
         }
       },
     });

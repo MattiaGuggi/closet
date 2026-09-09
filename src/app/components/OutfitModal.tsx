@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { clothesType, outfitType } from '@/lib/types';
-import { X, Sparkles, Layers, Check, Shirt } from 'lucide-react';
+import { X, Sparkles, Layers, Check, Shirt, ChevronDown } from 'lucide-react';
 
 type modalType = {
   onClose: () => void;
@@ -12,20 +12,24 @@ type modalType = {
   items: clothesType[] | null;
 };
 
+// Extracted styles to keep things clean
+const baseInputStyle =
+  'w-full px-3.5 py-2.5 bg-zinc-950/60 border border-white/10 rounded-xl shadow-inner text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all cursor-pointer';
+const labelStyle =
+  'text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5 flex items-center gap-1.5';
+
 const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
   const [newOutfit, setNewOutfit] = useState<outfitType>(outfit);
 
   const handleSelect = (key: 'top' | 'mid' | 'bottom', selectedId: string) => {
     if (!items) return;
+    if (!selectedId) {
+      setNewOutfit((prev) => ({ ...prev, [key]: undefined }));
+      return;
+    }
     const selectedItem = items.find((item) => String(item._id) === selectedId);
     setNewOutfit((prev) => ({ ...prev, [key]: selectedItem || undefined }));
   };
-
-  const baseInputStyle =
-    'w-full px-3.5 py-2.5 bg-zinc-950/60 border border-white/10 rounded-xl shadow-inner text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all cursor-pointer';
-
-  const labelStyle =
-    'text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5 flex items-center gap-1.5';
 
   const positions: { key: 'top' | 'mid' | 'bottom'; label: string }[] = [
     { key: 'top', label: 'Top' },
@@ -68,7 +72,7 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
             return (
               <div key={key} className="flex flex-col gap-3 p-4 rounded-2xl bg-zinc-950/40 border border-white/5 shadow-inner">
                 
-                {/* Slot Label & Dropdown Selector */}
+                {/* Slot Label & Custom Dropdown Selector */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className={labelStyle}>
@@ -80,20 +84,12 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
                     </span>
                   </div>
 
-                  <select
-                    value={currentSelectedItem?._id ?? ''}
-                    onChange={(e) => handleSelect(key, e.target.value)}
-                    className={baseInputStyle}
-                  >
-                    <option value="" className="bg-zinc-900 text-zinc-500">
-                      Select {label}...
-                    </option>
-                    {availableItems.map((item) => (
-                      <option key={item._id} value={item._id} className="bg-zinc-900 text-zinc-100">
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
+                  <CustomDropdown 
+                    label={label}
+                    value={currentSelectedItem?._id ? String(currentSelectedItem._id) : ''}
+                    options={availableItems}
+                    onChange={(id) => handleSelect(key, id)}
+                  />
                 </div>
 
                 {/* Glassmorphic Image Preview Window */}
@@ -154,5 +150,89 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
     </div>
   );
 };
+
+// ==========================================
+// SUB-COMPONENTS
+// ==========================================
+
+function CustomDropdown({ 
+  label, 
+  value, 
+  options, 
+  onChange 
+}: { 
+  label: string; 
+  value: string; 
+  options: clothesType[]; 
+  onChange: (id: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((opt) => String(opt._id) === value);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`${baseInputStyle} flex items-center justify-between text-left`}
+      >
+        <span className={selectedOption ? 'text-zinc-100 font-medium' : 'text-zinc-500'}>
+          {selectedOption ? selectedOption.name : `Select ${label}...`}
+        </span>
+        <ChevronDown 
+          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-400' : ''}`} 
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 p-1.5 bg-zinc-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150 max-h-48 overflow-y-auto custom-scrollbar">
+          
+          <button
+            type="button"
+            onClick={() => { onChange(''); setIsOpen(false); }}
+            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+              !value ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30' : 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white'
+            }`}
+          >
+            <span>None</span>
+            {!value && <Check className="w-3.5 h-3.5 text-indigo-400" />}
+          </button>
+
+          {options.map((opt) => {
+            const isSelected = String(opt._id) === value;
+            return (
+              <button
+                key={String(opt._id)}
+                type="button"
+                onClick={() => { onChange(String(opt._id)); setIsOpen(false); }}
+                className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-white'
+                }`}
+              >
+                <span className="truncate pr-2 text-left">{opt.name}</span>
+                {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default OutfitModal;

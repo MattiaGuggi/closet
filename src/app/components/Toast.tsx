@@ -1,29 +1,36 @@
+'use client';
+
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 
-const Toast = ({ message, type = 'info', onClose }: { message: string, type: string, onClose: () => void }) => {
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            onClose();
-        }, 5000);
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error' | 'info' | string;
+  onClose: () => void;
+}
 
-        return () => clearTimeout(timer);
-    }, [onClose]);
+const Toast = ({ message, type, onClose }: ToastProps) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
 
-    const typeStyles: Record<string, string> = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        info: 'bg-blue-500',
-    };
-
-    return (
-        <div className={`fixed top-4 right-4 z-50 text-white px-4 py-3 rounded-lg shadow-lg flex items-center justify-between min-w-[250px] ${typeStyles[type]}`}>
-            <span>{message}</span>
-            <button onClick={onClose} className="ml-4 cursor-pointer">
-                <X size={18} />
-            </button>
-        </div>
-    );
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-zinc-900/90 border border-white/10 text-white shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-5 fade-in duration-300">
+      {type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+      {type === 'error' && <AlertCircle className="w-5 h-5 text-rose-500" />}
+      {type === 'info' && <Info className="w-5 h-5 text-blue-400" />}
+      
+      <span className="text-sm font-medium">{message}</span>
+      
+      <button 
+        onClick={onClose}
+        className="ml-2 text-zinc-400 hover:text-white transition-colors"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
 };
 
 export default Toast;

@@ -38,3 +38,23 @@ main {
   background: linear-gradient(37deg, var(--dark-blue), var(--light-blue));
 }
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* This removes the white background and makes it transparent */
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+
+/* This is the grey bar itself */
+::-webkit-scrollbar-thumb {
+  background: #52525b; /* zinc-600 */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #71717a; /* zinc-500 (lighter grey when hovering) */
+}

@@ -138,6 +138,21 @@ export const createClothingInDb = async (newClothes: clothesType) => {
     throw new Error("Missing creator ID in clothing item creation.");
   }
 
+  // 1. PRE-CHECK: Prevent duplicate items based on Name + Type for this user
+  if (newClothes.name && newClothes.type) {
+    const existingClothes = await db.query.clothes.findFirst({
+      where: and(
+        eq(clothes.creator, creatorId),
+        eq(clothes.name, newClothes.name),
+        eq(clothes.type, newClothes.type)
+      )
+    });
+
+    if (existingClothes) {
+      throw new Error("An item with this name and type already exists in your closet.");
+    }
+  }
+
   const payload: any = {
     creator: creatorId,
     name: newClothes.name,
@@ -161,6 +176,9 @@ export const updateClothingInDb = async (clothesItem: clothesType) => {
     const itemId = getId(clothesItem);
     const creatorId = getId(clothesItem.creator);
 
+    const [currentClothes] = await db.select().from(clothes).where(eq(clothes._id, itemId));
+    if (!currentClothes) throw new Error("Clothing item not found");
+
     const payload: Partial<IClothes> = {};
     if (clothesItem.name !== undefined) payload.name = clothesItem.name;
     if (clothesItem.image !== undefined) payload.image = clothesItem.image;
@@ -171,6 +189,24 @@ export const updateClothingInDb = async (clothesItem: clothesType) => {
     if (clothesItem.type !== null && clothesItem.type !== undefined) payload.type = clothesItem.type;
     if (creatorId) payload.creator = creatorId;
 
+    // Calculate resulting name and type
+    const mergedName = payload.name ?? currentClothes.name;
+    const mergedType = payload.type ?? currentClothes.type;
+    const mergedCreator = payload.creator ?? currentClothes.creator;
+
+    // 1. PRE-CHECK: Prevent renaming into an already existing item
+    const duplicate = await db.query.clothes.findFirst({
+      where: and(
+        eq(clothes.creator, mergedCreator),
+        eq(clothes.name, mergedName),
+        eq(clothes.type, mergedType)
+      )
+    });
+
+    if (duplicate && duplicate._id !== itemId) {
+      throw new Error("Another item with this name and type already exists in your closet.");
+    }
+
     const [updated] = await db
       .update(clothes)
       .set(payload)
@@ -179,7 +215,7 @@ export const updateClothingInDb = async (clothesItem: clothesType) => {
     return updated;
   } catch (err) {
     console.error("Error updating clothes", err);
-    throw err;
+    throw err; // Pass error to frontend
   }
 };
 
@@ -264,6 +300,21 @@ export const createOutfitInDb = async ({ top, mid, bottom, creator }: any) => {
   const midId = getId(mid);
   const bottomId = getId(bottom);
 
+  // 1. PRE-CHECK: Does this exact outfit combination already exist for this user?
+  const existingOutfit = await db.query.outfits.findFirst({
+    where: and(
+      eq(outfits.creator, creatorId),
+      eq(outfits.top, topId),
+      eq(outfits.mid, midId),
+      eq(outfits.bottom, bottomId)
+    )
+  });
+
+  if (existingOutfit) {
+    throw new Error("This outfit combination already exists!");
+  }
+
+  // 2. Insert if unique
   const [created] = await db
     .insert(outfits)
     .values({
@@ -283,20 +334,47 @@ export const updateOutfitInDb = async (outfit: outfitType) => {
   try {
     const outfitId = getId(outfit);
 
+    // Fetch the current outfit to compare changes
+    const [currentOutfit] = await db.select().from(outfits).where(eq(outfits._id, outfitId));
+    if (!currentOutfit) throw new Error("Outfit not found");
+
     const payload: Partial<IOutfit> = {};
     if (outfit.creator) payload.creator = getId(outfit.creator);
     if (outfit.top) payload.top = getId(outfit.top);
     if (outfit.mid) payload.mid = getId(outfit.mid);
     if (outfit.bottom) payload.bottom = getId(outfit.bottom);
 
+    // Calculate what the "new" outfit combination will be after update
+    const mergedCreator = payload.creator ?? currentOutfit.creator;
+    const mergedTop = payload.top ?? currentOutfit.top;
+    const mergedMid = payload.mid ?? currentOutfit.mid;
+    const mergedBottom = payload.bottom ?? currentOutfit.bottom;
+
+    // 1. PRE-CHECK: Does this new combination clash with a DIFFERENT outfit already in the DB?
+    const duplicate = await db.query.outfits.findFirst({
+      where: and(
+        eq(outfits.creator, mergedCreator),
+        eq(outfits.top, mergedTop),
+        eq(outfits.mid, mergedMid),
+        eq(outfits.bottom, mergedBottom)
+      )
+    });
+
+    if (duplicate && duplicate._id !== outfitId) {
+      throw new Error("An outfit with this exact combination already exists!");
+    }
+
+    // 2. Update if unique
     const [updated] = await db
       .update(outfits)
       .set(payload)
       .where(eq(outfits._id, outfitId))
       .returning();
+      
     return updated;
   } catch (err) {
     console.error("Error updating outfit", err);
+    throw err; // Re-throw so the frontend catches it and shows the toast!
   }
 };
 

@@ -22,7 +22,7 @@ export const clothes = pgTable("clothes", {
   scale: real("scale").default(1),
   position: jsonb("position").$type<number[]>().default([0, 0, 0]),
   description: text("description").default(""),
-  type: varchar("type", { enum: ["top", "mid", "bottom"] }).notNull(),
+  type: varchar("type", { enum: ["top", "mid", "bottom", "gadget"] }).notNull(),
 });
 
 // Outfits Table

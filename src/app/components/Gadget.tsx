@@ -1,14 +1,12 @@
-import { clothesType } from '@/lib/types'
-import Image from 'next/image'
-import { Edit3 } from 'lucide-react'
+import { gadgetType } from "@/lib/types";
+import Image from "next/image";
+import { Edit3 } from "lucide-react";
 
-const Clothing = ({ item, onOpen }: { item: clothesType, onOpen: (item: clothesType) => void }) => {
-  const thumbnailScale = Math.min(item?.scale || 1, 1.2);
-
+const Gadget = ({ item, onOpen }: { item: gadgetType; onOpen: (item: gadgetType) => void }) => {
   return (
-    <div className='clothing-card w-full rounded-3xl bg-zinc-900/60 border border-white/10 hover:border-indigo-500/40 p-6 flex flex-col items-center justify-between backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02]'>
+    <div className='clothing-card w-full rounded-3xl bg-zinc-900/60 border border-white/10 hover:border-cyan-500/40 p-6 flex flex-col items-center justify-between backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02]'>
       <div className="text-center mb-4 relative z-10">
-        <h3 className='font-bold text-white text-base truncate max-w-[200px]'>{item?.name || 'Garment'}</h3>
+        <h3 className='font-bold text-white text-base truncate max-w-[200px]'>{item?.name || 'Gadget'}</h3>
         <p className='text-xs text-zinc-400 mt-0.5 truncate max-w-[200px]'>{item?.description || 'No description'}</p>
       </div>
 
@@ -19,7 +17,6 @@ const Clothing = ({ item, onOpen }: { item: clothesType, onOpen: (item: clothesT
             src={item.image} 
             fill 
             className='object-contain p-2' 
-            style={{ transform: `scale(${thumbnailScale})` }} 
           />
         ) : (
           <div className="text-xs text-zinc-600">No Image</div>
@@ -33,11 +30,11 @@ const Clothing = ({ item, onOpen }: { item: clothesType, onOpen: (item: clothesT
           onOpen(item);
         }}
       >
-        <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+        <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
         <span>Modify</span>
       </button>
     </div>
   )
-}
+};
 
-export default Clothing;
+export default Gadget;

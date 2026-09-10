@@ -1,10 +1,10 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import * as schema from "./schema";
 import { users, clothes, outfits, IClothes, IOutfit } from "./schema";
-import { clothesType, outfitType } from "./types";
+import { clothesType, gadgetType, outfitType } from "./types";
 
 const dbUrl = process.env.DATABASE_URL || process.env.MONGODB_URI || "";
 const sql = neon(dbUrl);
@@ -105,8 +105,20 @@ export const getAllClothesFromDb = async () => {
 
 export const getUserClothesFromDb = async (criteria: any) => {
   await connectDB();
-  const creatorId = getId(criteria?.creator || criteria);
-  return await db.select().from(clothes).where(eq(clothes.creator, creatorId));
+  try {
+    const creatorId = getId(criteria?.creator || criteria);
+    const rows = await db.query.clothes.findMany({
+      where: and(
+        eq(clothes.creator, creatorId), 
+        ne(clothes.type, "gadget")
+      ),
+    });
+    
+    return rows; 
+  } catch(err) {
+    console.error("Error fetching clothes", err);
+    return { success: false, error: "Server error" };
+  }
 };
 
 export const getClothingFromDb = async (criteria: any) => {
@@ -138,7 +150,6 @@ export const createClothingInDb = async (newClothes: clothesType) => {
     throw new Error("Missing creator ID in clothing item creation.");
   }
 
-  // 1. PRE-CHECK: Prevent duplicate items based on Name + Type for this user
   if (newClothes.name && newClothes.type) {
     const existingClothes = await db.query.clothes.findFirst({
       where: and(
@@ -269,7 +280,7 @@ export const getOutfitsFromDb = async () => {
   }));
 };
 
-export const getOutfitFromDb = async (criteria: string | number) => {
+export const getOutfitFromDb = async (criteria: string | number | outfitType) => {
   await connectDB();
   const id = getId(criteria);
   const o = await db.query.outfits.findFirst({
@@ -327,6 +338,26 @@ export const createOutfitInDb = async ({ top, mid, bottom, creator }: any) => {
   return fullOutfit || created;
 };
 
+export const getUserGadgetsFromDb = async (criteria: any) => {
+  await connectDB();
+  try {
+    const creatorId = getId(criteria?.creator || criteria);
+    const rows = await db.query.clothes.findMany({
+      where: and(eq(clothes.creator, creatorId), eq(clothes.type, "gadget")),
+    });
+    return rows.map((g) => ({
+      _id: g._id,
+      creator: g.creator,
+      name: g.name,
+      image: g.image,
+      description: g.description,
+    }));
+  } catch(err) {
+    console.error("Error fetching gadgets", err);
+    return { success: false, error: "Server error" };
+  }
+};
+
 export const updateOutfitInDb = async (outfit: outfitType) => {
   await connectDB();
   try {
@@ -374,6 +405,31 @@ export const updateOutfitInDb = async (outfit: outfitType) => {
   }
 };
 
+export const updateGadgetInDb = async (gadget: gadgetType) => {
+  await connectDB();
+  try {
+    const gadgetId = getId(gadget);
+    const [currentGadget] = await db.select().from(clothes).where(eq(clothes._id, gadgetId));
+    if (!currentGadget) throw new Error("Gadget not found");
+
+    const payload: Partial<IClothes> = {};
+    if (gadget.creator) payload.creator = getId(gadget.creator);
+    if (gadget.name) payload.name = gadget.name;
+    if (gadget.image) payload.image = gadget.image;
+    if (gadget.description) payload.description = gadget.description;
+    
+    const [updated] = await db
+      .update(clothes)
+      .set(payload)
+      .where(eq(clothes._id, gadgetId))
+      .returning();
+    return updated;
+  } catch (err) {
+    console.error("Error updating gadget", err);
+    throw err; // Re-throw so the frontend catches it and shows the toast!
+  }
+}
+
 export const deleteOutfitFromDb = async (id: string | number) => {
   await connectDB();
   try {
@@ -394,6 +450,18 @@ export const deleteItemFromDb = async (id: string | number) => {
     return { success: true, data: deleted };
   } catch (err) {
     console.error("Error deleting item", err);
+    return { success: false, error: "Errore nel server" };
+  }
+};
+
+export const deleteGadgetFromDb = async (id: string | number) => {
+  await connectDB();
+  try {
+    const itemId = getId(id);
+    const [deleted] = await db.delete(clothes).where(and(eq(clothes._id, itemId), eq(clothes.type, "gadget"))).returning();
+    return { success: true, data: deleted };
+  } catch (err) {
+    console.error("Error deleting gadget", err);
     return { success: false, error: "Errore nel server" };
   }
 };

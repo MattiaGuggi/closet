@@ -23,6 +23,7 @@ const typeOptions: { label: string; value: Position }[] = [
   { label: 'Top', value: 'top' },
   { label: 'Mid', value: 'mid' },
   { label: 'Bottom', value: 'bottom' },
+  { label: 'Gadget', value: 'gadget' },
 ];
 
 interface SubComponentProps {
@@ -196,7 +197,7 @@ function ImageSection({
   const startXScaleRef = useRef(0);
   const startScaleValRef = useRef(1);
 
-  // Panning Refs (No state needed, we drive it directly into newItem.position)
+  // Panning Refs
   const isPanningRef = useRef(false);
   const panStartRef = useRef({ mouseX: 0, mouseY: 0, startPosX: 0, startPosY: 0 });
 
@@ -221,15 +222,11 @@ function ImageSection({
     handleScaleStep(delta);
   };
 
-  // PANNING HANDLERS - Now mapped directly to newItem.position
   const handlePanStart = (e: React.PointerEvent) => {
-    // Ignore pan if they are clicking the scale handle button in the corner
     if ((e.target as Element).closest('.scale-handle')) return;
     
     e.preventDefault();
     isPanningRef.current = true;
-    
-    // Record where the mouse started, and what the position values were at that moment
     panStartRef.current = { 
       mouseX: e.clientX, 
       mouseY: e.clientY,
@@ -245,8 +242,6 @@ function ImageSection({
     const deltaX = e.clientX - panStartRef.current.mouseX;
     const deltaY = e.clientY - panStartRef.current.mouseY;
 
-    // Convert pixels to 3D units (e.g. 100 pixels = 1.0 unit)
-    // Note: DOM Y axis goes DOWN, 3D Y axis goes UP. So we invert Y.
     const newPosX = parseFloat((panStartRef.current.startPosX + (deltaX / 100)).toFixed(2));
     const newPosY = parseFloat((panStartRef.current.startPosY - (deltaY / 100)).toFixed(2));
 
@@ -265,7 +260,6 @@ function ImageSection({
     }
   };
 
-  // Double click resets position to 0,0
   const handleResetPosition = () => {
     setNewItem(prev => {
       const newPos = [...prev.position] as [number, number, number];
@@ -275,10 +269,9 @@ function ImageSection({
     });
   };
 
-  // SCALING HANDLERS
   const handleScaleStart = (e: React.PointerEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Stop it from triggering a pan
+    e.stopPropagation();
     isScalingRef.current = true;
     startXScaleRef.current = e.clientX;
     startScaleValRef.current = newItem.scale || 1;
@@ -311,12 +304,10 @@ function ImageSection({
     });
   };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  // 1. EXTRACTED: Core file processing logic
+  const processFile = async (file: File) => {
     setIsRemovingBg(true);
-    handleResetPosition(); // Reset to center when a new image is loaded
+    handleResetPosition();
 
     try {
       let finalFile = file;
@@ -324,7 +315,8 @@ function ImageSection({
       if (autoRemoveBg) {
         const tempUrl = URL.createObjectURL(file);
         const imgBlob = await processImageInWorker(tempUrl);
-        const cleanFileName = file.name.replace(/\.[^/.]+$/, '') + '-nobg.png';
+        // Fallback to 'pasted-image' if filename is missing (like from clipboard)
+        const cleanFileName = (file.name || 'pasted-image').replace(/\.[^/.]+$/, '') + '-nobg.png';
         finalFile = new File([imgBlob], cleanFileName, { type: 'image/png' });
         URL.revokeObjectURL(tempUrl);
       }
@@ -346,20 +338,54 @@ function ImageSection({
       }));
     } finally {
       setIsRemovingBg(false);
-      e.target.value = '';
     }
   };
 
-  // Convert 3D units back to pixel translation for the DOM (1 unit = 100px)
+  // 2. UPDATED: Standard input now uses `processFile`
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processFile(file);
+    e.target.value = ''; // Reset input
+  };
+
+  // 3. ADDED: Global Paste listener for the clipboard
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (isRemovingBg) return; // Prevent double-processing
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault(); // Stop default pasting behavior
+            
+            // Give pasted files a real name if the browser doesn't provide one
+            const finalFile = new File([file], file.name || 'pasted-image.png', { type: file.type });
+            processFile(finalFile);
+            return; // Stop looking after we find the first image
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [autoRemoveBg, isRemovingBg]); // Keep dependencies updated so processFile works correctly
+
   const visualTranslateX = (newItem.position[0] || 0) * 100;
-  const visualTranslateY = (newItem.position[1] || 0) * -100; // Inverted Y for DOM
+  const visualTranslateY = (newItem.position[1] || 0) * -100;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
         <label htmlFor="image-input" className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
           <Upload className="w-3.5 h-3.5 text-indigo-400" />
-          Image
+          {/* 4. UI UPDATE: Added paste hint */}
+          Image <span className="text-[10px] text-zinc-500 font-normal lowercase tracking-normal ml-1">(or paste Ctrl+V)</span>
         </label>
         
         <label className="group flex items-center gap-2 cursor-pointer">

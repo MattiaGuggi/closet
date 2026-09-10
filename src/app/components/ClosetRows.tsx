@@ -6,19 +6,19 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment, useGLTF } from "@react-three/drei";
 import Image from "next/image";
 import Model from "./model";
-import { clothesType, Position } from "@/lib/types";
+import { clothesType, OutfitPart } from "@/lib/types";
 import { Loader } from "./Loader";
 
 type ClosetRowsProps = {
   items: clothesType[];
   currentItemState: { top: number; mid: number; bottom: number };
-  handleClick: (dir: "left" | "right", pos: Position) => void;
+  handleClick: (dir: "left" | "right", pos: OutfitPart) => void;
   three: boolean;
 };
 
 export default function ClosetRows({ items, currentItemState, handleClick, three }: ClosetRowsProps) {
   const [loadedImages, setLoadedImages] = useState<{ [key: string]: boolean }>({});
-  const positions: Position[] = ["top", "mid", "bottom"];
+  const positions: OutfitPart[] = ["top", "mid", "bottom"];
 
   // Pre-load 3D models when items prop changes
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
 
   return (
     <div className="w-full max-w-4xl mx-auto my-4 p-3 sm:p-4 rounded-3xl bg-zinc-900/60 border border-white/10 backdrop-blur-2xl shadow-2xl flex flex-col gap-2">
-      {positions.map((pos: Position) => {
+      {positions.map((pos: OutfitPart) => {
         const itemsOfType = items.filter(item => item.type === pos);
         const currentItem = itemsOfType[currentItemState[pos]];
         const itemKey = currentItem ? String(currentItem._id || currentItem.name) : '';

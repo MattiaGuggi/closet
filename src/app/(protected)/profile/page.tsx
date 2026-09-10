@@ -9,14 +9,17 @@ import Outfit from '@/app/components/Outfit';
 import Clothing from '@/app/components/Clothing';
 import ItemModal from '@/app/components/ItemModal';
 import SkeletonCard from '@/app/components/SkeletonCard';
-import { clothesType, EditableClothesType, outfitType } from '@/lib/types';
+import { clothesType, EditableClothesType, gadgetType, outfitType } from '@/lib/types';
 import OutfitModal from '@/app/components/OutfitModal';
-import { Trash2Icon, LogOut, Edit3, Shirt, Layers, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { Trash2Icon, LogOut, Edit3, Shirt, Layers, AlertCircle, CheckCircle2, X, Watch } from 'lucide-react';
+import Gadget from '@/app/components/Gadget';
+import GadgetModal from '@/app/components/GadgetModal';
 
 const ProfilePage = () => {
   const { user, logout } = useUser();
   const [clothes, setClothes] = useState<clothesType[] | null>(null);
   const [outfits, setOutfits] = useState<outfitType[] | null>(null);
+  const [gadgets, setGadgets] = useState<gadgetType[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const [currentItem, setCurrentItem] = useState<clothesType>({ 
@@ -25,12 +28,15 @@ const ProfilePage = () => {
   const [currentOutfit, setCurrentOutfit] = useState<outfitType>({ 
     creator: user, top: undefined, mid: undefined, bottom: undefined 
   });
+  const [currentGadget, setCurrentGadget] = useState<gadgetType>({ 
+    creator: user, name: '', image: '', description: '', type: null 
+  });
 
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState<boolean>(false);
   const [isOutfitModalOpen, setIsOutfitModalOpen] = useState<boolean>(false);
+  const [isGadgetModalOpen, setIsGadgetModalOpen] = useState<boolean>(false);
 
-  // UI Feedback States (Toast & Confirm)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -50,8 +56,10 @@ const ProfilePage = () => {
     try {
       const response = await axios.get('/api/user', { params: { userId: user._id } });
       const data = response.data;
-      setClothes(data.clothes || []);
-      setOutfits(data.outfits || []);
+      
+      setClothes(Array.isArray(data.clothes) ? data.clothes.filter((c: clothesType) => c && c._id) : []);
+      setOutfits(Array.isArray(data.outfits) ? data.outfits.filter((o: outfitType) => o && o._id) : []);
+      setGadgets(Array.isArray(data.gadgets) ? data.gadgets.filter((g: gadgetType) => g && g._id) : []);
     } catch (err) {
       console.error(err);
       showToast('Errore nel recupero dati utente', 'error');
@@ -60,11 +68,40 @@ const ProfilePage = () => {
     }
   }, [user?._id]);
 
+  const saveGadget = async (gadget: gadgetType & { imageFile?: File }) => {
+    setIsGadgetModalOpen(false);
+    
+    const oldGadget = gadgets?.find((g) => g._id === gadget._id);
+    setGadgets((prev) => prev?.map((g) => g._id === gadget._id ? gadget : g) || []);
+
+    try {
+      const formData = new FormData();
+      formData.append("gadget", JSON.stringify(gadget));
+      if (gadget.imageFile) formData.append("image", gadget.imageFile);
+
+      const response = await axios.post("/api/updateGadget", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (response.data.success) {
+        fetchUserDetails();
+        showToast("Gadget saved successfully!", "success");
+      } else {
+        throw new Error("Failed to update gadget");
+      }
+    } catch (err) {
+      console.error(err);
+      if (oldGadget) {
+        setGadgets((prev) => prev?.map((g) => g._id === oldGadget._id ? oldGadget : g) || []);
+      }
+      showToast("Error updating gadget. Changes reverted.", "error");
+    }
+  };
+
   const saveItem = async (item: EditableClothesType) => {
     setIsItemModalOpen(false);
 
     const oldItem = clothes?.find((c) => c._id === item._id);
-
     setClothes((prev) => prev?.map((c) => c._id === item._id ? (item as unknown as clothesType) : c) || []);
 
     try {
@@ -85,7 +122,6 @@ const ProfilePage = () => {
       });
 
       if (response.data.success) {
-        // Silently sync in background to fetch actual image URLs
         fetchUserDetails();
         showToast("Capo salvato con successo!", "success");
       } else {
@@ -93,7 +129,6 @@ const ProfilePage = () => {
       }
     } catch (err) {
       console.error(err);
-      // 4. Rollback on fail
       if (oldItem) {
         setClothes((prev) => prev?.map((c) => c._id === oldItem._id ? oldItem : c) || []);
       }
@@ -139,17 +174,22 @@ const ProfilePage = () => {
     setCurrentOutfit(outfit);
     setIsOutfitModalOpen(true);
   };
+
+  const handleOpenGadgetModal = (gadget: gadgetType) => {
+    setCurrentGadget(gadget);
+    setIsGadgetModalOpen(true);
+  };
   
   const handleCloseItemModal = () => setIsItemModalOpen(false);
   const handleCloseOutfitModal = () => setIsOutfitModalOpen(false);
+  const handleCloseGadgetModal = () => setIsGadgetModalOpen(false);
 
-  const requestDeleteItem = (id?: number) => {
+  const requestDeleteItem = (id?: string | number) => {
     if (!id) {
       showToast('ID del capo mancante', 'error');
       return;
     }
 
-    // Keep a reference to roll back if needed
     const itemToRestore = clothes?.find((c) => c._id === id);
 
     setConfirmModal({
@@ -157,41 +197,32 @@ const ProfilePage = () => {
       title: 'Delete Item',
       description: 'Are you sure you want to delete this item? The action is irreversible.',
       onConfirm: async () => {
-        // 1. Instantly close the confirm modal
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-
-        // 2. Optimistic UI: Remove from screen immediately
         setClothes((prev) => prev?.filter((c) => c._id !== id) || []);
         showToast('Item deleted', 'success');
 
-        // 3. Fire network request in the background
         try {
           const response = await axios.delete(`/api/deleteItem?id=${id}`);
           if (response.data.success) {
-            fetchUserDetails(); // Silent background sync
+            fetchUserDetails();
           } else {
             throw new Error("Server failed to delete item");
           }
         } catch (err) {
           console.error('Error deleting item', err);
-          
-          // 4. Rollback if the network request failed
-          if (itemToRestore) {
-            setClothes((prev) => (prev ? [...prev, itemToRestore] : [itemToRestore]));
-          }
+          if (itemToRestore) setClothes((prev) => (prev ? [...prev, itemToRestore] : [itemToRestore]));
           showToast('Error during deletion. Item restored.', 'error');
         }
       },
     });
   };
 
-  const requestDeleteOutfit = (id?: number) => {
+  const requestDeleteOutfit = (id?: string | number) => {
     if (!id) {
       showToast('ID outfit mancante', 'error');
       return;
     }
 
-    // Keep a reference to roll back if needed
     const outfitToRestore = outfits?.find((o) => o._id === id);
 
     setConfirmModal({
@@ -199,29 +230,54 @@ const ProfilePage = () => {
       title: 'Elimina Outfit',
       description: 'Sei sicuro di voler eliminare questo outfit salvato?',
       onConfirm: async () => {
-        // 1. Instantly close the confirm modal
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-
-        // 2. Optimistic UI: Remove from screen immediately
         setOutfits((prev) => prev?.filter((o) => o._id !== id) || []);
         showToast('Outfit eliminato', 'success');
 
-        // 3. Fire network request in the background
         try {
           const response = await axios.delete(`/api/deleteOutfit?id=${id}`);
           if (response.data.success) {
-            fetchUserDetails(); // Silent background sync
+            fetchUserDetails();
           } else {
             throw new Error("Server failed to delete outfit");
           }
         } catch (err) {
           console.error('Error deleting outfit', err);
-          
-          // 4. Rollback if the network request failed
-          if (outfitToRestore) {
-            setOutfits((prev) => (prev ? [...prev, outfitToRestore] : [outfitToRestore]));
-          }
+          if (outfitToRestore) setOutfits((prev) => (prev ? [...prev, outfitToRestore] : [outfitToRestore]));
           showToast("Errore durante l'eliminazione dell'outfit. Ripristinato.", 'error');
+        }
+      },
+    });
+  };
+
+  const requestDeleteGadget = (id?: string | number) => {
+    if (!id) {
+      showToast('ID del gadget mancante', 'error');
+      return;
+    }
+
+    const gadgetToRestore = gadgets?.find((g) => g._id === id);
+
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Gadget',
+      description: 'Are you sure you want to delete this gadget? The action is irreversible.',
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        setGadgets((prev) => prev?.filter((g) => g._id !== id) || []);
+        showToast('Gadget deleted', 'success');
+
+        try {
+          const response = await axios.delete(`/api/deleteGadget?id=${id}`);
+          if (response.data.success) {
+            fetchUserDetails();
+          } else {
+            throw new Error("Server failed to delete gadget");
+          }
+        } catch (err) {
+          console.error('Error deleting item', err);
+          if (gadgetToRestore) setGadgets((prev) => (prev ? [...prev, gadgetToRestore] : [gadgetToRestore]));
+          showToast('Error during deletion. Gadget restored.', 'error');
         }
       },
     });
@@ -233,52 +289,25 @@ const ProfilePage = () => {
 
   return (
     <>
-      {/* Toast Banner */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-zinc-900/90 border border-white/10 text-white shadow-2xl backdrop-blur-xl">
-          {toast.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-rose-500" />
-          )}
+          {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <AlertCircle className="w-5 h-5 text-rose-500" />}
           <span className="text-sm font-medium">{toast.message}</span>
-          <button 
-            onClick={() => setToast(null)}
-            className="ml-2 text-zinc-400 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <button onClick={() => setToast(null)} className="ml-2 text-zinc-400 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
         </div>
       )}
 
-      {/* Confirm Modal */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
           <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                <Trash2Icon className="w-6 h-6" />
-              </div>
+              <div className="p-3 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20"><Trash2Icon className="w-6 h-6" /></div>
               <h3 className="text-xl font-bold text-white">{confirmModal.title}</h3>
             </div>
-            <p className="text-sm text-zinc-400 leading-relaxed">
-              {confirmModal.description}
-            </p>
+            <p className="text-sm text-zinc-400 leading-relaxed">{confirmModal.description}</p>
             <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
-                className="px-5 py-2.5 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmModal.onConfirm}
-                className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 transition-all cursor-pointer"
-              >
-                Confirm Deletion
-              </button>
+              <button type="button" onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))} className="px-5 py-2.5 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer">Cancel</button>
+              <button type="button" onClick={confirmModal.onConfirm} className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 transition-all cursor-pointer">Confirm Deletion</button>
             </div>
           </div>
         </div>
@@ -287,55 +316,34 @@ const ProfilePage = () => {
       {isUserModalOpen && <UserModal onClose={() => setIsUserModalOpen(false)} />}
       {isItemModalOpen && <ItemModal onSave={saveItem} onClose={handleCloseItemModal} item={currentItem} />}
       {isOutfitModalOpen && <OutfitModal onSave={saveOutfit} onClose={handleCloseOutfitModal} outfit={currentOutfit} items={clothes} />}
+      {isGadgetModalOpen && <GadgetModal onSave={saveGadget} onClose={handleCloseGadgetModal} gadget={currentGadget} />}
 
       <section id="profile-section" className="w-full max-w-6xl mx-auto px-6 py-10 flex flex-col items-center">
         
-        {/* User Card Banner */}
         <div className="w-full rounded-3xl bg-zinc-900/60 border border-white/10 p-8 sm:p-10 backdrop-blur-2xl flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden mb-12">
           <div className="flex items-center gap-6">
             <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-indigo-500/40 p-1 bg-zinc-950 shadow-xl">
-              <Image
-                priority
-                src={user?.pfp || "/default-pfp.png"}
-                alt="Pfp"
-                fill
-                className="object-cover rounded-full"
-              />
+              <Image priority src={user?.pfp || "/default-pfp.png"} alt="Pfp" fill className="object-cover rounded-full" />
             </div>
             <div className="text-center sm:text-left">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                {user?.username || 'Creator Profile'}
-              </h1>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{user?.username || 'Creator Profile'}</h1>
               <p className="text-xs text-zinc-400 mt-1">{user?.email}</p>
             </div>
           </div>
-
-          {/* User Controls */}
           <div className="flex items-center gap-3">
-            <button
-              className="flex items-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs rounded-xl border border-white/10 transition-all hover:scale-105 cursor-pointer"
-              onClick={() => setIsUserModalOpen(true)}
-            >
-              <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
-              Update Profile
+            <button className="flex items-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs rounded-xl border border-white/10 transition-all hover:scale-105 cursor-pointer" onClick={() => setIsUserModalOpen(true)}>
+              <Edit3 className="w-3.5 h-3.5 text-indigo-400" /> Update Profile
             </button>
-            <button
-              className="flex items-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold text-xs rounded-xl border border-red-500/20 transition-all hover:scale-105 cursor-pointer"
-              onClick={logout}
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Exit
+            <button className="flex items-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold text-xs rounded-xl border border-red-500/20 transition-all hover:scale-105 cursor-pointer" onClick={logout}>
+              <LogOut className="w-3.5 h-3.5" /> Exit
             </button>
           </div>
         </div>
-
         {/* Clothes Section */}
         <section id="clothes-section" className="w-full mb-16">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
-                <Shirt className="w-5 h-5" />
-              </div>
+              <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"><Shirt className="w-5 h-5" /></div>
               <div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">Your Clothes</h2>
                 <p className="text-xs text-zinc-400">Garments stored in your studio</p>
@@ -355,16 +363,9 @@ const ProfilePage = () => {
               </>
             ) : clothes && clothes.length > 0 ? (
               clothes.map((clothing, idx) => (
-                <div key={clothing._id || idx} className="relative group">
+                <div key={clothing._id || idx} className="relative group transition-transform hover:scale-[1.02]">
                   <Clothing item={clothing} onOpen={handleOpenItemModal} />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      requestDeleteItem(clothing._id);
-                    }}
-                    className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-20 backdrop-blur-md"
-                    title="Delete item"
-                  >
+                  <button onClick={(e) => { e.stopPropagation(); requestDeleteItem(clothing._id); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
                     <Trash2Icon className="w-4 h-4" />
                   </button>
                 </div>
@@ -376,14 +377,11 @@ const ProfilePage = () => {
             )}
           </div>
         </section>
-
         {/* Outfit Section */}
         <section id="outfit-section" className="w-full mb-16">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
-                <Layers className="w-5 h-5" />
-              </div>
+              <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400"><Layers className="w-5 h-5" /></div>
               <div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">Your Outfits</h2>
                 <p className="text-xs text-zinc-400">Saved fashion combinations</p>
@@ -393,7 +391,6 @@ const ProfilePage = () => {
               {isLoading ? 'Loading...' : `${outfits?.length || 0} Outfit(s)`}
             </span>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {isLoading ? (
               <>
@@ -403,16 +400,9 @@ const ProfilePage = () => {
               </>
             ) : outfits && outfits.length > 0 ? (
               outfits.map((outfit, idx) => (
-                <div key={outfit._id || idx} className="relative group">
+                <div key={outfit._id || idx} className="relative group transition-transform hover:scale-[1.02]">
                   <Outfit item={outfit} onOpen={handleOpenOutfitModal} />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      requestDeleteOutfit(outfit._id);
-                    }}
-                    className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-20 backdrop-blur-md"
-                    title="Delete outfit"
-                  >
+                  <button onClick={(e) => { e.stopPropagation(); requestDeleteOutfit(outfit._id); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete outfit">
                     <Trash2Icon className="w-4 h-4" />
                   </button>
                 </div>
@@ -425,6 +415,44 @@ const ProfilePage = () => {
           </div>
         </section>
 
+        {/* Gadget Section */}
+        <section id="gadget-section" className="w-full mb-16">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400"><Watch className="w-5 h-5" /></div>
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight">Your Gadgets</h2>
+                <p className="text-xs text-zinc-400">Saved accessory items</p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
+              {isLoading ? 'Loading...' : `${gadgets?.length || 0} Gadget(s)`}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+            {isLoading ? (
+              <>
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </>
+            ) : gadgets && gadgets.length > 0 ? (
+              gadgets.map((gadget, idx) => (
+                <div key={gadget._id || idx} className="relative group transition-transform hover:scale-[1.02]">
+                  <Gadget item={gadget} onOpen={handleOpenGadgetModal} />
+                  <button onClick={(e) => { e.stopPropagation(); requestDeleteGadget(gadget._id); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete gadget">
+                    <Trash2Icon className="w-4 h-4" />
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full p-12 text-center rounded-2xl bg-zinc-900/30 border border-white/5 text-zinc-500 text-sm">
+                No saved gadgets found.
+              </div>
+            )}
+          </div>
+        </section>
       </section>
     </>
   );

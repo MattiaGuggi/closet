@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { updateClothingInDb } from "@/lib/database";
+import { updateGadgetInDb } from "@/lib/database";
 import { UTApi } from "uploadthing/server";
 
 const utapi = new UTApi({ token: process.env.UPLOADTHING_TOKEN! });
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const updated = await updateClothingInDb(gadget);
+    const updated = await updateGadgetInDb(gadget);
     
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {

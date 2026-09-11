@@ -22,7 +22,19 @@ export const clothes = pgTable("clothes", {
   scale: real("scale").default(1),
   position: jsonb("position").$type<number[]>().default([0, 0, 0]),
   description: text("description").default(""),
-  type: varchar("type", { enum: ["top", "mid", "bottom", "gadget"] }).notNull(),
+  type: varchar("type", { enum: ["top", "mid", "bottom"] }).notNull(),
+});
+
+// Gadgets Table
+export const gadgets = pgTable("gadgets", {
+  _id: uuid("_id").defaultRandom().primaryKey(),
+  creator: uuid("creator")
+    .notNull()
+    .references(() => users._id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  image: text("image").default(""),
+  description: text("description").default(""),
+  type: varchar("type", { enum: ["hat", "glasses", "bracelet", "fragrance", "watch", "gadget"] }).notNull(),
 });
 
 // Outfits Table
@@ -42,10 +54,17 @@ export const outfits = pgTable("outfits", {
     .references(() => clothes._id, { onDelete: "cascade" }),
 });
 
-// Relational Definitions for nested outfit queries
+// Relational Definitions
 export const clothesRelations = relations(clothes, ({ one }) => ({
   creatorUser: one(users, {
     fields: [clothes.creator],
+    references: [users._id],
+  }),
+}));
+
+export const gadgetsRelations = relations(gadgets, ({ one }) => ({
+  creatorUser: one(users, {
+    fields: [gadgets.creator],
     references: [users._id],
   }),
 }));
@@ -71,4 +90,5 @@ export const outfitsRelations = relations(outfits, ({ one }) => ({
 
 export type IUser = typeof users.$inferSelect;
 export type IClothes = typeof clothes.$inferSelect;
+export type IGadget = typeof gadgets.$inferSelect;
 export type IOutfit = typeof outfits.$inferSelect;

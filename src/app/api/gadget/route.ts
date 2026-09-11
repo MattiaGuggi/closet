@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClothingInDb } from "@/lib/database";
+import { createGadgetInDb } from "@/lib/database";
+import { UTApi } from "uploadthing/server";
+
+const utapi = new UTApi({ token: process.env.UPLOADTHING_TOKEN! });
 
 export async function POST(req: Request) {
   try {
@@ -13,10 +16,14 @@ export async function POST(req: Request) {
     const gadget = JSON.parse(gadgetStr as string);
     const imageFile = formData.get("image") as File | null;
 
-    // TODO: If you use AWS S3 / Vercel Blob, upload the `imageFile` here 
-    // and assign the resulting URL to `gadget.image`.
+    if (imageFile && imageFile.size > 0) {
+      const uploadRes = await utapi.uploadFiles(imageFile);
+      if (uploadRes.data?.url) {
+        gadget.image = uploadRes.data.url;
+      }
+    }
 
-    const newGadget = await createClothingInDb(gadget);
+    const newGadget = await createGadgetInDb(gadget);
 
     return NextResponse.json({ success: true, item: newGadget });
   } catch (error: any) {

@@ -14,7 +14,8 @@ const Clothing = ({ item, onOpen }: { item: clothesType, onOpen: (item: clothesT
 
       <div className="relative w-36 h-36 my-2 flex items-center justify-center bg-zinc-950/40 rounded-2xl border border-white/5 p-2 overflow-hidden pointer-events-none">
         {item?.image ? (
-          <Image 
+          <Image
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
             alt={item.name} 
             src={item.image} 
             fill 

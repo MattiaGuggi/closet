@@ -8,13 +8,14 @@ import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
 import OptionController from '@/app/components/OptionController';
 import Toast from '@/app/components/Toast';
-import { clothesType, EditableClothesType, OutfitPart } from '@/lib/types';
+import { clothesType, EditableClothesType, gadgetType, OutfitPart } from '@/lib/types';
 import { Sparkles, ChevronLeft, ChevronRight, Watch } from 'lucide-react';
 import Image from 'next/image';
 
 const ClosetPage = () => {
   const { user } = useUser();
   const [allItems, setAllItems] = useState<clothesType[]>([]);
+  const [allGadgets, setAllGadgets] = useState<gadgetType[]>([]);
   
   const [currentItemState, setCurrentItemState] = useState<Record<OutfitPart, number>>({
     top: 0,
@@ -38,6 +39,7 @@ const ClosetPage = () => {
       const response = await axios.get('/api/items');
       const data = response.data;
       setAllItems(data.clothes);
+      setAllGadgets(data.gadgets);
     } catch (error) {
       console.error('Error fetching items:', error);
     }
@@ -107,7 +109,8 @@ const ClosetPage = () => {
     
     try {
       const response = await axios.post('/api/outfit', { top, mid, bottom, creator: user });
-      showToast('Outfit created successfully', 'success');
+      if (response.data.success)
+        showToast('Outfit created successfully', 'success');
     } catch(err) {
       showToast('Outfit already created! Check your outfits in your profile', 'error');
     }
@@ -127,17 +130,20 @@ const ClosetPage = () => {
           ...posPrev,
           [itemType]: itemsOfType.length - 1
         }));
-      } else if (optimisticItem.type === "gadget") {
+      }
+      else if (optimisticItem.type === "gadget") {
         const gadgets = updatedList.filter(i => i.type === "gadget");
         setCurrentGadgetIndex(gadgets.length - 1);
       }
       return updatedList;
     });
 
-    showToast('Saving item to wardrobe...', 'info');
+    const isGadget = item.type === 'gadget';
+    showToast(`Saving ${isGadget ? 'gadget' : 'item'} to wardrobe...`, 'info');
 
     const formData = new FormData();
-    formData.append("item", JSON.stringify(item));
+    formData.append(isGadget ? "gadget" : "item", JSON.stringify(item));
+    
     if (item.imageFile) formData.append("image", item.imageFile);
     if (item.modelFileFile) formData.append("model", item.modelFileFile);
     formData.append("name", item.name);
@@ -146,21 +152,30 @@ const ClosetPage = () => {
     formData.append("position", JSON.stringify(item.position));
     if (item.type) formData.append("type", item.type);
 
+    const endpoint = isGadget ? '/api/gadget' : '/api/import';
+
     try {
-      const response = await axios.post("/api/import", formData, { headers: { "Content-Type": "multipart/form-data" } });
-      if (response.data.success && response.data.item) {
-        setAllItems(prev => prev.map(i => i._id === tempId ? response.data.item : i));
-        showToast('Item saved successfully!', 'success');
+      const response = await axios.post(endpoint, formData, { 
+        headers: { "Content-Type": "multipart/form-data" } 
+      });
+      
+      const savedItem = response.data.item || response.data.data;
+
+      if (response.data.success && savedItem) {
+        setAllItems(prev => prev.map(i => i._id === tempId ? savedItem : i));
+        showToast(`${isGadget ? 'Gadget' : 'Item'} saved successfully!`, 'success');
       } else {
-        throw new Error("Server failed to save item");
+        throw new Error(`Server failed to save ${isGadget ? 'gadget' : 'item'}`);
       }
     } catch (err) {
       setAllItems(prev => prev.filter(i => i._id !== tempId));
-      showToast('Failed to upload item. Please try again.', 'error');
+      showToast(`Failed to upload ${isGadget ? 'gadget' : 'item'}. Please try again.`, 'error');
     }
   };
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => {
+    fetchItems();
+  }, []);
 
   useEffect(() => {
     const sections = gsap.utils.toArray<HTMLElement>(".closet-row, .gadget-box");
@@ -169,8 +184,7 @@ const ClosetPage = () => {
     }
   }, []);
 
-  const gadgetsList = allItems.filter(item => item.type === "gadget");
-  const currentGadget = gadgetsList[currentGadgetIndex];
+  const currentGadget = allGadgets[currentGadgetIndex];
 
   return (
     <>
@@ -205,6 +219,7 @@ const ClosetPage = () => {
                   <>
                     <div className="relative w-28 h-28 mb-3">
                       <Image 
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         src={currentGadget.image} 
                         alt={currentGadget.name} 
                         fill 

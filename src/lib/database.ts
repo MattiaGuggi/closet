@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { eq, and, ne } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import * as schema from "./schema";
-import { users, clothes, outfits, IClothes, IOutfit } from "./schema";
+import { users, clothes, outfits, IClothes, IOutfit, gadgets } from "./schema";
 import { clothesType, gadgetType, outfitType } from "./types";
 
 const dbUrl = process.env.DATABASE_URL || process.env.MONGODB_URI || "";
@@ -98,6 +98,11 @@ export const deleteUserFromDb = async (user: any) => {
   }
 };
 
+export const getAllGadgetsFromDb = async () => {
+  await connectDB();
+  return await db.select().from(gadgets);
+}
+
 export const getAllClothesFromDb = async () => {
   await connectDB();
   return await db.select().from(clothes);
@@ -107,11 +112,9 @@ export const getUserClothesFromDb = async (criteria: any) => {
   await connectDB();
   try {
     const creatorId = getId(criteria?.creator || criteria);
+    // Clean query: gadgets are no longer in this table
     const rows = await db.query.clothes.findMany({
-      where: and(
-        eq(clothes.creator, creatorId), 
-        ne(clothes.type, "gadget")
-      ),
+      where: eq(clothes.creator, creatorId),
     });
     
     return rows; 
@@ -150,12 +153,18 @@ export const createClothingInDb = async (newClothes: clothesType) => {
     throw new Error("Missing creator ID in clothing item creation.");
   }
 
-  if (newClothes.name && newClothes.type) {
+  if (newClothes.type === "gadget") {
+    throw new Error("Gadgets must be saved in the gadgets table, not clothes.");
+  }
+
+  const clothesTypeEnum = newClothes.type as "top" | "mid" | "bottom";
+
+  if (newClothes.name && clothesTypeEnum) {
     const existingClothes = await db.query.clothes.findFirst({
       where: and(
         eq(clothes.creator, creatorId),
         eq(clothes.name, newClothes.name),
-        eq(clothes.type, newClothes.type)
+        eq(clothes.type, clothesTypeEnum)
       )
     });
 
@@ -172,7 +181,7 @@ export const createClothingInDb = async (newClothes: clothesType) => {
     scale: newClothes.scale ?? 1,
     position: newClothes.position || [0, 0, 0],
     description: newClothes.description || "",
-    type: newClothes.type,
+    type: clothesTypeEnum,
   };
 
   if (newClothes._id) payload._id = newClothes._id;
@@ -187,6 +196,10 @@ export const updateClothingInDb = async (clothesItem: clothesType) => {
     const itemId = getId(clothesItem);
     const creatorId = getId(clothesItem.creator);
 
+    if (clothesItem.type === "gadget") {
+      throw new Error("Gadgets must be updated via the gadget endpoint.");
+    }
+
     const [currentClothes] = await db.select().from(clothes).where(eq(clothes._id, itemId));
     if (!currentClothes) throw new Error("Clothing item not found");
 
@@ -197,20 +210,22 @@ export const updateClothingInDb = async (clothesItem: clothesType) => {
     if (clothesItem.scale !== undefined) payload.scale = clothesItem.scale;
     if (clothesItem.position !== undefined) payload.position = clothesItem.position;
     if (clothesItem.description !== undefined) payload.description = clothesItem.description;
-    if (clothesItem.type !== null && clothesItem.type !== undefined) payload.type = clothesItem.type;
+    
+    if (clothesItem.type !== null && clothesItem.type !== undefined) {
+      payload.type = clothesItem.type as "top" | "mid" | "bottom";
+    }
+    
     if (creatorId) payload.creator = creatorId;
 
-    // Calculate resulting name and type
     const mergedName = payload.name ?? currentClothes.name;
     const mergedType = payload.type ?? currentClothes.type;
     const mergedCreator = payload.creator ?? currentClothes.creator;
 
-    // 1. PRE-CHECK: Prevent renaming into an already existing item
     const duplicate = await db.query.clothes.findFirst({
       where: and(
         eq(clothes.creator, mergedCreator),
         eq(clothes.name, mergedName),
-        eq(clothes.type, mergedType)
+        eq(clothes.type, mergedType as "top" | "mid" | "bottom")
       )
     });
 
@@ -218,15 +233,12 @@ export const updateClothingInDb = async (clothesItem: clothesType) => {
       throw new Error("Another item with this name and type already exists in your closet.");
     }
 
-    const [updated] = await db
-      .update(clothes)
-      .set(payload)
-      .where(eq(clothes._id, itemId))
-      .returning();
+    const [updated] = await db.update(clothes).set(payload).where(eq(clothes._id, itemId)).returning();
+      
     return updated;
   } catch (err) {
     console.error("Error updating clothes", err);
-    throw err; // Pass error to frontend
+    throw err; 
   }
 };
 
@@ -342,16 +354,11 @@ export const getUserGadgetsFromDb = async (criteria: any) => {
   await connectDB();
   try {
     const creatorId = getId(criteria?.creator || criteria);
-    const rows = await db.query.clothes.findMany({
-      where: and(eq(clothes.creator, creatorId), eq(clothes.type, "gadget")),
+    const rows = await db.query.gadgets.findMany({
+      where: eq(gadgets.creator, creatorId),
     });
-    return rows.map((g) => ({
-      _id: g._id,
-      creator: g.creator,
-      name: g.name,
-      image: g.image,
-      description: g.description,
-    }));
+    
+    return rows;
   } catch(err) {
     console.error("Error fetching gadgets", err);
     return { success: false, error: "Server error" };
@@ -454,14 +461,66 @@ export const deleteItemFromDb = async (id: string | number) => {
   }
 };
 
-export const deleteGadgetFromDb = async (id: string | number) => {
+export const deleteGadgetFromDb = async (id: string) => {
   await connectDB();
   try {
-    const itemId = getId(id);
-    const [deleted] = await db.delete(clothes).where(and(eq(clothes._id, itemId), eq(clothes.type, "gadget"))).returning();
-    return { success: true, data: deleted };
+    const [deletedItem] = await db.delete(gadgets).where(eq(gadgets._id, id)).returning();
+      
+    if (!deletedItem) {
+      throw new Error("Gadget not found or already deleted");
+    }
+    
+    return deletedItem;
   } catch (err) {
-    console.error("Error deleting gadget", err);
-    return { success: false, error: "Errore nel server" };
+    console.error("Error deleting gadget:", err);
+    throw new Error("Failed to delete gadget from database");
+  }
+};
+
+export const createGadgetInDb = async (newGadget: gadgetType) => {
+  await connectDB();
+
+  const creatorId = getId(newGadget.creator);
+  if (!creatorId) {
+    throw new Error("Missing creator ID in gadget creation.");
+  }
+
+  // Check for duplicates in the new gadgets table
+  if (newGadget.name && newGadget.type) {
+    const existingGadget = await db.query.gadgets.findFirst({
+      where: and(
+        eq(gadgets.creator, creatorId),
+        eq(gadgets.name, newGadget.name),
+        eq(gadgets.type, newGadget.type)
+      )
+    });
+
+    if (existingGadget) {
+      throw new Error("A gadget with this name and type already exists.");
+    }
+  }
+
+  const payload: any = {
+    creator: creatorId,
+    name: newGadget.name,
+    image: newGadget.image || "",
+    description: newGadget.description || "",
+    type: newGadget.type || "gadget",
+  };
+
+  if (newGadget._id) payload._id = newGadget._id;
+
+  const [item] = await db.insert(gadgets).values(payload).returning();
+  return item;
+};
+
+export const getGadgetFromDb = async (id: string) => {
+  await connectDB();
+  try {
+    const [item] = await db.select().from(gadgets).where(eq(gadgets._id, id));
+    return item || null;
+  } catch (err) {
+    console.error("Error fetching gadget:", err);
+    throw new Error("Failed to fetch gadget from database");
   }
 };

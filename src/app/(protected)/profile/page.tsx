@@ -1,7 +1,7 @@
 'use client';
 
 import axios from 'axios';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/app/context/UserContext';
 import UserModal from '@/app/components/UserModal';
@@ -11,10 +11,59 @@ import ItemModal from '@/app/components/ItemModal';
 import SkeletonCard from '@/app/components/SkeletonCard';
 import { clothesType, EditableClothesType, gadgetType, outfitType } from '@/lib/types';
 import OutfitModal from '@/app/components/OutfitModal';
-import { Trash2Icon, LogOut, Edit3, Shirt, Layers, AlertCircle, CheckCircle2, X, Watch } from 'lucide-react';
+import { Trash2Icon, LogOut, Edit3, Shirt, Layers, AlertCircle, CheckCircle2, X, Watch, ListFilter, ChevronDown, Check } from 'lucide-react';
 import Gadget from '@/app/components/Gadget';
 import GadgetModal from '@/app/components/GadgetModal';
 import Toast from '@/app/components/Toast';
+
+// 1. Updated SortOptions to include Type A-Z and Type Z-A
+type SortOption = 'Default' | 'A-Z' | 'Z-A' | 'Type A-Z' | 'Type Z-A';
+
+// Reusable Dropdown Component
+function SortDropdown({
+  value,
+  options,
+  onChange,
+  isOpen,
+  onToggle,
+  onClose
+}: {
+  value: SortOption;
+  options: SortOption[];
+  onChange: (val: SortOption) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="relative z-40">
+      {isOpen && <div className="fixed inset-0 z-30" onClick={onClose} />}
+      <button
+        onClick={onToggle}
+        className="relative z-40 flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-zinc-900/80 border border-white/10 rounded-lg text-zinc-400 hover:text-white hover:border-white/20 transition-all cursor-pointer backdrop-blur-md"
+      >
+        <ListFilter className="w-3 h-3" />
+        {value === 'Default' ? 'Sort' : value}
+        <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-36 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 py-1 animate-in fade-in zoom-in-95 duration-200">
+          {options.map(opt => (
+            <button
+              key={opt}
+              onClick={() => { onChange(opt); onClose(); }}
+              className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors cursor-pointer ${value === opt ? 'bg-indigo-500/10 text-indigo-400 font-medium' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}
+            >
+              {opt}
+              {value === opt && <Check className="w-3 h-3" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const ProfilePage = () => {
   const { user, logout } = useUser();
@@ -22,6 +71,11 @@ const ProfilePage = () => {
   const [outfits, setOutfits] = useState<outfitType[] | null>(null);
   const [gadgets, setGadgets] = useState<gadgetType[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Sorting States
+  const [clothesSort, setClothesSort] = useState<SortOption>('Default');
+  const [gadgetsSort, setGadgetsSort] = useState<SortOption>('Default');
+  const [activeDropdown, setActiveDropdown] = useState<'clothes' | 'gadgets' | null>(null);
 
   const [currentItem, setCurrentItem] = useState<clothesType>({ 
     name: '', image: '', modelFile: '', scale: 1.0, position: [0, 0, 0], description: '', type: null, creator: user 
@@ -68,6 +122,40 @@ const ProfilePage = () => {
       setIsLoading(false);
     }
   }, [user?._id]);
+
+  // --- Sorting Logic using useMemo ---
+  const sortedClothes = useMemo(() => {
+    if (!clothes) return null;
+    const arr = [...clothes];
+    if (clothesSort === 'A-Z') arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    if (clothesSort === 'Z-A') arr.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+    return arr;
+  }, [clothes, clothesSort]);
+
+  const sortedGadgets = useMemo(() => {
+    if (!gadgets) return null;
+    const arr = [...gadgets];
+    
+    if (gadgetsSort === 'A-Z') {
+      arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    } else if (gadgetsSort === 'Z-A') {
+      arr.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+    } else if (gadgetsSort === 'Type A-Z') {
+      arr.sort((a, b) => {
+        const typeCompare = (a.type || '').localeCompare(b.type || '');
+        // Fallback: If types are the same, sort alphabetically by name
+        return typeCompare !== 0 ? typeCompare : (a.name || '').localeCompare(b.name || '');
+      });
+    } else if (gadgetsSort === 'Type Z-A') {
+      arr.sort((a, b) => {
+        const typeCompare = (b.type || '').localeCompare(a.type || '');
+        // Fallback: If types are the same, sort alphabetically by name
+        return typeCompare !== 0 ? typeCompare : (a.name || '').localeCompare(b.name || '');
+      });
+    }
+    return arr;
+  }, [gadgets, gadgetsSort]);
+
 
   const saveGadget = async (gadget: gadgetType & { imageFile?: File }) => {
     setIsGadgetModalOpen(false);
@@ -334,9 +422,10 @@ const ProfilePage = () => {
             </button>
           </div>
         </div>
+
         {/* Clothes Section */}
         <section id="clothes-section" className="w-full mb-16">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+          <div className="flex items-end justify-between mb-8 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"><Shirt className="w-5 h-5" /></div>
               <div>
@@ -344,9 +433,19 @@ const ProfilePage = () => {
                 <p className="text-xs text-zinc-400">Garments stored in your studio</p>
               </div>
             </div>
-            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
-              {isLoading ? 'Loading...' : `${clothes?.length || 0} Item(s)`}
-            </span>
+            <div className="flex flex-col items-end gap-2.5">
+              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
+                {isLoading ? 'Loading...' : `${clothes?.length || 0} Item(s)`}
+              </span>
+              <SortDropdown 
+                value={clothesSort} 
+                options={['Default', 'A-Z', 'Z-A']} 
+                onChange={setClothesSort} 
+                isOpen={activeDropdown === 'clothes'}
+                onToggle={() => setActiveDropdown(prev => prev === 'clothes' ? null : 'clothes')}
+                onClose={() => setActiveDropdown(null)}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
@@ -356,8 +455,8 @@ const ProfilePage = () => {
                 <SkeletonCard />
                 <SkeletonCard />
               </>
-            ) : clothes && clothes.length > 0 ? (
-              clothes.map((clothing, idx) => (
+            ) : sortedClothes && sortedClothes.length > 0 ? (
+              sortedClothes.map((clothing, idx) => (
                 <div key={clothing._id || idx} className="relative group transition-transform hover:scale-[1.02]">
                   <Clothing item={clothing} onOpen={handleOpenItemModal} />
                   <button onClick={(e) => { e.stopPropagation(); requestDeleteItem(clothing._id); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
@@ -372,9 +471,10 @@ const ProfilePage = () => {
             )}
           </div>
         </section>
+
         {/* Outfit Section */}
         <section id="outfit-section" className="w-full mb-16">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+          <div className="flex items-end justify-between mb-8 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400"><Layers className="w-5 h-5" /></div>
               <div>
@@ -382,9 +482,11 @@ const ProfilePage = () => {
                 <p className="text-xs text-zinc-400">Saved fashion combinations</p>
               </div>
             </div>
-            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
-              {isLoading ? 'Loading...' : `${outfits?.length || 0} Outfit(s)`}
-            </span>
+            <div className="flex flex-col items-end gap-2.5">
+              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
+                {isLoading ? 'Loading...' : `${outfits?.length || 0} Outfit(s)`}
+              </span>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {isLoading ? (
@@ -412,7 +514,7 @@ const ProfilePage = () => {
 
         {/* Gadget Section */}
         <section id="gadget-section" className="w-full mb-16">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+          <div className="flex items-end justify-between mb-8 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400"><Watch className="w-5 h-5" /></div>
               <div>
@@ -420,9 +522,19 @@ const ProfilePage = () => {
                 <p className="text-xs text-zinc-400">Saved accessory items</p>
               </div>
             </div>
-            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
-              {isLoading ? 'Loading...' : `${gadgets?.length || 0} Gadget(s)`}
-            </span>
+            <div className="flex flex-col items-end gap-2.5">
+              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
+                {isLoading ? 'Loading...' : `${gadgets?.length || 0} Gadget(s)`}
+              </span>
+              <SortDropdown 
+                value={gadgetsSort} 
+                options={['Default', 'A-Z', 'Z-A', 'Type A-Z', 'Type Z-A']} 
+                onChange={setGadgetsSort} 
+                isOpen={activeDropdown === 'gadgets'}
+                onToggle={() => setActiveDropdown(prev => prev === 'gadgets' ? null : 'gadgets')}
+                onClose={() => setActiveDropdown(null)}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
@@ -432,8 +544,8 @@ const ProfilePage = () => {
                 <SkeletonCard />
                 <SkeletonCard />
               </>
-            ) : gadgets && gadgets.length > 0 ? (
-              gadgets.map((gadget, idx) => (
+            ) : sortedGadgets && sortedGadgets.length > 0 ? (
+              sortedGadgets.map((gadget, idx) => (
                 <div key={gadget._id || idx} className="relative group transition-transform hover:scale-[1.02]">
                   <Gadget item={gadget} onOpen={handleOpenGadgetModal} />
                   <button onClick={(e) => { e.stopPropagation(); requestDeleteGadget(gadget._id); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete gadget">

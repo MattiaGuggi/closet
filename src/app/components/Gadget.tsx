@@ -3,6 +3,9 @@ import Image from "next/image";
 import { Edit3 } from "lucide-react";
 
 const Gadget = ({ item, onOpen }: { item: gadgetType; onOpen: (item: gadgetType) => void }) => {
+  // Clamp scale between 0.4 and 1.25 so previews stay legible and inside the box
+  const thumbnailScale = Math.max(0.4, Math.min(item?.scale || 1, 1.25));
+
   return (
     <div className='clothing-card w-full rounded-3xl bg-zinc-900/60 border border-white/10 hover:border-violet-500/40 p-6 flex flex-col items-center justify-between backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02]'>
       <div className="text-center mb-4 relative z-10">
@@ -14,10 +17,11 @@ const Gadget = ({ item, onOpen }: { item: gadgetType; onOpen: (item: gadgetType)
         {item?.image ? (
           <Image 
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            alt={item.name} 
+            alt={item.name || 'Gadget'} 
             src={item.image} 
             fill 
-            className='object-contain p-2' 
+            className='object-contain p-2 transition-transform duration-300' 
+            style={{ transform: `scale(${thumbnailScale})` }}
           />
         ) : (
           <div className="text-xs text-zinc-600">No Image</div>
@@ -35,7 +39,7 @@ const Gadget = ({ item, onOpen }: { item: gadgetType; onOpen: (item: gadgetType)
         <span>Modify</span>
       </button>
     </div>
-  )
+  );
 };
 
 export default Gadget;

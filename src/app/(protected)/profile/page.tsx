@@ -11,9 +11,8 @@ import ItemModal from '@/app/components/ItemModal';
 import SkeletonCard from '@/app/components/SkeletonCard';
 import { clothesType, EditableClothesType, gadgetType, outfitType } from '@/lib/types';
 import OutfitModal from '@/app/components/OutfitModal';
-import { Trash2Icon, LogOut, Edit3, Shirt, Layers, AlertCircle, CheckCircle2, X, Watch, ListFilter, ChevronDown, Check } from 'lucide-react';
+import { Trash2Icon, LogOut, Edit3, Shirt, Layers, Watch, ListFilter, ChevronDown, Check } from 'lucide-react';
 import Gadget from '@/app/components/Gadget';
-import GadgetModal from '@/app/components/GadgetModal';
 import Toast from '@/app/components/Toast';
 
 // 1. Updated SortOptions to include Type A-Z and Type Z-A
@@ -157,16 +156,16 @@ const ProfilePage = () => {
   }, [gadgets, gadgetsSort]);
 
 
-  const saveGadget = async (gadget: gadgetType & { imageFile?: File }) => {
+  const saveGadget = async (item: gadgetType & { imageFile?: File }) => {
     setIsGadgetModalOpen(false);
     
-    const oldGadget = gadgets?.find((g) => g._id === gadget._id);
-    setGadgets((prev) => prev?.map((g) => g._id === gadget._id ? gadget : g) || []);
+    const oldGadget = gadgets?.find((g) => g._id === item._id);
+    setGadgets((prev) => prev?.map((g) => g._id === item._id ? item : g) || []);
 
     try {
       const formData = new FormData();
-      formData.append("gadget", JSON.stringify(gadget));
-      if (gadget.imageFile) formData.append("image", gadget.imageFile);
+      formData.append("gadget", JSON.stringify(item));
+      if (item.imageFile) formData.append("image", item.imageFile);
 
       const response = await axios.post("/api/updateGadget", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -399,7 +398,7 @@ const ProfilePage = () => {
       {isUserModalOpen && <UserModal onClose={() => setIsUserModalOpen(false)} />}
       {isItemModalOpen && <ItemModal onSave={saveItem} onClose={handleCloseItemModal} item={currentItem} />}
       {isOutfitModalOpen && <OutfitModal onSave={saveOutfit} onClose={handleCloseOutfitModal} outfit={currentOutfit} items={clothes} />}
-      {isGadgetModalOpen && <GadgetModal onSave={saveGadget} onClose={handleCloseGadgetModal} gadget={currentGadget} />}
+      {isGadgetModalOpen && <ItemModal onSave={saveGadget} onClose={handleCloseGadgetModal} item={currentGadget} />}
 
       <section id="profile-section" className="w-full max-w-6xl mx-auto px-6 py-10 flex flex-col items-center">
         

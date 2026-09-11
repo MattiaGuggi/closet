@@ -126,7 +126,6 @@ const ClosetPage = () => {
 
     if (isGadget) {
       setAllGadgets(prev => {
-        // Cast to gadgetType to satisfy TypeScript
         const updatedList = [...prev, optimisticItem as unknown as gadgetType];
         setCurrentGadgetIndex(updatedList.length - 1);
         return updatedList;
@@ -216,46 +215,46 @@ const ClosetPage = () => {
           </div>
           <div className="gadget-box w-full max-w-sm lg:max-w-none lg:w-[280px] bg-zinc-900/70 border border-white/10 rounded-3xl p-5 backdrop-blur-3xl shadow-2xl flex flex-col mt-8 lg:mt-0 lg:absolute lg:right-0 xl:-right-12 lg:top-24 z-30">
             <div className="flex items-center justify-between mb-4">
-              {/* Updated Header Pill to bridge Indigo & Purple */}
               <span className="px-3 py-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20 text-[11px] font-bold uppercase tracking-wider text-violet-400 backdrop-blur-md shadow-sm flex items-center gap-1.5">
                 <Watch className="w-4 h-4" /> Gadgets
               </span>
             </div>
             
-            {/* Added a subtle transition to the inner carousel box */}
             <div className="relative flex items-center justify-between w-full h-[200px] bg-zinc-950/50 border border-white/5 hover:border-violet-500/10 transition-colors duration-500 rounded-2xl p-2 group overflow-hidden shadow-inner">
               
               <button 
                 onClick={() => handleGadgetClick('left')} 
-                className="p-2.5 rounded-2xl bg-zinc-900/80 hover:bg-violet-600 text-zinc-400 hover:text-white border border-white/5 hover:border-violet-500/50 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md"
+                className="shrink-0 p-2.5 rounded-2xl bg-zinc-900/80 hover:bg-violet-600 text-zinc-400 hover:text-white border border-white/5 hover:border-violet-500/50 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               
-              <div id="gadget-carousel-wrapper" className="flex-1 h-full relative flex flex-col items-center justify-center px-2">
+              <div id="gadget-carousel-wrapper" className="flex-1 min-w-0 h-full relative flex flex-col items-center justify-center px-1">
                 {currentGadget ? (
                   <>
-                    <div className="relative w-28 h-28 mb-3">
+                    <div className="relative w-24 h-24 mb-2 shrink-0">
                       <Image 
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         src={currentGadget.image} 
                         alt={currentGadget.name} 
                         fill 
                         className="object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] pointer-events-none" 
+                        style={{ transform: `scale(${Math.max(0.4, Math.min(currentGadget?.scale || 1, 1.25))})` }} 
                       />
                     </div>
-                    <span className="text-xs font-bold text-zinc-100 truncate max-w-full px-2 text-center drop-shadow-md">
+                    <p className="w-full text-xs font-bold text-zinc-100 text-center drop-shadow-md break-words line-clamp-2 leading-tight px-1">
                       {currentGadget.name}
-                    </span>
+                    </p>
                   </>
                 ) : (
                   <span className="text-xs text-zinc-600 font-medium uppercase tracking-wider">No Gadgets</span>
                 )}
               </div>
               
+              {/* Added shrink-0 */}
               <button 
                 onClick={() => handleGadgetClick('right')} 
-                className="p-2.5 rounded-2xl bg-zinc-900/80 hover:bg-violet-600 text-zinc-400 hover:text-white border border-white/5 hover:border-violet-500/50 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md"
+                className="shrink-0 p-2.5 rounded-2xl bg-zinc-900/80 hover:bg-violet-600 text-zinc-400 hover:text-white border border-white/5 hover:border-violet-500/50 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>

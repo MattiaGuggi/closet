@@ -33,6 +33,9 @@ export const gadgets = pgTable("gadgets", {
     .references(() => users._id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
   image: text("image").default(""),
+  modelFile: text("model_file").default(""),
+  scale: real("scale").default(1),
+  position: jsonb("position").$type<number[]>().default([0, 0, 0]),
   description: text("description").default(""),
   type: varchar("type", { enum: ["hat", "glasses", "bracelet", "fragrance", "watch"] }).notNull(),
 });

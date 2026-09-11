@@ -11,7 +11,7 @@ import {
   Maximize2, Upload, Loader2, Check, ChevronUp, 
   ChevronDown, MoveDiagonal, ZoomIn, ListFilter
 } from 'lucide-react';
-import { clothesType, EditableClothesType, OutfitPart, Gadget } from '@/lib/types';
+import { clothesType, OutfitPart, Gadget, gadgetType } from '@/lib/types';
 
 // SHARED STYLES & CONSTANTS
 const baseInputStyle = 'w-full px-3.5 py-2.5 bg-zinc-950/60 border border-white/10 rounded-xl shadow-inner text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all';
@@ -33,41 +33,48 @@ const gadgetOptions: { label: string; value: Gadget }[] = [
   { label: 'Watch', value: 'watch' },
 ];
 
-interface SubComponentProps {
-  newItem: EditableClothesType;
-  setNewItem: React.Dispatch<React.SetStateAction<EditableClothesType>>;
+type EditableItem<T extends clothesType | gadgetType> = T & {
+  imageFile?: File;
+  modelFileFile?: File;
+  modelFilePreview?: string;
+  imagePreview?: string;
+  scale: number;
+  position: [number, number, number];
+};
+
+type ItemModalProps<T extends clothesType | gadgetType> = {
+  onClose: () => void;
+  onSave: (newItem: EditableItem<T>, choice: string) => void;
+  item: T;
+};
+
+interface SubComponentProps<T extends clothesType | gadgetType> {
+  newItem: EditableItem<T>;
+  setNewItem: React.Dispatch<React.SetStateAction<EditableItem<T>>>;
 }
 
-// Extended props for TypeDropdown to include the lifted state
-interface TypeDropdownProps extends SubComponentProps {
+interface TypeDropdownProps<T extends clothesType | gadgetType> extends SubComponentProps<T> {
   mainCategory: 'Clothing' | 'Gadget' | null;
   setMainCategory: React.Dispatch<React.SetStateAction<'Clothing' | 'Gadget' | null>>;
 }
 
 // MAIN COMPONENT
-const ItemModal = ({
+function ItemModal<T extends clothesType | gadgetType>({
   onClose,
   onSave,
   item,
-}: {
-  onClose: () => void;
-  onSave: (newItem: EditableClothesType, choice: string) => void;
-  item: clothesType;
-}) => {
-  const [newItem, setNewItem] = useState<EditableClothesType>({
+}: ItemModalProps<T>) {
+  const [newItem, setNewItem] = useState<EditableItem<T>>({
     ...item,
     scale: item.scale || 1,
-    position: item.position || [0, 0, 0]
-  });
+    position: item.position || [0, 0, 0],
+  } as EditableItem<T>);
   
   const [isRemovingBg, setIsRemovingBg] = useState(false);
 
-  // Derive the current top-level category based on the exact item type
   const getInitialCategory = () => {
     if (!item.type) return null;
-    
     const currentType = item.type as string; 
-    
     if (clothingOptions.some(opt => opt.value === currentType)) return 'Clothing';
     if (gadgetOptions.some(opt => opt.value === currentType)) return 'Gadget';
     return null;
@@ -104,7 +111,6 @@ const ItemModal = ({
         {/* Form Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-5">
-            {/* Pass the state down as props */}
             <TypeDropdown 
               newItem={newItem} 
               setNewItem={setNewItem} 
@@ -139,7 +145,6 @@ const ItemModal = ({
           <button
             type="button"
             disabled={isRemovingBg || !newItem.type || !mainCategory}
-            // Use the lifted state here
             onClick={() => onSave(newItem, mainCategory as string)}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:hover:scale-100"
           >
@@ -154,7 +159,7 @@ const ItemModal = ({
 }
 
 // SUB-COMPONENTS
-function TypeDropdown({ newItem, setNewItem, mainCategory, setMainCategory }: TypeDropdownProps) {
+function TypeDropdown<T extends clothesType | gadgetType>({ newItem, setNewItem, mainCategory, setMainCategory }: TypeDropdownProps<T>) {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   
@@ -205,9 +210,8 @@ function TypeDropdown({ newItem, setNewItem, mainCategory, setMainCategory }: Ty
                   onClick={() => {
                     setMainCategory(cat as 'Clothing' | 'Gadget');
                     setIsCategoryOpen(false);
-                    // Reset the specific type when switching main categories
                     if (mainCategory !== cat) {
-                      setNewItem((prev) => ({ ...prev, type: null }));
+                      setNewItem((prev) => ({ ...prev, type: null as T['type'] }));
                     }
                   }}
                   className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
@@ -251,7 +255,7 @@ function TypeDropdown({ newItem, setNewItem, mainCategory, setMainCategory }: Ty
                     key={opt.value}
                     type="button"
                     onClick={() => {
-                      setNewItem((prev) => ({ ...prev, type: opt.value }));
+                      setNewItem((prev) => ({ ...prev, type: opt.value as T['type'] }));
                       setIsTypeOpen(false);
                     }}
                     className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
@@ -273,12 +277,12 @@ function TypeDropdown({ newItem, setNewItem, mainCategory, setMainCategory }: Ty
   );
 }
 
-function ImageSection({ 
+function ImageSection<T extends clothesType | gadgetType>({ 
   newItem, 
   setNewItem, 
   isRemovingBg, 
   setIsRemovingBg 
-}: SubComponentProps & { isRemovingBg: boolean, setIsRemovingBg: (val: boolean) => void }) {
+}: SubComponentProps<T> & { isRemovingBg: boolean, setIsRemovingBg: (val: boolean) => void }) {
   
   const [autoRemoveBg, setAutoRemoveBg] = useState(true);
   const workerRef = useRef<Worker | null>(null);
@@ -334,7 +338,7 @@ function ImageSection({
     const newPosX = parseFloat((panStartRef.current.startPosX + (deltaX / 100)).toFixed(2));
     const newPosY = parseFloat((panStartRef.current.startPosY - (deltaY / 100)).toFixed(2));
 
-    setNewItem(prev => {
+    setNewItem((prev) => {
       const newPos = [...prev.position] as [number, number, number];
       newPos[0] = newPosX;
       newPos[1] = newPosY;
@@ -350,7 +354,7 @@ function ImageSection({
   };
 
   const handleResetPosition = () => {
-    setNewItem(prev => {
+    setNewItem((prev) => {
       const newPos = [...prev.position] as [number, number, number];
       newPos[0] = 0;
       newPos[1] = 0;
@@ -544,7 +548,7 @@ function ImageSection({
   );
 }
 
-function ModelSection({ newItem, setNewItem }: SubComponentProps) {
+function ModelSection<T extends clothesType | gadgetType>({ newItem, setNewItem }: SubComponentProps<T>) {
   return (
     <div>
       <label htmlFor="3d-input" className={labelStyle}>
@@ -583,7 +587,7 @@ function ModelSection({ newItem, setNewItem }: SubComponentProps) {
   );
 }
 
-function DetailsForm({ newItem, setNewItem }: SubComponentProps) {
+function DetailsForm<T extends clothesType | gadgetType>({ newItem, setNewItem }: SubComponentProps<T>) {
   const handlePositionStep = (axisIndex: number, delta: number) => {
     setNewItem((prev) => {
       const newPos = [...prev.position] as [number, number, number];

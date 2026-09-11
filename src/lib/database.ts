@@ -424,6 +424,10 @@ export const updateGadgetInDb = async (gadget: gadgetType) => {
     if (gadget.name) payload.name = gadget.name;
     if (gadget.image) payload.image = gadget.image;
     if (gadget.description) payload.description = gadget.description;
+    if (gadget.type) payload.type = gadget.type;
+    if (gadget.modelFile) payload.modelFile = gadget.modelFile;
+    if (gadget.scale) payload.scale = gadget.scale;
+    if (gadget.position) payload.position = gadget.position;
 
     const [updated] = await db.update(gadgets).set(payload).where(eq(gadgets._id, gadgetId)).returning();
     return updated;

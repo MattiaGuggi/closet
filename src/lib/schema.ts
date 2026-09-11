@@ -34,7 +34,7 @@ export const gadgets = pgTable("gadgets", {
   name: varchar("name", { length: 255 }).notNull(),
   image: text("image").default(""),
   description: text("description").default(""),
-  type: varchar("type", { enum: ["hat", "glasses", "bracelet", "fragrance", "watch", "gadget"] }).notNull(),
+  type: varchar("type", { enum: ["hat", "glasses", "bracelet", "fragrance", "watch"] }).notNull(),
 });
 
 // Outfits Table

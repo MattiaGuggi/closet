@@ -74,19 +74,18 @@ const ClosetPage = () => {
 
   const handleGadgetClick = (arrow: 'left' | 'right') => {
     const wrapper = document.getElementById('gadget-carousel-wrapper');
-    const gadgets = allItems.filter(item => item.type === "gadget");
     
-    if (!wrapper || gadgets.length < 2) return;
+    if (!wrapper || allGadgets.length < 2) return;
 
     const tl = gsap.timeline();
     tl.to(wrapper, {
       opacity: 0,
-      x: arrow === 'left' ? -150 : 150,
-      duration: 0.35,
+      x: arrow === 'left' ? -100 : 100,
+      duration: 0.2,
       ease: 'power2.inOut',
       onComplete: () => {
         setCurrentGadgetIndex(prev => {
-          const maxIndex = gadgets.length - 1;
+          const maxIndex = allGadgets.length - 1;
           return arrow === 'left' 
             ? prev === 0 ? maxIndex : prev - 1 
             : prev === maxIndex ? 0 : prev + 1;
@@ -116,30 +115,36 @@ const ClosetPage = () => {
     }
   };
 
-  const importItem = async (item: EditableClothesType) => {
+  const importItem = async (item: EditableClothesType, choice: string) => {
     setIsModalOpen(false);
     const tempId = -Date.now(); 
     const optimisticItem = { ...item, _id: tempId, image: item.image } as unknown as clothesType;
 
-    setAllItems(prev => {
-      const updatedList = [...prev, optimisticItem];
-      if (optimisticItem.type && optimisticItem.type !== "gadget") {
-        const itemType = optimisticItem.type as OutfitPart;
-        const itemsOfType = updatedList.filter(i => i.type === itemType);
-        setCurrentItemState(posPrev => ({
-          ...posPrev,
-          [itemType]: itemsOfType.length - 1
-        }));
-      }
-      else if (optimisticItem.type === "gadget") {
-        const gadgets = updatedList.filter(i => i.type === "gadget");
-        setCurrentGadgetIndex(gadgets.length - 1);
-      }
-      return updatedList;
-    });
-
-    const isGadget = item.type === 'gadget';
+    const isGadget = choice.toLowerCase() === 'gadget';
+    
     showToast(`Saving ${isGadget ? 'gadget' : 'item'} to wardrobe...`, 'info');
+
+    if (isGadget) {
+      setAllGadgets(prev => {
+        // Cast to gadgetType to satisfy TypeScript
+        const updatedList = [...prev, optimisticItem as unknown as gadgetType];
+        setCurrentGadgetIndex(updatedList.length - 1);
+        return updatedList;
+      });
+    } else {
+      setAllItems(prev => {
+        const updatedList = [...prev, optimisticItem];
+        if (optimisticItem.type) {
+          const itemType = optimisticItem.type as OutfitPart;
+          const itemsOfType = updatedList.filter(i => i.type === itemType);
+          setCurrentItemState(posPrev => ({
+            ...posPrev,
+            [itemType]: itemsOfType.length - 1
+          }));
+        }
+        return updatedList;
+      });
+    }
 
     const formData = new FormData();
     formData.append(isGadget ? "gadget" : "item", JSON.stringify(item));
@@ -162,13 +167,21 @@ const ClosetPage = () => {
       const savedItem = response.data.item || response.data.data;
 
       if (response.data.success && savedItem) {
-        setAllItems(prev => prev.map(i => i._id === tempId ? savedItem : i));
+        if (isGadget) {
+          setAllGadgets(prev => prev.map(i => i._id === tempId ? (savedItem as gadgetType) : i));
+        } else {
+          setAllItems(prev => prev.map(i => i._id === tempId ? savedItem : i));
+        }
         showToast(`${isGadget ? 'Gadget' : 'Item'} saved successfully!`, 'success');
       } else {
         throw new Error(`Server failed to save ${isGadget ? 'gadget' : 'item'}`);
       }
     } catch (err) {
-      setAllItems(prev => prev.filter(i => i._id !== tempId));
+      if (isGadget) {
+        setAllGadgets(prev => prev.filter(i => i._id !== tempId));
+      } else {
+        setAllItems(prev => prev.filter(i => i._id !== tempId));
+      }
       showToast(`Failed to upload ${isGadget ? 'gadget' : 'item'}. Please try again.`, 'error');
     }
   };
@@ -188,7 +201,7 @@ const ClosetPage = () => {
 
   return (
     <>
-      <section id='closet-section' className="w-full max-w-[1500px] mx-auto px-6 py-8 flex flex-col items-center">
+      <section id='closet-section' className="w-full max-w-[1500px] py-8 flex flex-col items-center">
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
             <Sparkles className="w-3.5 h-3.5" /> Interactive Studio
@@ -201,19 +214,24 @@ const ClosetPage = () => {
           <div className='w-full max-w-4xl z-10'>
             <ClosetRows items={allItems} currentItemState={currentItemState} handleClick={handleClick} three={three} />
           </div>
-          <div className="gadget-box w-full max-w-sm lg:max-w-none lg:w-[280px] bg-zinc-900/70 border border-white/10 rounded-3xl p-5 backdrop-blur-3xl shadow-2xl flex flex-col mt-8 lg:mt-0 lg:absolute lg:right-4 lg:top-24 z-30">
+          <div className="gadget-box w-full max-w-sm lg:max-w-none lg:w-[280px] bg-zinc-900/70 border border-white/10 rounded-3xl p-5 backdrop-blur-3xl shadow-2xl flex flex-col mt-8 lg:mt-0 lg:absolute lg:right-0 xl:-right-12 lg:top-24 z-30">
             <div className="flex items-center justify-between mb-4">
-              <span className="px-3 py-1.5 rounded-lg bg-zinc-900/80 border border-white/10 text-[11px] font-bold uppercase tracking-wider text-purple-400 backdrop-blur-md shadow-sm flex items-center gap-1.5">
+              {/* Updated Header Pill to bridge Indigo & Purple */}
+              <span className="px-3 py-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20 text-[11px] font-bold uppercase tracking-wider text-violet-400 backdrop-blur-md shadow-sm flex items-center gap-1.5">
                 <Watch className="w-4 h-4" /> Gadgets
               </span>
             </div>
-            <div className="relative flex items-center justify-between w-full h-[200px] bg-zinc-950/50 border border-white/5 rounded-2xl p-2 group overflow-hidden shadow-inner">
+            
+            {/* Added a subtle transition to the inner carousel box */}
+            <div className="relative flex items-center justify-between w-full h-[200px] bg-zinc-950/50 border border-white/5 hover:border-violet-500/10 transition-colors duration-500 rounded-2xl p-2 group overflow-hidden shadow-inner">
+              
               <button 
                 onClick={() => handleGadgetClick('left')} 
-                className="p-2.5 rounded-2xl bg-zinc-900/80 hover:bg-purple-600 text-zinc-300 hover:text-white border border-white/10 transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md shadow-xl"
+                className="p-2.5 rounded-2xl bg-zinc-900/80 hover:bg-violet-600 text-zinc-400 hover:text-white border border-white/5 hover:border-violet-500/50 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
+              
               <div id="gadget-carousel-wrapper" className="flex-1 h-full relative flex flex-col items-center justify-center px-2">
                 {currentGadget ? (
                   <>
@@ -226,7 +244,7 @@ const ClosetPage = () => {
                         className="object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] pointer-events-none" 
                       />
                     </div>
-                    <span className="text-xs font-bold text-zinc-200 truncate max-w-full px-2 text-center drop-shadow-md">
+                    <span className="text-xs font-bold text-zinc-100 truncate max-w-full px-2 text-center drop-shadow-md">
                       {currentGadget.name}
                     </span>
                   </>
@@ -234,12 +252,14 @@ const ClosetPage = () => {
                   <span className="text-xs text-zinc-600 font-medium uppercase tracking-wider">No Gadgets</span>
                 )}
               </div>
+              
               <button 
                 onClick={() => handleGadgetClick('right')} 
-                className="p-2.5 rounded-2xl bg-zinc-900/80 hover:bg-purple-600 text-zinc-300 hover:text-white border border-white/10 transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md shadow-xl"
+                className="p-2.5 rounded-2xl bg-zinc-900/80 hover:bg-violet-600 text-zinc-400 hover:text-white border border-white/5 hover:border-violet-500/50 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
+              
             </div>
           </div>
         </div>
@@ -248,7 +268,7 @@ const ClosetPage = () => {
       {isModalOpen && (
         <ItemModel 
           onClose={() => setIsModalOpen(false)} 
-          onSave={(newItem) => importItem(newItem)} 
+          onSave={(newItem, choice) => importItem(newItem, choice)} 
           item={{ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user }} 
         />
       )}

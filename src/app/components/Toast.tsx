@@ -16,7 +16,7 @@ const Toast = ({ message, type, onClose }: ToastProps) => {
   }, [onClose]);
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-zinc-900/90 border border-white/10 text-white shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-5 fade-in duration-300">
+    <div className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-zinc-900/90 border border-white/10 text-white shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-5 fade-in duration-300">
       {type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
       {type === 'error' && <AlertCircle className="w-5 h-5 text-rose-500" />}
       {type === 'info' && <Info className="w-5 h-5 text-blue-400" />}

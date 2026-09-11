@@ -14,11 +14,33 @@ export type clothesType = {
     type: Position | null;
 };
 
-export type EditableClothesType = clothesType & {
-  imageFile?: File;
-  modelFileFile?: File;        // Actual file object
-  imagePreview?: string;       // For previews
-  modelFilePreview?: string;   // For previews
+export type gadgetType = {
+    _id?: number;
+    creator: userType | null;
+    name: string;
+    image: string;
+    modelFile?: string;
+    scale: number;
+    position: [number, number, number];
+    description: string;
+    type: Gadget | null;
+};
+
+export type EditableClothesType =  {
+    _id?: number;
+    creator?: userType | null;
+    name: string;
+    image: string;
+    modelFile?: string;
+    scale: number;
+    position: [number, number, number];
+    description: string;
+    type: Position | Gadget | null;
+
+    imageFile?: File;
+    modelFileFile?: File;
+    imagePreview?: string;
+    modelFilePreview?: string;
 };
 
 export type outfitType = {
@@ -35,13 +57,4 @@ export type userType = {
     email: string;
     password: string;
     pfp?: string;
-};
-
-export type gadgetType = {
-    _id?: number;
-    creator: userType | null;
-    name: string;
-    image: string;
-    description: string;
-    type: Gadget | null;
 };

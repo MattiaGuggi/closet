@@ -4,7 +4,7 @@ import { Edit3 } from "lucide-react";
 
 const Gadget = ({ item, onOpen }: { item: gadgetType; onOpen: (item: gadgetType) => void }) => {
   return (
-    <div className='clothing-card w-full rounded-3xl bg-zinc-900/60 border border-white/10 hover:border-cyan-500/40 p-6 flex flex-col items-center justify-between backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02]'>
+    <div className='clothing-card w-full rounded-3xl bg-zinc-900/60 border border-white/10 hover:border-violet-500/40 p-6 flex flex-col items-center justify-between backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02]'>
       <div className="text-center mb-4 relative z-10">
         <h3 className='font-bold text-white text-base truncate max-w-[200px]'>{item?.name || 'Gadget'}</h3>
         <p className='text-xs text-zinc-400 mt-0.5 truncate max-w-[200px]'>{item?.description || 'No description'}</p>
@@ -31,7 +31,7 @@ const Gadget = ({ item, onOpen }: { item: gadgetType; onOpen: (item: gadgetType)
           onOpen(item);
         }}
       >
-        <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
+        <Edit3 className="w-3.5 h-3.5 text-violet-400" />
         <span>Modify</span>
       </button>
     </div>

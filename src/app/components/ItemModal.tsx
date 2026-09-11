@@ -6,12 +6,12 @@ import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls } from '@react-three/drei';
 import Model from './model';
 import { Loader } from './Loader';
-import { clothesType, EditableClothesType, Position } from '@/lib/types';
 import { 
   X, Sparkles, Box, Tag, FileText, Layers, Move, 
   Maximize2, Upload, Loader2, Check, ChevronUp, 
-  ChevronDown, MoveDiagonal, ZoomIn
+  ChevronDown, MoveDiagonal, ZoomIn, ListFilter
 } from 'lucide-react';
+import { clothesType, EditableClothesType, OutfitPart, Gadget } from '@/lib/types';
 
 // SHARED STYLES & CONSTANTS
 const baseInputStyle = 'w-full px-3.5 py-2.5 bg-zinc-950/60 border border-white/10 rounded-xl shadow-inner text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all';
@@ -19,16 +19,29 @@ const numberInputStyle = `${baseInputStyle} [appearance:textfield] [&::-webkit-o
 const labelStyle = 'text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5 flex items-center gap-1.5';
 const fileInputStyle = 'w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700 cursor-pointer border border-white/10 rounded-xl p-1 bg-zinc-950/40 disabled:opacity-50 transition-all';
 
-const typeOptions: { label: string; value: Position }[] = [
+const clothingOptions: { label: string; value: OutfitPart }[] = [
   { label: 'Top', value: 'top' },
   { label: 'Mid', value: 'mid' },
   { label: 'Bottom', value: 'bottom' },
-  { label: 'Gadget', value: 'gadget' },
+];
+
+const gadgetOptions: { label: string; value: Gadget }[] = [
+  { label: 'Hat', value: 'hat' },
+  { label: 'Glasses', value: 'glasses' },
+  { label: 'Bracelet', value: 'bracelet' },
+  { label: 'Fragrance', value: 'fragrance' },
+  { label: 'Watch', value: 'watch' },
 ];
 
 interface SubComponentProps {
   newItem: EditableClothesType;
   setNewItem: React.Dispatch<React.SetStateAction<EditableClothesType>>;
+}
+
+// Extended props for TypeDropdown to include the lifted state
+interface TypeDropdownProps extends SubComponentProps {
+  mainCategory: 'Clothing' | 'Gadget' | null;
+  setMainCategory: React.Dispatch<React.SetStateAction<'Clothing' | 'Gadget' | null>>;
 }
 
 // MAIN COMPONENT
@@ -38,7 +51,7 @@ const ItemModal = ({
   item,
 }: {
   onClose: () => void;
-  onSave: (newItem: EditableClothesType) => void;
+  onSave: (newItem: EditableClothesType, choice: string) => void;
   item: clothesType;
 }) => {
   const [newItem, setNewItem] = useState<EditableClothesType>({
@@ -49,9 +62,22 @@ const ItemModal = ({
   
   const [isRemovingBg, setIsRemovingBg] = useState(false);
 
+  // Derive the current top-level category based on the exact item type
+  const getInitialCategory = () => {
+    if (!item.type) return null;
+    
+    const currentType = item.type as string; 
+    
+    if (clothingOptions.some(opt => opt.value === currentType)) return 'Clothing';
+    if (gadgetOptions.some(opt => opt.value === currentType)) return 'Gadget';
+    return null;
+  };
+
+  const [mainCategory, setMainCategory] = useState<'Clothing' | 'Gadget' | null>(getInitialCategory());
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-zinc-900/95 border border-white/10 shadow-2xl rounded-3xl p-6 sm:p-8 text-white backdrop-blur-2xl flex flex-col gap-6">
+      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-zinc-900/95 border border-white/10 shadow-2xl rounded-3xl p-6 sm:p-8 text-white backdrop-blur-2xl flex flex-col gap-6 custom-scrollbar">
         
         {/* Header Section */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
@@ -77,9 +103,14 @@ const ItemModal = ({
 
         {/* Form Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
           <div className="flex flex-col gap-5">
-            <TypeDropdown newItem={newItem} setNewItem={setNewItem} />
+            {/* Pass the state down as props */}
+            <TypeDropdown 
+              newItem={newItem} 
+              setNewItem={setNewItem} 
+              mainCategory={mainCategory}
+              setMainCategory={setMainCategory}
+            />
             
             <ImageSection 
               newItem={newItem} 
@@ -107,9 +138,10 @@ const ItemModal = ({
           </button>
           <button
             type="button"
-            disabled={isRemovingBg}
-            onClick={() => onSave(newItem)}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
+            disabled={isRemovingBg || !newItem.type || !mainCategory}
+            // Use the lifted state here
+            onClick={() => onSave(newItem, mainCategory as string)}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:hover:scale-100"
           >
             {isRemovingBg ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             {isRemovingBg ? 'Processing Image...' : 'Save Item'}
@@ -122,60 +154,119 @@ const ItemModal = ({
 }
 
 // SUB-COMPONENTS
-function TypeDropdown({ newItem, setNewItem }: SubComponentProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+function TypeDropdown({ newItem, setNewItem, mainCategory, setMainCategory }: TypeDropdownProps) {
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
+  
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const typeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+        setIsCategoryOpen(false);
+      }
+      if (typeRef.current && !typeRef.current.contains(event.target as Node)) {
+        setIsTypeOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <label className={labelStyle}>
-        <Layers className="w-3.5 h-3.5 text-indigo-400" />
-        Item Type
-      </label>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`${baseInputStyle} flex items-center justify-between cursor-pointer text-left`}
-      >
-        <span className={newItem.type ? 'text-zinc-100 font-medium capitalize' : 'text-zinc-500'}>
-          {newItem.type || 'Select item type'}
-        </span>
-        <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-400' : ''}`} />
-      </button>
+  const currentOptions = mainCategory === 'Clothing' ? clothingOptions : gadgetOptions;
 
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-30 p-1.5 bg-zinc-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
-          {typeOptions.map((opt) => {
-            const isSelected = newItem.type === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  setNewItem((prev) => ({ ...prev, type: opt.value }));
-                  setIsOpen(false);
-                }}
-                className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-white'
-                }`}
-              >
-                <span>{opt.label}</span>
-                {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400" />}
-              </button>
-            );
-          })}
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="relative" ref={categoryRef}>
+        <label className={labelStyle}>
+          <Layers className="w-3.5 h-3.5 text-indigo-400" />
+          Primary Category
+        </label>
+        <button
+          type="button"
+          onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+          className={`${baseInputStyle} flex items-center justify-between cursor-pointer text-left`}
+        >
+          <span className={mainCategory ? 'text-zinc-100 font-medium' : 'text-zinc-500'}>
+            {mainCategory || 'Select Clothing or Gadget'}
+          </span>
+          <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180 text-indigo-400' : ''}`} />
+        </button>
+
+        {isCategoryOpen && (
+          <div className="absolute top-full left-0 right-0 mt-2 z-40 p-1.5 bg-zinc-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
+            {['Clothing', 'Gadget'].map((cat) => {
+              const isSelected = mainCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setMainCategory(cat as 'Clothing' | 'Gadget');
+                    setIsCategoryOpen(false);
+                    // Reset the specific type when switching main categories
+                    if (mainCategory !== cat) {
+                      setNewItem((prev) => ({ ...prev, type: null }));
+                    }
+                  }}
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                      : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-white'
+                  }`}
+                >
+                  <span>{cat}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {mainCategory && (
+        <div className="relative animate-in slide-in-from-top-2 fade-in duration-200" ref={typeRef}>
+          <label className={labelStyle}>
+            <ListFilter className="w-3.5 h-3.5 text-indigo-400" />
+            Specific Type
+          </label>
+          <button
+            type="button"
+            onClick={() => setIsTypeOpen(!isTypeOpen)}
+            className={`${baseInputStyle} flex items-center justify-between cursor-pointer text-left ${!newItem.type ? 'ring-1 ring-rose-500/50 border-rose-500/30' : ''}`}
+          >
+            <span className={newItem.type ? 'text-zinc-100 font-medium capitalize' : 'text-rose-400 font-medium'}>
+              {newItem.type || `Select a specific ${mainCategory.toLowerCase()} type`}
+            </span>
+            <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isTypeOpen ? 'rotate-180 text-indigo-400' : ''}`} />
+          </button>
+
+          {isTypeOpen && (
+            <div className="absolute top-full left-0 right-0 mt-2 z-30 p-1.5 bg-zinc-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150 max-h-48 overflow-y-auto custom-scrollbar">
+              {currentOptions.map((opt) => {
+                const isSelected = newItem.type === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      setNewItem((prev) => ({ ...prev, type: opt.value }));
+                      setIsTypeOpen(false);
+                    }}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                        : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-white'
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -192,12 +283,10 @@ function ImageSection({
   const [autoRemoveBg, setAutoRemoveBg] = useState(true);
   const workerRef = useRef<Worker | null>(null);
 
-  // Scaling Refs
   const isScalingRef = useRef(false);
   const startXScaleRef = useRef(0);
   const startScaleValRef = useRef(1);
 
-  // Panning Refs
   const isPanningRef = useRef(false);
   const panStartRef = useRef({ mouseX: 0, mouseY: 0, startPosX: 0, startPosY: 0 });
 
@@ -304,7 +393,6 @@ function ImageSection({
     });
   };
 
-  // 1. EXTRACTED: Core file processing logic
   const processFile = async (file: File) => {
     setIsRemovingBg(true);
     handleResetPosition();
@@ -315,7 +403,6 @@ function ImageSection({
       if (autoRemoveBg) {
         const tempUrl = URL.createObjectURL(file);
         const imgBlob = await processImageInWorker(tempUrl);
-        // Fallback to 'pasted-image' if filename is missing (like from clipboard)
         const cleanFileName = (file.name || 'pasted-image').replace(/\.[^/.]+$/, '') + '-nobg.png';
         finalFile = new File([imgBlob], cleanFileName, { type: 'image/png' });
         URL.revokeObjectURL(tempUrl);
@@ -341,18 +428,16 @@ function ImageSection({
     }
   };
 
-  // 2. UPDATED: Standard input now uses `processFile`
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     processFile(file);
-    e.target.value = ''; // Reset input
+    e.target.value = ''; 
   };
 
-  // 3. ADDED: Global Paste listener for the clipboard
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      if (isRemovingBg) return; // Prevent double-processing
+      if (isRemovingBg) return;
 
       const items = e.clipboardData?.items;
       if (!items) return;
@@ -361,12 +446,10 @@ function ImageSection({
         if (item.type.startsWith('image/')) {
           const file = item.getAsFile();
           if (file) {
-            e.preventDefault(); // Stop default pasting behavior
-            
-            // Give pasted files a real name if the browser doesn't provide one
+            e.preventDefault();
             const finalFile = new File([file], file.name || 'pasted-image.png', { type: file.type });
             processFile(finalFile);
-            return; // Stop looking after we find the first image
+            return;
           }
         }
       }
@@ -374,7 +457,7 @@ function ImageSection({
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [autoRemoveBg, isRemovingBg]); // Keep dependencies updated so processFile works correctly
+  }, [autoRemoveBg, isRemovingBg]);
 
   const visualTranslateX = (newItem.position[0] || 0) * 100;
   const visualTranslateY = (newItem.position[1] || 0) * -100;
@@ -384,7 +467,6 @@ function ImageSection({
       <div className="flex items-center justify-between mb-2">
         <label htmlFor="image-input" className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
           <Upload className="w-3.5 h-3.5 text-indigo-400" />
-          {/* 4. UI UPDATE: Added paste hint */}
           Image <span className="text-[10px] text-zinc-500 font-normal lowercase tracking-normal ml-1">(or paste Ctrl+V)</span>
         </label>
         
@@ -396,10 +478,7 @@ function ImageSection({
               onChange={(e) => setAutoRemoveBg(e.target.checked)}
               className="peer appearance-none w-4 h-4 rounded bg-zinc-950/80 border border-white/10 checked:bg-indigo-600 checked:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all cursor-pointer group-hover:border-indigo-500/50 shadow-inner"
             />
-            <Check 
-              className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" 
-              strokeWidth={3} 
-            />
+            <Check className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
           </div>
           <span className="text-xs text-zinc-400 group-hover:text-zinc-200 transition-colors">
             Auto-remove background

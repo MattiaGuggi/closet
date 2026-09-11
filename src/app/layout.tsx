@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import AnimationProvider from "./components/AnimationProvider";
 import { UserProvider } from "./context/UserContext";
 import React from "react";
+// @ts-expect-error Next.js loads global CSS at runtime without TypeScript declarations.
 import "./globals.css";
 
 const geistSans = Geist({

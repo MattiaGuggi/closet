@@ -1,10 +1,10 @@
 'use client'
-import { clothesType } from '@/lib/types';
+import { EditableClothesType } from '@/lib/types';
 import { useGLTF } from '@react-three/drei';
 import React from 'react'
 import { Group } from 'three';
 
-const Model = ({ item }: { item: clothesType }) => {
+const Model = ({ item }: { item: EditableClothesType }) => {
     const groupRef = React.useRef<Group>(null);
     const { scene } = useGLTF<any>(item.modelFile) as { scene: Group };
 

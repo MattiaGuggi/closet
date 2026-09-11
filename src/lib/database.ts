@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { eq, and, ne } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import * as schema from "./schema";
-import { users, clothes, outfits, IClothes, IOutfit, gadgets } from "./schema";
+import { users, clothes, outfits, IClothes, IOutfit, gadgets, IGadget } from "./schema";
 import { clothesType, gadgetType, outfitType } from "./types";
 
 const dbUrl = process.env.DATABASE_URL || process.env.MONGODB_URI || "";
@@ -408,7 +408,7 @@ export const updateOutfitInDb = async (outfit: outfitType) => {
     return updated;
   } catch (err) {
     console.error("Error updating outfit", err);
-    throw err; // Re-throw so the frontend catches it and shows the toast!
+    throw err;
   }
 };
 
@@ -416,24 +416,20 @@ export const updateGadgetInDb = async (gadget: gadgetType) => {
   await connectDB();
   try {
     const gadgetId = getId(gadget);
-    const [currentGadget] = await db.select().from(clothes).where(eq(clothes._id, gadgetId));
+    const [currentGadget] = await db.select().from(gadgets).where(eq(gadgets._id, gadgetId));
     if (!currentGadget) throw new Error("Gadget not found");
 
-    const payload: Partial<IClothes> = {};
+    const payload: Partial<IGadget> = {};
     if (gadget.creator) payload.creator = getId(gadget.creator);
     if (gadget.name) payload.name = gadget.name;
     if (gadget.image) payload.image = gadget.image;
     if (gadget.description) payload.description = gadget.description;
-    
-    const [updated] = await db
-      .update(clothes)
-      .set(payload)
-      .where(eq(clothes._id, gadgetId))
-      .returning();
+
+    const [updated] = await db.update(gadgets).set(payload).where(eq(gadgets._id, gadgetId)).returning();
     return updated;
   } catch (err) {
     console.error("Error updating gadget", err);
-    throw err; // Re-throw so the frontend catches it and shows the toast!
+    throw err;
   }
 }
 
@@ -511,6 +507,7 @@ export const createGadgetInDb = async (newGadget: gadgetType) => {
   if (newGadget._id) payload._id = newGadget._id;
 
   const [item] = await db.insert(gadgets).values(payload).returning();
+  console.log("Created new gadget in DB:", item);
   return item;
 };
 

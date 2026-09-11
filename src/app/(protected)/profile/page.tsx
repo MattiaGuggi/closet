@@ -14,6 +14,7 @@ import OutfitModal from '@/app/components/OutfitModal';
 import { Trash2Icon, LogOut, Edit3, Shirt, Layers, AlertCircle, CheckCircle2, X, Watch } from 'lucide-react';
 import Gadget from '@/app/components/Gadget';
 import GadgetModal from '@/app/components/GadgetModal';
+import Toast from '@/app/components/Toast';
 
 const ProfilePage = () => {
   const { user, logout } = useUser();
@@ -29,7 +30,7 @@ const ProfilePage = () => {
     creator: user, top: undefined, mid: undefined, bottom: undefined 
   });
   const [currentGadget, setCurrentGadget] = useState<gadgetType>({ 
-    creator: user, name: '', image: '', description: '', type: null 
+    creator: user, name: '', image: '', description: '', type: null, scale: 1.0, position: [0, 0, 0]
   });
 
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
@@ -289,13 +290,7 @@ const ProfilePage = () => {
 
   return (
     <>
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-zinc-900/90 border border-white/10 text-white shadow-2xl backdrop-blur-xl">
-          {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <AlertCircle className="w-5 h-5 text-rose-500" />}
-          <span className="text-sm font-medium">{toast.message}</span>
-          <button onClick={() => setToast(null)} className="ml-2 text-zinc-400 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
-        </div>
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
@@ -419,7 +414,7 @@ const ProfilePage = () => {
         <section id="gadget-section" className="w-full mb-16">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400"><Watch className="w-5 h-5" /></div>
+              <div className="p-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400"><Watch className="w-5 h-5" /></div>
               <div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">Your Gadgets</h2>
                 <p className="text-xs text-zinc-400">Saved accessory items</p>

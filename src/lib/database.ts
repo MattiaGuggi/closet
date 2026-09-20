@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, isNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import * as schema from "./schema";
 import { users, clothes, outfits, IClothes, IOutfit, gadgets, IGadget } from "./schema";
@@ -11,12 +11,13 @@ const sql = neon(dbUrl);
 export const db = drizzle(sql, { schema });
 
 /**
- * Normalizes input to extract string IDs whether passed as a string or an object
+ * Normalizes input to extract string IDs whether passed as a string or an object.
+ * Returns null instead of an empty string to prevent PostgreSQL UUID casting errors on empty layers.
  */
-const getId = (val: any): string => {
-  if (!val) return "";
+const getId = (val: any): string | null => {
+  if (!val) return null;
   if (typeof val === "string") return val;
-  return val._id || val.id || val.creator || "";
+  return val._id || val.id || val.creator || null;
 };
 
 export const connectDB = async () => {
@@ -77,6 +78,8 @@ export const updateUserInDb = async (user: any) => {
   await connectDB();
   try {
     const userId = getId(user);
+    if (!userId) throw new Error("Invalid User ID");
+    
     const [updated] = await db
       .update(users)
       .set(user)
@@ -92,6 +95,7 @@ export const deleteUserFromDb = async (user: any) => {
   await connectDB();
   try {
     const userId = getId(user);
+    if (!userId) return;
     await db.delete(users).where(eq(users._id, userId));
   } catch (err) {
     console.error("Error deleting user", err);
@@ -112,7 +116,8 @@ export const getUserClothesFromDb = async (criteria: any) => {
   await connectDB();
   try {
     const creatorId = getId(criteria?.creator || criteria);
-    // Clean query: gadgets are no longer in this table
+    if (!creatorId) return [];
+    
     const rows = await db.query.clothes.findMany({
       where: eq(clothes.creator, creatorId),
     });
@@ -132,6 +137,7 @@ export const getClothingFromDb = async (criteria: any) => {
   }
   if (criteria?._id || criteria?.id) {
     const id = getId(criteria);
+    if (!id) return null;
     const result = await db.select().from(clothes).where(eq(clothes._id, id));
     return result[0] || null;
   }
@@ -182,6 +188,7 @@ export const createClothingInDb = async (newClothes: clothesType) => {
     position: newClothes.position || [0, 0, 0],
     description: newClothes.description || "",
     type: clothesTypeEnum,
+    layer: newClothes.layer || null, // Ensure layer is explicitly mapped
   };
 
   if (newClothes._id) payload._id = newClothes._id;
@@ -195,6 +202,7 @@ export const updateClothingInDb = async (clothesItem: clothesType) => {
   try {
     const itemId = getId(clothesItem);
     const creatorId = getId(clothesItem.creator);
+    if (!itemId) throw new Error("Invalid Item ID");
 
     if (clothesItem.type === "gadget") {
       throw new Error("Gadgets must be updated via the gadget endpoint.");
@@ -210,6 +218,7 @@ export const updateClothingInDb = async (clothesItem: clothesType) => {
     if (clothesItem.scale !== undefined) payload.scale = clothesItem.scale;
     if (clothesItem.position !== undefined) payload.position = clothesItem.position;
     if (clothesItem.description !== undefined) payload.description = clothesItem.description;
+    if (clothesItem.layer !== undefined) payload.layer = clothesItem.layer as "base" | "mid" | "outer" | null;
     
     if (clothesItem.type !== null && clothesItem.type !== undefined) {
       payload.type = clothesItem.type as "top" | "mid" | "bottom";
@@ -246,6 +255,7 @@ export const deleteClothingFromDb = async (clothesItem: clothesType) => {
   await connectDB();
   try {
     const itemId = getId(clothesItem);
+    if (!itemId) return;
     await db.delete(clothes).where(eq(clothes._id, itemId));
   } catch (err) {
     console.error("Error deleting clothes", err);
@@ -255,10 +265,14 @@ export const deleteClothingFromDb = async (clothesItem: clothesType) => {
 export const getUserOutfitsFromDb = async (criteria: any) => {
   await connectDB();
   const creatorId = getId(criteria?.creator || criteria);
+  if (!creatorId) return [];
+
   const rows = await db.query.outfits.findMany({
     where: eq(outfits.creator, creatorId),
     with: {
-      topItem: true,
+      topBaseItem: true,
+      topMidItem: true,
+      topOuterItem: true,
       midItem: true,
       bottomItem: true,
     },
@@ -267,7 +281,11 @@ export const getUserOutfitsFromDb = async (criteria: any) => {
   return rows.map((o) => ({
     _id: o._id,
     creator: o.creator,
-    top: o.topItem,
+    top: {
+      base: o.topBaseItem || null,
+      mid: o.topMidItem || null,
+      outer: o.topOuterItem || null,
+    },
     mid: o.midItem,
     bottom: o.bottomItem,
   }));
@@ -277,7 +295,9 @@ export const getOutfitsFromDb = async () => {
   await connectDB();
   const rows = await db.query.outfits.findMany({
     with: {
-      topItem: true,
+      topBaseItem: true,
+      topMidItem: true,
+      topOuterItem: true,
       midItem: true,
       bottomItem: true,
     },
@@ -286,7 +306,11 @@ export const getOutfitsFromDb = async () => {
   return rows.map((o) => ({
     _id: o._id,
     creator: o.creator,
-    top: o.topItem,
+    top: {
+      base: o.topBaseItem || null,
+      mid: o.topMidItem || null,
+      outer: o.topOuterItem || null,
+    },
     mid: o.midItem,
     bottom: o.bottomItem,
   }));
@@ -295,10 +319,14 @@ export const getOutfitsFromDb = async () => {
 export const getOutfitFromDb = async (criteria: string | number | outfitType) => {
   await connectDB();
   const id = getId(criteria);
+  if (!id) return null;
+
   const o = await db.query.outfits.findFirst({
     where: eq(outfits._id, id),
     with: {
-      topItem: true,
+      topBaseItem: true,
+      topMidItem: true,
+      topOuterItem: true,
       midItem: true,
       bottomItem: true,
     },
@@ -309,7 +337,11 @@ export const getOutfitFromDb = async (criteria: string | number | outfitType) =>
   return {
     _id: o._id,
     creator: o.creator,
-    top: o.topItem,
+    top: {
+      base: o.topBaseItem || null,
+      mid: o.topMidItem || null,
+      outer: o.topOuterItem || null,
+    },
     mid: o.midItem,
     bottom: o.bottomItem,
   };
@@ -319,17 +351,30 @@ export const createOutfitInDb = async ({ top, mid, bottom, creator }: any) => {
   await connectDB();
 
   const creatorId = getId(creator);
-  const topId = getId(top);
+  if (!creatorId) throw new Error("Missing creator ID.");
+
+  // Extract nested layer IDs, falling back to null if undefined/empty
+  const topBaseId = top?.base ? getId(top.base) : null;
+  const topMidId = top?.mid ? getId(top.mid) : null;
+  const topOuterId = top?.outer ? getId(top.outer) : null;
+  
   const midId = getId(mid);
   const bottomId = getId(bottom);
 
+  if (!midId || !bottomId) throw new Error("Missing pants or shoes.");
+
+  // Dynamically build duplicate query handling both set layers and explicitly empty (null) layers
+  const searchConditions = [
+    eq(outfits.creator, creatorId),
+    eq(outfits.mid, midId),
+    eq(outfits.bottom, bottomId),
+    topBaseId ? eq(outfits.topBase, topBaseId) : isNull(outfits.topBase),
+    topMidId ? eq(outfits.topMid, topMidId) : isNull(outfits.topMid),
+    topOuterId ? eq(outfits.topOuter, topOuterId) : isNull(outfits.topOuter)
+  ];
+
   const existingOutfit = await db.query.outfits.findFirst({
-    where: and(
-      eq(outfits.creator, creatorId),
-      eq(outfits.top, topId),
-      eq(outfits.mid, midId),
-      eq(outfits.bottom, bottomId)
-    )
+    where: and(...searchConditions)
   });
 
   if (existingOutfit) {
@@ -340,7 +385,9 @@ export const createOutfitInDb = async ({ top, mid, bottom, creator }: any) => {
     .insert(outfits)
     .values({
       creator: creatorId,
-      top: topId,
+      topBase: topBaseId,
+      topMid: topMidId,
+      topOuter: topOuterId,
       mid: midId,
       bottom: bottomId,
     })
@@ -354,6 +401,8 @@ export const getUserGadgetsFromDb = async (criteria: any) => {
   await connectDB();
   try {
     const creatorId = getId(criteria?.creator || criteria);
+    if (!creatorId) return [];
+
     const rows = await db.query.gadgets.findMany({
       where: eq(gadgets.creator, creatorId),
     });
@@ -369,30 +418,42 @@ export const updateOutfitInDb = async (outfit: outfitType) => {
   await connectDB();
   try {
     const outfitId = getId(outfit);
+    if (!outfitId) throw new Error("Invalid Outfit ID");
 
-    // Fetch the current outfit to compare changes
     const [currentOutfit] = await db.select().from(outfits).where(eq(outfits._id, outfitId));
     if (!currentOutfit) throw new Error("Outfit not found");
 
     const payload: Partial<IOutfit> = {};
-    if (outfit.creator) payload.creator = getId(outfit.creator);
-    if (outfit.top) payload.top = getId(outfit.top);
-    if (outfit.mid) payload.mid = getId(outfit.mid);
-    if (outfit.bottom) payload.bottom = getId(outfit.bottom);
+    if (outfit.creator) payload.creator = getId(outfit.creator) as string;
+    if (outfit.mid) payload.mid = getId(outfit.mid) as string;
+    if (outfit.bottom) payload.bottom = getId(outfit.bottom) as string;
+    
+    // Assign nested top layers safely
+    if (outfit.top) {
+      payload.topBase = outfit.top.base ? getId(outfit.top.base) : null;
+      payload.topMid = outfit.top.mid ? getId(outfit.top.mid) : null;
+      payload.topOuter = outfit.top.outer ? getId(outfit.top.outer) : null;
+    }
 
-    // Calculate what the "new" outfit combination will be after update
     const mergedCreator = payload.creator ?? currentOutfit.creator;
-    const mergedTop = payload.top ?? currentOutfit.top;
     const mergedMid = payload.mid ?? currentOutfit.mid;
     const mergedBottom = payload.bottom ?? currentOutfit.bottom;
+    
+    const mergedTopBase = payload.hasOwnProperty('topBase') ? payload.topBase : currentOutfit.topBase;
+    const mergedTopMid = payload.hasOwnProperty('topMid') ? payload.topMid : currentOutfit.topMid;
+    const mergedTopOuter = payload.hasOwnProperty('topOuter') ? payload.topOuter : currentOutfit.topOuter;
+
+    const duplicateConditions = [
+      eq(outfits.creator, mergedCreator),
+      eq(outfits.mid, mergedMid),
+      eq(outfits.bottom, mergedBottom),
+      mergedTopBase ? eq(outfits.topBase, mergedTopBase) : isNull(outfits.topBase),
+      mergedTopMid ? eq(outfits.topMid, mergedTopMid) : isNull(outfits.topMid),
+      mergedTopOuter ? eq(outfits.topOuter, mergedTopOuter) : isNull(outfits.topOuter)
+    ];
 
     const duplicate = await db.query.outfits.findFirst({
-      where: and(
-        eq(outfits.creator, mergedCreator),
-        eq(outfits.top, mergedTop),
-        eq(outfits.mid, mergedMid),
-        eq(outfits.bottom, mergedBottom)
-      )
+      where: and(...duplicateConditions)
     });
 
     if (duplicate && duplicate._id !== outfitId) {
@@ -416,11 +477,13 @@ export const updateGadgetInDb = async (gadget: gadgetType) => {
   await connectDB();
   try {
     const gadgetId = getId(gadget);
+    if (!gadgetId) throw new Error("Invalid Gadget ID");
+
     const [currentGadget] = await db.select().from(gadgets).where(eq(gadgets._id, gadgetId));
     if (!currentGadget) throw new Error("Gadget not found");
 
     const payload: Partial<IGadget> = {};
-    if (gadget.creator) payload.creator = getId(gadget.creator);
+    if (gadget.creator) payload.creator = getId(gadget.creator) as string;
     if (gadget.name) payload.name = gadget.name;
     if (gadget.image) payload.image = gadget.image;
     if (gadget.description) payload.description = gadget.description;
@@ -441,6 +504,8 @@ export const deleteOutfitFromDb = async (id: string | number) => {
   await connectDB();
   try {
     const outfitId = getId(id);
+    if (!outfitId) throw new Error("Invalid ID");
+    
     const [deleted] = await db.delete(outfits).where(eq(outfits._id, outfitId)).returning();
     return { success: true, data: deleted };
   } catch (err) {
@@ -453,6 +518,8 @@ export const deleteItemFromDb = async (id: string | number) => {
   await connectDB();
   try {
     const itemId = getId(id);
+    if (!itemId) throw new Error("Invalid ID");
+    
     const [deleted] = await db.delete(clothes).where(eq(clothes._id, itemId)).returning();
     return { success: true, data: deleted };
   } catch (err) {

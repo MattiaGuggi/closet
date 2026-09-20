@@ -15,10 +15,8 @@ import { Trash2Icon, LogOut, Edit3, Shirt, Layers, Watch, ListFilter, ChevronDow
 import Gadget from '@/app/components/Gadget';
 import Toast from '@/app/components/Toast';
 
-// 1. Updated SortOptions to include Type A-Z and Type Z-A
 type SortOption = 'Default' | 'A-Z' | 'Z-A' | 'Type A-Z' | 'Type Z-A';
 
-// Reusable Dropdown Component
 function SortDropdown({
   value,
   options,
@@ -79,9 +77,12 @@ const ProfilePage = () => {
   const [currentItem, setCurrentItem] = useState<clothesType>({ 
     name: '', image: '', modelFile: '', scale: 1.0, position: [0, 0, 0], description: '', type: null, creator: user 
   });
+  
+  // FIX: Updated to match the new nested top layer structure
   const [currentOutfit, setCurrentOutfit] = useState<outfitType>({ 
-    creator: user, top: undefined, mid: undefined, bottom: undefined 
+    creator: user, top: { base: null, mid: null, outer: null }, mid: undefined, bottom: undefined 
   });
+  
   const [currentGadget, setCurrentGadget] = useState<gadgetType>({ 
     creator: user, name: '', image: '', description: '', type: null, scale: 1.0, position: [0, 0, 0]
   });

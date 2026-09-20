@@ -11,7 +11,7 @@ import {
   Maximize2, Upload, Loader2, Check, ChevronUp, 
   ChevronDown, MoveDiagonal, ZoomIn, ListFilter
 } from 'lucide-react';
-import { clothesType, OutfitPart, Gadget, gadgetType } from '@/lib/types';
+import { clothesType, OutfitPart, Gadget, gadgetType, UpperLayer } from '@/lib/types';
 
 // SHARED STYLES & CONSTANTS
 const baseInputStyle = 'w-full px-3.5 py-2.5 bg-zinc-950/60 border border-white/10 rounded-xl shadow-inner text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all';
@@ -144,7 +144,12 @@ function ItemModal<T extends clothesType | gadgetType>({
           </button>
           <button
             type="button"
-            disabled={isRemovingBg || !newItem.type || !mainCategory}
+            disabled={
+              isRemovingBg || 
+              !newItem.type || 
+              !mainCategory || 
+              (newItem.type === 'top' && !('layer' in newItem && newItem.layer))
+            }
             onClick={() => onSave(newItem, mainCategory as string)}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:hover:scale-100"
           >
@@ -255,7 +260,11 @@ function TypeDropdown<T extends clothesType | gadgetType>({ newItem, setNewItem,
                     key={opt.value}
                     type="button"
                     onClick={() => {
-                      setNewItem((prev) => ({ ...prev, type: opt.value as T['type'] }));
+                      // Wipe layer if changing away from 'top'
+                      const updateObj = { ...newItem, type: opt.value as T['type'] };
+                      if (opt.value !== 'top' && 'layer' in updateObj) delete (updateObj as any).layer;
+                      
+                      setNewItem(updateObj);
                       setIsTypeOpen(false);
                     }}
                     className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
@@ -273,10 +282,48 @@ function TypeDropdown<T extends clothesType | gadgetType>({ newItem, setNewItem,
           )}
         </div>
       )}
+
+      {/* NEW: TOP LAYER SELECTOR */}
+      {newItem.type === 'top' && (
+        <div className="animate-in slide-in-from-top-2 fade-in duration-200">
+          <label className={labelStyle}>
+            <Layers className="w-3.5 h-3.5 text-indigo-400" />
+            Top Layer Placement
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {(['base', 'mid', 'outer'] as UpperLayer[]).map((layer) => {
+              const currentLayer = (newItem as any).layer;
+              const isSelected = currentLayer === layer;
+              
+              const labels = {
+                base: 'Base (T-shirt)',
+                mid: 'Mid (Hoodie)',
+                outer: 'Outer (Jacket)'
+              };
+
+              return (
+                <button
+                  key={layer}
+                  type="button"
+                  onClick={() => setNewItem(prev => ({ ...prev, layer }))}
+                  className={`py-2 px-1 rounded-xl text-[10px] sm:text-xs font-semibold border transition-all cursor-pointer text-center ${
+                    isSelected 
+                      ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/20' 
+                      : 'bg-zinc-950/60 text-zinc-400 border-white/10 hover:border-white/20 hover:text-white'
+                  } ${!currentLayer && !isSelected ? 'ring-1 ring-rose-500/50 border-rose-500/30' : ''}`}
+                >
+                  {labels[layer]}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
+// ... [Keep ImageSection, ModelSection, and DetailsForm EXACTLY the same]
 function ImageSection<T extends clothesType | gadgetType>({ 
   newItem, 
   setNewItem, 

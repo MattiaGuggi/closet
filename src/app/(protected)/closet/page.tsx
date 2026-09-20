@@ -8,7 +8,7 @@ import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
 import OptionController from '@/app/components/OptionController';
 import Toast from '@/app/components/Toast';
-import { clothesType, EditableClothesType, gadgetType, OutfitPart } from '@/lib/types';
+import { clothesType, EditableClothesType, gadgetType, OutfitPart, OutfitState, UpperLayer } from '@/lib/types';
 import { Sparkles, ChevronLeft, ChevronRight, Watch } from 'lucide-react';
 import Image from 'next/image';
 
@@ -17,15 +17,13 @@ const ClosetPage = () => {
   const [allItems, setAllItems] = useState<clothesType[]>([]);
   const [allGadgets, setAllGadgets] = useState<gadgetType[]>([]);
   
-  const [currentItemState, setCurrentItemState] = useState<Record<OutfitPart, number>>({
-    top: 0,
+  const [currentItemState, setCurrentItemState] = useState<OutfitState>({
+    top: { base: 0, mid: 0, outer: 0 },
     mid: 0,
     bottom: 0
   });
 
-  // Gadget specific state
   const [currentGadgetIndex, setCurrentGadgetIndex] = useState<number>(0);
-  
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
@@ -45,9 +43,16 @@ const ClosetPage = () => {
     }
   };
 
-  const handleClick = (arrow: string, position: OutfitPart) => {
+  // Updated to accept the specific layer (base, mid, outer) being navigated
+  const handleClick = (arrow: 'left' | 'right', position: OutfitPart, layer?: UpperLayer) => {
     const wrapper = document.getElementById(`${position}-wrapper`);
-    const itemsOfType = allItems.filter(item => item.type === position);
+    
+    // Filter items by position, and if it's the top row, filter further by layer
+    const itemsOfType = allItems.filter(item => {
+      if (item.type !== position) return false;
+      if (position === 'top' && layer) return item.layer === layer;
+      return true;
+    });
 
     if (!wrapper || itemsOfType.length < 2) return;
 
@@ -59,12 +64,24 @@ const ClosetPage = () => {
       ease: 'power2.inOut',
       onComplete: () => {
         setCurrentItemState(prev => {
-          const currentIndex = prev[position];
-          const maxIndex = itemsOfType.length - 1;
-          const newIndex = arrow === 'left' 
-            ? currentIndex === 0 ? maxIndex : currentIndex - 1 
-            : currentIndex === maxIndex ? 0 : currentIndex + 1;
-          return { ...prev, [position]: newIndex };
+          if (position === 'top' && layer) {
+            const currentIndex = prev.top[layer];
+            const maxIndex = itemsOfType.length - 1;
+            const newIndex = arrow === 'left' 
+              ? currentIndex === 0 ? maxIndex : currentIndex - 1 
+              : currentIndex === maxIndex ? 0 : currentIndex + 1;
+            
+            return { ...prev, top: { ...prev.top, [layer]: newIndex } };
+          } else {
+            const pos = position as 'mid' | 'bottom';
+            const currentIndex = prev[pos];
+            const maxIndex = itemsOfType.length - 1;
+            const newIndex = arrow === 'left' 
+              ? currentIndex === 0 ? maxIndex : currentIndex - 1 
+              : currentIndex === maxIndex ? 0 : currentIndex + 1;
+            
+            return { ...prev, [pos]: newIndex };
+          }
         });
       }
     });
@@ -74,7 +91,6 @@ const ClosetPage = () => {
 
   const handleGadgetClick = (arrow: 'left' | 'right') => {
     const wrapper = document.getElementById('gadget-carousel-wrapper');
-    
     if (!wrapper || allGadgets.length < 2) return;
 
     const tl = gsap.timeline();
@@ -97,16 +113,27 @@ const ClosetPage = () => {
   };
 
   const buildOutfit = async () => {
-    const top = allItems.filter(item => item.type === "top")[currentItemState.top] || null;
+    // Extract layers independently so an outfit can feature a t-shirt beneath a hoodie
+    const baseItems = allItems.filter(i => i.type === 'top' && i.layer === 'base');
+    const midTopItems = allItems.filter(i => i.type === 'top' && i.layer === 'mid');
+    const outerItems = allItems.filter(i => i.type === 'top' && i.layer === 'outer');
+
+    const topBase = baseItems[currentItemState.top.base] || null;
+    const topMid = midTopItems[currentItemState.top.mid] || null;
+    const topOuter = outerItems[currentItemState.top.outer] || null;
+
+    const top = { base: topBase, mid: topMid, outer: topOuter };
     const mid = allItems.filter(item => item.type === "mid")[currentItemState.mid] || null;
     const bottom = allItems.filter(item => item.type === "bottom")[currentItemState.bottom] || null;
 
-    if (!top || !mid || !bottom) {
-      showToast('Cannot build outfit without all 3 parts!', 'error');
+    // Validate that at least one top layer exists alongside pants and shoes
+    if ((!top.base && !top.mid && !top.outer) || !mid || !bottom) {
+      showToast('Cannot build outfit without all core parts!', 'error');
       return;
     }
     
     try {
+      // NOTE: Your backend outfitType schema will need to be updated to accept `top` as an object of layers rather than a single clothesType
       const response = await axios.post('/api/outfit', { top, mid, bottom, creator: user });
       if (response.data.success)
         showToast('Outfit created successfully', 'success');
@@ -135,11 +162,22 @@ const ClosetPage = () => {
         const updatedList = [...prev, optimisticItem];
         if (optimisticItem.type) {
           const itemType = optimisticItem.type as OutfitPart;
-          const itemsOfType = updatedList.filter(i => i.type === itemType);
-          setCurrentItemState(posPrev => ({
-            ...posPrev,
-            [itemType]: itemsOfType.length - 1
-          }));
+          
+          // Route the new item to the correct layer index if it's a top
+          if (itemType === 'top' && optimisticItem.layer) {
+             const layer = optimisticItem.layer;
+             const itemsOfType = updatedList.filter(i => i.type === 'top' && i.layer === layer);
+             setCurrentItemState(posPrev => ({
+               ...posPrev,
+               top: { ...posPrev.top, [layer]: itemsOfType.length - 1 }
+             }));
+          } else if (itemType !== 'top') {
+             const itemsOfType = updatedList.filter(i => i.type === itemType);
+             setCurrentItemState(posPrev => ({
+               ...posPrev,
+               [itemType]: itemsOfType.length - 1
+             }));
+          }
         }
         return updatedList;
       });
@@ -155,6 +193,7 @@ const ClosetPage = () => {
     formData.append("description", item.description);
     formData.append("position", JSON.stringify(item.position));
     if (item.type) formData.append("type", item.type);
+    if (item.layer) formData.append("layer", item.layer); // Ensure layer is sent to backend
 
     const endpoint = isGadget ? '/api/gadget' : '/api/import';
 
@@ -211,7 +250,8 @@ const ClosetPage = () => {
         <OptionController setThree={setThree} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />
         <div className='relative w-full flex flex-col items-center mt-6'>
           <div className='w-full max-w-4xl z-10'>
-            <ClosetRows items={allItems} currentItemState={currentItemState} handleClick={handleClick} three={three} />
+            {/* The type of currentItemState has changed, ClosetRows will need adjusting to handle top as an object */}
+            <ClosetRows items={allItems} currentItemState={currentItemState as any} handleClick={handleClick as any} three={three} />
           </div>
           <div className="gadget-box w-full max-w-sm lg:max-w-none lg:w-[280px] bg-zinc-900/70 border border-white/10 rounded-3xl p-5 backdrop-blur-3xl shadow-2xl flex flex-col mt-8 lg:mt-0 lg:absolute lg:right-0 xl:-right-12 lg:top-24 z-30">
             <div className="flex items-center justify-between mb-4">
@@ -251,7 +291,6 @@ const ClosetPage = () => {
                 )}
               </div>
               
-              {/* Added shrink-0 */}
               <button 
                 onClick={() => handleGadgetClick('right')} 
                 className="shrink-0 p-2.5 rounded-2xl bg-zinc-900/80 hover:bg-violet-600 text-zinc-400 hover:text-white border border-white/5 hover:border-violet-500/50 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md"

@@ -23,6 +23,7 @@ export const clothes = pgTable("clothes", {
   position: jsonb("position").$type<number[]>().default([0, 0, 0]),
   description: text("description").default(""),
   type: varchar("type", { enum: ["top", "mid", "bottom"] }).notNull(),
+  layer: varchar("layer", { enum: ["base", "mid", "outer"] }), 
 });
 
 // Gadgets Table
@@ -46,9 +47,11 @@ export const outfits = pgTable("outfits", {
   creator: uuid("creator")
     .notNull()
     .references(() => users._id, { onDelete: "cascade" }),
-  top: uuid("top")
-    .notNull()
-    .references(() => clothes._id, { onDelete: "cascade" }),
+  
+  topBase: uuid("top_base").references(() => clothes._id, { onDelete: "cascade" }),
+  topMid: uuid("top_mid").references(() => clothes._id, { onDelete: "cascade" }),
+  topOuter: uuid("top_outer").references(() => clothes._id, { onDelete: "cascade" }),
+
   mid: uuid("mid")
     .notNull()
     .references(() => clothes._id, { onDelete: "cascade" }),
@@ -77,8 +80,16 @@ export const outfitsRelations = relations(outfits, ({ one }) => ({
     fields: [outfits.creator],
     references: [users._id],
   }),
-  topItem: one(clothes, {
-    fields: [outfits.top],
+  topBaseItem: one(clothes, {
+    fields: [outfits.topBase],
+    references: [clothes._id],
+  }),
+  topMidItem: one(clothes, {
+    fields: [outfits.topMid],
+    references: [clothes._id],
+  }),
+  topOuterItem: one(clothes, {
+    fields: [outfits.topOuter],
     references: [clothes._id],
   }),
   midItem: one(clothes, {

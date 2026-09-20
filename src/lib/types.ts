@@ -1,6 +1,7 @@
 export type Gadget = "hat" | "glasses" | "bracelet" | "fragrance" | "watch";
 export type OutfitPart = "top" | "mid" | "bottom"; // Local type to strictly define the carousel rows
 export type Position = OutfitPart | "gadget";
+export type UpperLayer = "base" | "mid" | "outer";
 
 export type clothesType = {
     _id?: number;
@@ -12,6 +13,7 @@ export type clothesType = {
     position: [number, number, number];
     description: string;
     type: Position | null;
+    layer?: UpperLayer;
 };
 
 export type gadgetType = {
@@ -36,6 +38,7 @@ export type EditableClothesType =  {
     position: [number, number, number];
     description: string;
     type: Position | Gadget | null;
+    layer?: UpperLayer;
 
     imageFile?: File;
     modelFileFile?: File;
@@ -43,10 +46,20 @@ export type EditableClothesType =  {
     modelFilePreview?: string;
 };
 
+export type OutfitState = {
+  top: Record<UpperLayer, number>;
+  mid: number;
+  bottom: number;
+};
+
 export type outfitType = {
     _id?: number;
     creator: userType | null;
-    top: clothesType | undefined;
+    top: {
+      base?: clothesType | null;
+      mid?: clothesType | null;
+      outer?: clothesType | null;
+    };
     mid: clothesType | undefined;
     bottom: clothesType | undefined;
 };

@@ -200,6 +200,7 @@ const ClosetPage = () => {
 
   return (
     <>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <section id='closet-section' className="w-full max-w-[1500px] py-8 flex flex-col items-center">
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
@@ -207,7 +208,6 @@ const ClosetPage = () => {
           </div>
           <h1 className='text-3xl sm:text-4xl font-extrabold text-white tracking-tight'>Closet Canvas</h1>
         </div>
-        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         <OptionController setThree={setThree} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />
         <div className='relative w-full flex flex-col items-center mt-6'>
           <div className='w-full max-w-4xl z-10'>

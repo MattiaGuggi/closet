@@ -23,7 +23,6 @@ const ClosetPage = () => {
     bottom: 0
   });
 
-  // HOISTED STATE: Now ClosetPage knows which layers are hidden
   const [hiddenLayers, setHiddenLayers] = useState<Record<UpperLayer, boolean>>({
     base: false,
     mid: false,
@@ -119,7 +118,6 @@ const ClosetPage = () => {
     const midTopItems = allItems.filter(i => i.type === 'top' && i.layer === 'mid');
     const outerItems = allItems.filter(i => i.type === 'top' && i.layer === 'outer');
 
-    // ONLY include layer if it is NOT hidden
     const topBase = !hiddenLayers.base ? (baseItems[currentItemState.top.base] || null) : null;
     const topMid = !hiddenLayers.mid ? (midTopItems[currentItemState.top.mid] || null) : null;
     const topOuter = !hiddenLayers.outer ? (outerItems[currentItemState.top.outer] || null) : null;

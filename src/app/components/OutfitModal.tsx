@@ -12,36 +12,47 @@ type modalType = {
   items: clothesType[] | null;
 };
 
-// Extracted styles to keep things clean
-const baseInputStyle =
-  'w-full px-3.5 py-2.5 bg-zinc-950/60 border border-white/10 rounded-xl shadow-inner text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all cursor-pointer';
-const labelStyle =
-  'text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5 flex items-center gap-1.5';
+const baseInputStyle = 'w-full px-3.5 py-2.5 bg-zinc-950/60 border border-white/10 rounded-xl shadow-inner text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all cursor-pointer';
+const labelStyle = 'text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5 flex items-center gap-1.5';
+
+type SlotKey = 'topBase' | 'topMid' | 'topOuter' | 'mid' | 'bottom';
 
 const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
   const [newOutfit, setNewOutfit] = useState<outfitType>(outfit);
 
-  const handleSelect = (key: 'top' | 'mid' | 'bottom', selectedId: string) => {
+  const handleSelect = (slotKey: SlotKey, selectedId: string) => {
     if (!items) return;
-    if (!selectedId) {
-      setNewOutfit((prev) => ({ ...prev, [key]: undefined }));
-      return;
-    }
-    const selectedItem = items.find((item) => String(item._id) === selectedId);
-    setNewOutfit((prev) => ({ ...prev, [key]: selectedItem || undefined }));
+    
+    const selectedItem = selectedId ? items.find((item) => String(item._id) === selectedId) || null : null;
+
+    setNewOutfit((prev) => {
+      if (slotKey.startsWith('top')) {
+        const layerKey = slotKey.replace('top', '').toLowerCase() as 'base' | 'mid' | 'outer';
+        return {
+          ...prev,
+          top: { ...prev.top, [layerKey]: selectedItem }
+        };
+      } else {
+        return {
+          ...prev,
+          [slotKey]: selectedItem || undefined
+        };
+      }
+    });
   };
 
-  const positions: { key: 'top' | 'mid' | 'bottom'; label: string }[] = [
-    { key: 'top', label: 'Top' },
-    { key: 'mid', label: 'Mid' },
-    { key: 'bottom', label: 'Bottom' },
+  const positions: { key: SlotKey; label: string; type: string; layer?: string }[] = [
+    { key: 'topOuter', label: 'Outerwear', type: 'top', layer: 'outer' },
+    { key: 'topMid', label: 'Mid Layer', type: 'top', layer: 'mid' },
+    { key: 'topBase', label: 'Base Layer', type: 'top', layer: 'base' },
+    { key: 'mid', label: 'Pants', type: 'mid' },
+    { key: 'bottom', label: 'Shoes', type: 'bottom' },
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-zinc-900/95 border border-white/10 shadow-2xl rounded-3xl p-6 sm:p-8 text-white backdrop-blur-2xl flex flex-col gap-6">
+      <div className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-zinc-900/95 border border-white/10 shadow-2xl rounded-3xl p-6 sm:p-8 text-white backdrop-blur-2xl flex flex-col gap-6 custom-scrollbar">
         
-        {/* Header Section */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
@@ -51,7 +62,7 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
               <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                 {outfit?._id ? 'Edit Outfit' : 'Create An Outfit'}
               </h2>
-              <p className="text-xs text-zinc-400">Assemble top, mid, and bottom pieces into a complete look</p>
+              <p className="text-xs text-zinc-400">Assemble layers, pants, and shoes into a complete look</p>
             </div>
           </div>
           <button
@@ -63,16 +74,28 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
           </button>
         </div>
 
-        {/* Outfit Selection Grid (3 Slots) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {positions.map(({ key, label }) => {
-            const currentSelectedItem = newOutfit[key];
-            const availableItems = items?.filter((item) => item.type === key) || [];
+        {/* Outfit Selection Grid (5 Slots) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {positions.map(({ key, label, type, layer }) => {
+            
+            // Extract the current selected item based on slot key
+            let currentSelectedItem: clothesType | null | undefined;
+            if (key.startsWith('top')) {
+               const layerKey = key.replace('top', '').toLowerCase() as 'base' | 'mid' | 'outer';
+               currentSelectedItem = newOutfit.top[layerKey];
+            } else {
+               currentSelectedItem = newOutfit[key as 'mid' | 'bottom'];
+            }
+
+            // Filter items exactly by type and layer (if applicable)
+            const availableItems = items?.filter((item) => {
+              if (item.type !== type) return false;
+              if (type === 'top' && item.layer !== layer) return false;
+              return true;
+            }) || [];
 
             return (
               <div key={key} className="flex flex-col gap-3 p-4 rounded-2xl bg-zinc-950/40 border border-white/5 shadow-inner">
-                
-                {/* Slot Label & Custom Dropdown Selector */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className={labelStyle}>
@@ -92,8 +115,7 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
                   />
                 </div>
 
-                {/* Glassmorphic Image Preview Window */}
-                <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 bg-zinc-950/80 shadow-inner flex items-center justify-center bg-[radial-gradient(#ffffff0d_1px,transparent_1px)] [background-size:12px_12px]">
+                <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/10 bg-zinc-950/80 shadow-inner flex items-center justify-center bg-[radial-gradient(#ffffff0d_1px,transparent_1px)] [background-size:12px_12px]">
                   {currentSelectedItem?.image ? (
                     <div className="relative w-full h-full flex items-center justify-center p-2">
                       <Image
@@ -101,9 +123,7 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
                         alt={currentSelectedItem.name || label}
                         fill
                         className="object-contain p-2 drop-shadow-xl"
-                        style={{
-                          transform: `scale(${currentSelectedItem.scale || 1})`,
-                        }}
+                        style={{ transform: `scale(${currentSelectedItem.scale || 1})` }}
                       />
                     </div>
                   ) : (
@@ -114,7 +134,6 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
                   )}
                 </div>
 
-                {/* Item Name Indicator */}
                 {currentSelectedItem && (
                   <div className="text-center">
                     <span className="text-xs font-semibold text-zinc-300 truncate block">
@@ -127,7 +146,6 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
           })}
         </div>
 
-        {/* Action Buttons */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10 mt-2">
           <button
             type="button"
@@ -138,8 +156,9 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
           </button>
           <button
             type="button"
+            disabled={!newOutfit.top.base && !newOutfit.top.mid && !newOutfit.top.outer && !newOutfit.mid && !newOutfit.bottom}
             onClick={() => onSave(newOutfit)}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:hover:scale-100"
           >
             <Check className="w-4 h-4" />
             Save Outfit
@@ -169,7 +188,6 @@ function CustomDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -189,11 +207,11 @@ function CustomDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className={`${baseInputStyle} flex items-center justify-between text-left`}
       >
-        <span className={selectedOption ? 'text-zinc-100 font-medium' : 'text-zinc-500'}>
+        <span className={selectedOption ? 'text-zinc-100 font-medium truncate' : 'text-zinc-500'}>
           {selectedOption ? selectedOption.name : `Select ${label}...`}
         </span>
         <ChevronDown 
-          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-400' : ''}`} 
+          className={`w-4 h-4 text-zinc-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-400' : ''}`} 
         />
       </button>
 

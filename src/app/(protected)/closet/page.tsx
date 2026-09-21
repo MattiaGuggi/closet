@@ -23,6 +23,13 @@ const ClosetPage = () => {
     bottom: 0
   });
 
+  // HOISTED STATE: Now ClosetPage knows which layers are hidden
+  const [hiddenLayers, setHiddenLayers] = useState<Record<UpperLayer, boolean>>({
+    base: false,
+    mid: false,
+    outer: false
+  });
+
   const [currentGadgetIndex, setCurrentGadgetIndex] = useState<number>(0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
@@ -112,17 +119,17 @@ const ClosetPage = () => {
     const midTopItems = allItems.filter(i => i.type === 'top' && i.layer === 'mid');
     const outerItems = allItems.filter(i => i.type === 'top' && i.layer === 'outer');
 
-    const topBase = baseItems[currentItemState.top.base] || null;
-    const topMid = midTopItems[currentItemState.top.mid] || null;
-    const topOuter = outerItems[currentItemState.top.outer] || null;
+    // ONLY include layer if it is NOT hidden
+    const topBase = !hiddenLayers.base ? (baseItems[currentItemState.top.base] || null) : null;
+    const topMid = !hiddenLayers.mid ? (midTopItems[currentItemState.top.mid] || null) : null;
+    const topOuter = !hiddenLayers.outer ? (outerItems[currentItemState.top.outer] || null) : null;
 
     const top = { base: topBase, mid: topMid, outer: topOuter };
     const mid = allItems.filter(item => item.type === "mid")[currentItemState.mid] || null;
     const bottom = allItems.filter(item => item.type === "bottom")[currentItemState.bottom] || null;
 
-    // Validate that at least one top layer exists alongside pants and shoes
     if ((!top.base && !top.mid && !top.outer) || !mid || !bottom) {
-      showToast('Cannot build outfit without all core parts!', 'error');
+      showToast('Cannot build outfit without at least one top, pants, and shoes!', 'error');
       return;
     }
     
@@ -156,7 +163,6 @@ const ClosetPage = () => {
         if (optimisticItem.type) {
           const itemType = optimisticItem.type as OutfitPart;
           
-          // Route the new item to the correct layer index if it's a top
           if (itemType === 'top' && optimisticItem.layer) {
              const layer = optimisticItem.layer;
              const itemsOfType = updatedList.filter(i => i.type === 'top' && i.layer === layer);
@@ -164,6 +170,8 @@ const ClosetPage = () => {
                ...posPrev,
                top: { ...posPrev.top, [layer]: itemsOfType.length - 1 }
              }));
+             // Also ensure the layer is visible when adding a new item to it
+             setHiddenLayers(prev => ({ ...prev, [layer]: false }));
           } else if (itemType !== 'top') {
              const itemsOfType = updatedList.filter(i => i.type === itemType);
              setCurrentItemState(posPrev => ({
@@ -186,7 +194,7 @@ const ClosetPage = () => {
     formData.append("description", item.description);
     formData.append("position", JSON.stringify(item.position));
     if (item.type) formData.append("type", item.type);
-    if (item.layer) formData.append("layer", item.layer); // Ensure layer is sent to backend
+    if (item.layer) formData.append("layer", item.layer);
 
     const endpoint = isGadget ? '/api/gadget' : '/api/import';
 
@@ -243,8 +251,14 @@ const ClosetPage = () => {
         <OptionController setThree={setThree} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />
         <div className='relative w-full flex flex-col items-center mt-6'>
           <div className='w-full max-w-4xl z-10'>
-            {/* The type of currentItemState has changed, ClosetRows will need adjusting to handle top as an object */}
-            <ClosetRows items={allItems} currentItemState={currentItemState as any} handleClick={handleClick} three={three} />
+            <ClosetRows 
+              items={allItems} 
+              currentItemState={currentItemState as OutfitState} 
+              handleClick={handleClick} 
+              three={three} 
+              hiddenLayers={hiddenLayers}
+              setHiddenLayers={setHiddenLayers}
+            />
           </div>
           <div className="gadget-box w-full max-w-sm lg:max-w-none lg:w-[280px] bg-zinc-900/70 border border-white/10 rounded-3xl p-5 backdrop-blur-3xl shadow-2xl flex flex-col mt-8 lg:mt-0 lg:absolute lg:right-0 xl:-right-12 lg:top-24 z-30">
             <div className="flex items-center justify-between mb-4">

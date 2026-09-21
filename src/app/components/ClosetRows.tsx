@@ -13,18 +13,15 @@ type ClosetRowsProps = {
   currentItemState: OutfitState;
   handleClick: (dir: "left" | "right", pos: OutfitPart, layer?: UpperLayer) => void;
   three: boolean;
+  hiddenLayers: Record<UpperLayer, boolean>;
+  setHiddenLayers: React.Dispatch<React.SetStateAction<Record<UpperLayer, boolean>>>;
 };
 
-export default function ClosetRows({ items, currentItemState, handleClick, three }: ClosetRowsProps) {
+export default function ClosetRows({ items, currentItemState, handleClick, three, hiddenLayers, setHiddenLayers }: ClosetRowsProps) {
   const [loadedImages, setLoadedImages] = useState<{ [key: string]: boolean }>({});
   const positions: OutfitPart[] = ["top", "mid", "bottom"];
   
   const [activeTopLayer, setActiveTopLayer] = useState<UpperLayer>("mid");
-  const [hiddenLayers, setHiddenLayers] = useState<Record<UpperLayer, boolean>>({
-    base: false,
-    mid: false,
-    outer: false
-  });
 
   useEffect(() => {
     for (const item of items) {

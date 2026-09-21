@@ -43,11 +43,10 @@ const ClosetPage = () => {
     }
   };
 
-  // Updated to accept the specific layer (base, mid, outer) being navigated
   const handleClick = (arrow: 'left' | 'right', position: OutfitPart, layer?: UpperLayer) => {
-    const wrapper = document.getElementById(`${position}-wrapper`);
+    const posWrapper = document.getElementById(`${position}-wrapper`);
+    const wrapper = position === 'top' && layer ? posWrapper?.querySelector(`#top-${layer}-wrapper`) : posWrapper;
     
-    // Filter items by position, and if it's the top row, filter further by layer
     const itemsOfType = allItems.filter(item => {
       if (item.type !== position) return false;
       if (position === 'top' && layer) return item.layer === layer;
@@ -67,18 +66,14 @@ const ClosetPage = () => {
           if (position === 'top' && layer) {
             const currentIndex = prev.top[layer];
             const maxIndex = itemsOfType.length - 1;
-            const newIndex = arrow === 'left' 
-              ? currentIndex === 0 ? maxIndex : currentIndex - 1 
-              : currentIndex === maxIndex ? 0 : currentIndex + 1;
+            const newIndex = arrow === 'left' ? currentIndex === 0 ? maxIndex : currentIndex - 1 : currentIndex === maxIndex ? 0 : currentIndex + 1;
             
             return { ...prev, top: { ...prev.top, [layer]: newIndex } };
           } else {
             const pos = position as 'mid' | 'bottom';
             const currentIndex = prev[pos];
             const maxIndex = itemsOfType.length - 1;
-            const newIndex = arrow === 'left' 
-              ? currentIndex === 0 ? maxIndex : currentIndex - 1 
-              : currentIndex === maxIndex ? 0 : currentIndex + 1;
+            const newIndex = arrow === 'left' ? currentIndex === 0 ? maxIndex : currentIndex - 1 : currentIndex === maxIndex ? 0 : currentIndex + 1;
             
             return { ...prev, [pos]: newIndex };
           }
@@ -113,7 +108,6 @@ const ClosetPage = () => {
   };
 
   const buildOutfit = async () => {
-    // Extract layers independently so an outfit can feature a t-shirt beneath a hoodie
     const baseItems = allItems.filter(i => i.type === 'top' && i.layer === 'base');
     const midTopItems = allItems.filter(i => i.type === 'top' && i.layer === 'mid');
     const outerItems = allItems.filter(i => i.type === 'top' && i.layer === 'outer');
@@ -133,7 +127,6 @@ const ClosetPage = () => {
     }
     
     try {
-      // NOTE: Your backend outfitType schema will need to be updated to accept `top` as an object of layers rather than a single clothesType
       const response = await axios.post('/api/outfit', { top, mid, bottom, creator: user });
       if (response.data.success)
         showToast('Outfit created successfully', 'success');
@@ -251,7 +244,7 @@ const ClosetPage = () => {
         <div className='relative w-full flex flex-col items-center mt-6'>
           <div className='w-full max-w-4xl z-10'>
             {/* The type of currentItemState has changed, ClosetRows will need adjusting to handle top as an object */}
-            <ClosetRows items={allItems} currentItemState={currentItemState as any} handleClick={handleClick as any} three={three} />
+            <ClosetRows items={allItems} currentItemState={currentItemState as any} handleClick={handleClick} three={three} />
           </div>
           <div className="gadget-box w-full max-w-sm lg:max-w-none lg:w-[280px] bg-zinc-900/70 border border-white/10 rounded-3xl p-5 backdrop-blur-3xl shadow-2xl flex flex-col mt-8 lg:mt-0 lg:absolute lg:right-0 xl:-right-12 lg:top-24 z-30">
             <div className="flex items-center justify-between mb-4">

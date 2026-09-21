@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
@@ -20,7 +19,6 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
   const [loadedImages, setLoadedImages] = useState<{ [key: string]: boolean }>({});
   const positions: OutfitPart[] = ["top", "mid", "bottom"];
   
-  // Layering State
   const [activeTopLayer, setActiveTopLayer] = useState<UpperLayer>("mid");
   const [hiddenLayers, setHiddenLayers] = useState<Record<UpperLayer, boolean>>({
     base: false,
@@ -49,25 +47,28 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
     if (!item) return null;
 
     return (
-      <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${zIndex} ${isHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        {!loadedImages[itemKey] && (
-          <div className="absolute inset-2 animate-pulse bg-zinc-800/40 rounded-2xl border border-white/5" />
-        )}
-        <Image
-          key={itemKey}
-          src={item.image}
-          alt={item.name}
-          fill
-          sizes="(max-width: 768px) 80vw, 40vw"
-          priority
-          className={`closet-image object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 z-10 ${
-            loadedImages[itemKey] ? "opacity-100" : "opacity-0 scale-95"
-          }`}
-          style={{
-            transform: `scale(${item.scale || 1}) translate(${item.position?.[0]* -65 || 0}px, ${item.position?.[1]* -65 || 0}px)`
-          }}
-          onLoad={() => handleImageLoad(itemKey)}
-        />
+      <div className={`absolute inset-0 flex items-center justify-center transition-opacity pointer-events-none duration-300 ${zIndex} ${isHidden ? 'opacity-0' : 'opacity-100'}`}>
+        <div id={`top-${layer}-wrapper`} className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none">
+          {!loadedImages[itemKey] && (
+            <div className="absolute inset-2 animate-pulse bg-zinc-800/40 rounded-2xl border border-white/5" />
+          )}
+          <Image
+            key={itemKey}
+            src={item.image}
+            alt={item.name}
+            fill
+            sizes="(max-width: 768px) 80vw, 40vw"
+            priority
+            className={`closet-image object-contain pointer-events-none drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 z-10 ${
+              loadedImages[itemKey] ? "opacity-100" : "opacity-0 scale-95"
+            }`}
+            style={{
+              transform: `scale(${item.scale || 1}) translate(${item.position?.[0]* -65 || 0}px, ${item.position?.[1]* -65 || 0}px)`
+            }}
+            onLoad={() => handleImageLoad(itemKey)}
+          />
+        </div>
+
       </div>
     );
   };
@@ -75,38 +76,25 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
   return (
     <div className="w-full max-w-4xl mx-auto my-4 p-3 sm:p-4 rounded-3xl bg-zinc-900/60 border border-white/10 backdrop-blur-2xl shadow-2xl flex flex-col gap-2">
       {positions.map((pos: OutfitPart) => {
-        // Safe cast handling for mid/bottom rows
         const isTop = pos === "top";
         const itemsOfType = items.filter(item => item.type === pos);
-        
-        // Single item state for pants/shoes
-        const currentItem = !isTop 
-          ? itemsOfType[(currentItemState as any)[pos]] 
-          : null;
-          
+        const currentItem = !isTop ? itemsOfType[(currentItemState as any)[pos]] : null;
         const itemKey = currentItem ? String(currentItem._id || currentItem.name) : '';
-
-        const rowHeight = pos === "bottom"
-          ? "h-[16vh] min-h-[130px] sm:min-h-[150px]"
-          : "h-[28vh] min-h-[220px] sm:min-h-[260px]";
-
-        const wrapperAlignment = pos === "bottom"
-          ? "items-start pt-1"
-          : "items-center";
+        const rowHeight = pos === "bottom" ? "h-[16vh] min-h-[130px] sm:min-h-[150px]" : "h-[28vh] min-h-[220px] sm:min-h-[260px]";
+        const wrapperAlignment = pos === "bottom" ? "items-start pt-1" : "items-center";
 
         return (
           <section 
             key={pos} 
             className={`closet-row relative flex items-center justify-between w-full ${rowHeight} px-4 py-2 rounded-2xl bg-zinc-950/50 border border-white/5 hover:border-white/15 transition-all overflow-visible group shadow-inner`}
           >
-            {/* Category Indicator Label & Layer Controls */}
-            <div className="absolute top-3 left-4 flex items-center gap-3 z-30">
-              <span className="px-2.5 py-1 rounded-lg bg-zinc-900/80 border border-white/10 text-[11px] font-bold uppercase tracking-wider text-indigo-400 backdrop-blur-md shadow-sm">
+            <div className="absolute top-3 left-4 flex items-center gap-3 z-40">
+              <span className="px-2.5 py-1 rounded-lg bg-zinc-900/80 border border-white/10 text-[11px] font-bold uppercase tracking-wider text-indigo-400 backdrop-blur-md shadow-sm pointer-events-auto">
                 {pos}
               </span>
               
               {isTop && (
-                <div className="flex items-center bg-zinc-900/80 rounded-lg border border-white/10 p-0.5 backdrop-blur-md shadow-sm">
+                <div className="flex items-center bg-zinc-900/80 rounded-lg border border-white/10 p-0.5 backdrop-blur-md shadow-sm pointer-events-auto">
                   {(['base', 'mid', 'outer'] as UpperLayer[]).map(layer => (
                     <div key={layer} className="flex items-center">
                       <button
@@ -143,43 +131,43 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
               )}
             </div>
 
-            {/* Left Nav Button */}
             <button
               type="button"
               onClick={() => handleClick("left", pos, isTop ? activeTopLayer : undefined)}
-              className="relative p-3 rounded-2xl bg-zinc-900/80 hover:bg-indigo-600 text-zinc-300 hover:text-white border border-white/10 transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md shadow-xl"
+              className="relative p-3 rounded-2xl bg-zinc-900/80 hover:bg-indigo-600 text-zinc-300 hover:text-white border border-white/10 transition-all hover:scale-110 active:scale-95 cursor-pointer z-40 backdrop-blur-md shadow-xl pointer-events-auto"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
 
-            {/* Stage Canvas / Image Container */}
-            <div className={`scene-wrapper w-full h-full flex justify-center ${wrapperAlignment} relative py-1`} id={`${pos}-wrapper`}>
+            <div className={`scene-wrapper w-full h-full flex justify-center ${wrapperAlignment} relative py-1 pointer-events-none`} id={isTop ? 'top-wrapper' : `${pos}-wrapper`}>
               <div className="absolute inset-0 bg-radial from-indigo-500/10 via-transparent to-transparent opacity-60 pointer-events-none" />
 
               {three ? (
                 <>
-                  {/* Logic for 3D View */}
                   {isTop ? (
-                    // In 3D mode, just render the currently active layer to avoid mesh intersection messes
                     (() => {
                       const activeItem = items.filter(i => i.type === 'top' && i.layer === activeTopLayer)[currentItemState.top[activeTopLayer]];
-                      return activeItem && activeItem.modelFile ? (
-                        <Canvas camera={{ position: [0, 0, 2.6], fov: 28 }} className="overflow-visible">
-                          <React.Suspense fallback={<Loader />}>
-                            <Environment preset="sunset" />
-                            <Model item={activeItem} />
-                            <OrbitControls enableDamping dampingFactor={0.05} enableZoom={true} />
-                          </React.Suspense>
-                        </Canvas>
-                      ) : (
-                        <div className="text-zinc-500 text-xs font-semibold uppercase tracking-wider bg-zinc-900/40 px-4 py-2 rounded-xl border border-white/5">
-                          No 3D model for this layer
+                      return (
+                        <div id={`top-${activeTopLayer}-wrapper`} className="absolute inset-0 w-full h-full flex items-center justify-center">
+                          {activeItem && activeItem.modelFile ? (
+                            <Canvas camera={{ position: [0, 0, 2.6], fov: 28 }} className="overflow-visible pointer-events-auto">
+                              <React.Suspense fallback={<Loader />}>
+                                <Environment preset="sunset" />
+                                <Model item={activeItem} />
+                                <OrbitControls enableDamping dampingFactor={0.05} enableZoom={true} />
+                              </React.Suspense>
+                            </Canvas>
+                          ) : (
+                            <div className="text-zinc-500 text-xs font-semibold uppercase tracking-wider bg-zinc-900/40 px-4 py-2 rounded-xl border border-white/5 pointer-events-auto">
+                              No 3D model for this layer
+                            </div>
+                          )}
                         </div>
                       )
                     })()
                   ) : (
                     currentItem && currentItem.modelFile ? (
-                      <Canvas camera={{ position: [0, 0, 2.6], fov: 28 }} className="overflow-visible">
+                      <Canvas camera={{ position: [0, 0, 2.6], fov: 28 }} className="overflow-visible pointer-events-auto">
                         <React.Suspense fallback={<Loader />}>
                           <Environment preset="sunset" />
                           <Model item={currentItem} />
@@ -187,7 +175,7 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
                         </React.Suspense>
                       </Canvas>
                     ) : (
-                      <div className="text-zinc-500 text-xs font-semibold uppercase tracking-wider bg-zinc-900/40 px-4 py-2 rounded-xl border border-white/5">
+                      <div className="text-zinc-500 text-xs font-semibold uppercase tracking-wider bg-zinc-900/40 px-4 py-2 rounded-xl border border-white/5 pointer-events-auto">
                         No 3D model
                       </div>
                     )
@@ -195,8 +183,7 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
                 </>
               ) : (
                 <>
-                  {/* Logic for 2D View */}
-                  <div className={`relative overflow-visible w-full ${pos === "bottom" ? "h-28 sm:h-32" : "h-full"} max-w-md sm:max-w-lg flex items-center justify-center p-0`}>
+                  <div className={`relative overflow-visible w-full pointer-events-none ${pos === "bottom" ? "h-28 sm:h-32" : "h-full"} max-w-md sm:max-w-lg flex items-center justify-center p-0`}>
                     
                     {isTop ? (
                       <>
@@ -207,7 +194,7 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
                     ) : (
                       <>
                         {itemsOfType.length === 0 && (
-                          <div className="text-zinc-500 text-xs font-semibold uppercase tracking-wider bg-zinc-900/40 px-4 py-2 rounded-xl border border-white/5">
+                          <div className="text-zinc-500 text-xs font-semibold uppercase tracking-wider bg-zinc-900/40 px-4 py-2 rounded-xl border border-white/5 pointer-events-auto">
                             No items available
                           </div>
                         )}
@@ -223,7 +210,7 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
                               fill
                               sizes="(max-width: 768px) 80vw, 40vw"
                               priority
-                              className={`closet-image object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 hover:scale-105 z-10 ${
+                              className={`closet-image object-contain pointer-events-none drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 hover:scale-105 z-10 ${
                                 loadedImages[itemKey] ? "opacity-100" : "opacity-0 scale-95"
                               }`}
                               style={{
@@ -240,11 +227,10 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
               )}
             </div>
 
-            {/* Right Nav Button */}
             <button
               type="button"
               onClick={() => handleClick("right", pos, isTop ? activeTopLayer : undefined)}
-              className="relative p-3 rounded-2xl bg-zinc-900/80 hover:bg-indigo-600 text-zinc-300 hover:text-white border border-white/10 transition-all hover:scale-110 active:scale-95 cursor-pointer z-20 backdrop-blur-md shadow-xl"
+              className="relative p-3 rounded-2xl bg-zinc-900/80 hover:bg-indigo-600 text-zinc-300 hover:text-white border border-white/10 transition-all hover:scale-110 active:scale-95 cursor-pointer z-40 backdrop-blur-md shadow-xl pointer-events-auto"
             >
               <ChevronRight className="w-6 h-6" />
             </button>

@@ -8,8 +8,9 @@ import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
 import OptionController from '@/app/components/OptionController';
 import Toast from '@/app/components/Toast';
+import OutfitExtractor from '@/app/components/OutfitExtractor'; // IMPORT EXTRACTOR
 import { clothesType, EditableClothesType, gadgetType, OutfitPart, OutfitState, UpperLayer } from '@/lib/types';
-import { Sparkles, ChevronLeft, ChevronRight, Watch } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Watch, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 
 const ClosetPage = () => {
@@ -31,6 +32,7 @@ const ClosetPage = () => {
 
   const [currentGadgetIndex, setCurrentGadgetIndex] = useState<number>(0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isExtractorOpen, setIsExtractorOpen] = useState<boolean>(false); // NEW STATE FOR EXTRACTOR
   const [three, setThree] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
   
@@ -240,12 +242,25 @@ const ClosetPage = () => {
     <>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <section id='closet-section' className="w-full max-w-[1500px] py-8 flex flex-col items-center">
-        <div className="text-center mb-6">
+        
+        <div className="text-center mb-6 relative w-full flex flex-col items-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
             <Sparkles className="w-3.5 h-3.5" /> Interactive Studio
           </div>
-          <h1 className='text-3xl sm:text-4xl font-extrabold text-white tracking-tight'>Closet Canvas</h1>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <h1 className='text-3xl sm:text-4xl font-extrabold text-white tracking-tight'>Closet Canvas</h1>
+            
+            <button 
+              onClick={() => setIsExtractorOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 cursor-pointer sm:absolute sm:right-6 md:right-12"
+            >
+              <Wand2 className="w-4 h-4" />
+              Extract from Photo
+            </button>
+          </div>
         </div>
+
         <OptionController setThree={setThree} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />
         <div className='relative w-full flex flex-col items-center mt-6'>
           <div className='w-full max-w-4xl z-10'>
@@ -315,6 +330,8 @@ const ClosetPage = () => {
           item={{ name: '', image: '', modelFile: '', scale: 0.0, position: [0, 0, 0], description: '', type: null, creator: user }} 
         />
       )}
+
+      {isExtractorOpen && <OutfitExtractor onClose={() => setIsExtractorOpen(false)} />}
     </>
   );
 };

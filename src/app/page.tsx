@@ -1,9 +1,6 @@
 'use client';
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from './components/header';
-import Image from 'next/image';
-import gsap from 'gsap';
 import { useUser } from './context/UserContext';
 import { Shirt, Sparkles, Box, Layers, ArrowUpRight } from 'lucide-react';
 
@@ -16,20 +13,6 @@ const Home = () => {
   }, [isAuthenticated]);
 
   if (!isAuthenticated) return null;
-
-  useEffect(() => {
-    gsap.set('.presentation-card', {
-      opacity: 0,
-      y: 60,
-    });
-    gsap.to('.presentation-card', {
-      opacity: 1,
-      y: 0,
-      duration: 0.6,
-      stagger: 0.15,
-      ease: 'power3.out',
-    });
-  }, []);
 
   return (
     <>

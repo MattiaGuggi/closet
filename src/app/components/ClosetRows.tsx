@@ -79,11 +79,14 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
         const itemKey = currentItem ? String(currentItem._id || currentItem.name) : '';
         const rowHeight = pos === "bottom" ? "h-[16vh] min-h-[130px] sm:min-h-[150px]" : "h-[28vh] min-h-[220px] sm:min-h-[260px]";
         const wrapperAlignment = pos === "bottom" ? "items-start pt-1" : "items-center";
+        
+        // Fix: Explicitly declare the row's z-index to reverse the natural DOM stacking order
+        const zIndexClass = pos === "top" ? "z-30" : pos === "mid" ? "z-20" : "z-10";
 
         return (
           <section 
             key={pos} 
-            className={`closet-row relative flex items-center justify-between w-full ${rowHeight} px-4 py-2 rounded-2xl bg-zinc-950/50 border border-white/5 hover:border-white/15 transition-all overflow-visible group shadow-inner`}
+            className={`closet-row ${zIndexClass} relative flex items-center justify-between w-full ${rowHeight} px-4 py-2 rounded-2xl bg-zinc-950/50 border border-white/5 hover:border-white/15 transition-all overflow-visible group shadow-inner`}
           >
             <div className="absolute top-3 left-4 flex items-center gap-3 z-40">
               <span className="px-2.5 py-1 rounded-lg bg-zinc-900/80 border border-white/10 text-[11px] font-bold uppercase tracking-wider text-indigo-400 backdrop-blur-md shadow-sm pointer-events-auto">

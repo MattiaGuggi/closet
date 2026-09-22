@@ -578,7 +578,6 @@ export const createGadgetInDb = async (newGadget: gadgetType) => {
   if (newGadget._id) payload._id = newGadget._id;
 
   const [item] = await db.insert(gadgets).values(payload).returning();
-  console.log("Created new gadget in DB:", item);
   return item;
 };
 

@@ -8,7 +8,7 @@ import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
 import OptionController from '@/app/components/OptionController';
 import Toast from '@/app/components/Toast';
-import OutfitExtractor from '@/app/components/OutfitExtractor'; // IMPORT EXTRACTOR
+import OutfitExtractor from '@/app/components/OutfitExtractor';
 import { clothesType, EditableClothesType, gadgetType, OutfitPart, OutfitState, UpperLayer } from '@/lib/types';
 import { Sparkles, ChevronLeft, ChevronRight, Watch, Wand2 } from 'lucide-react';
 import Image from 'next/image';
@@ -331,7 +331,7 @@ const ClosetPage = () => {
         />
       )}
 
-      {isExtractorOpen && <OutfitExtractor onClose={() => setIsExtractorOpen(false)} />}
+      {isExtractorOpen && <OutfitExtractor onClose={() => setIsExtractorOpen(false)} showToast={(msg, type) => showToast(msg, type)} />}
     </>
   );
 };

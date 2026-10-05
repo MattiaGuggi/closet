@@ -118,10 +118,10 @@ const ProfilePage = () => {
     onConfirm: () => void;
   }>({ isOpen: false, title: '', description: '', onConfirm: () => {} });
 
-  const showToast = (message: string, type: 'success' | 'info' | 'error') => {
+  const showToast = useCallback((message: string, type: 'success' | 'info' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
-  };
+  }, []);
 
   const { fetchUserDetails, saveItem, saveOutfit, saveGadget, deleteEntity, clothes, setClothes, outfits, setOutfits, gadgets, setGadgets, isLoading } = useClosetAPI(user, showToast);
 

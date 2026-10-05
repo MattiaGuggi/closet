@@ -18,10 +18,10 @@ import useClosetAPI from '@/app/hooks/useClosetAPI';
 const wishlistPage = () => {
     const { user } = useUser();
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
-    const showToast = (message: string, type: 'success' | 'info' | 'error') => {
+    const showToast = useCallback((message: string, type: 'success' | 'info' | 'error') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 4000);
-    };
+    }, []);
     const { clothes, setClothes, outfits, setOutfits, gadgets, setGadgets, isLoading, fetchUserDetails, saveItem, saveOutfit, saveGadget, deleteEntity } = useClosetAPI(user, showToast); 
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;

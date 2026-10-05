@@ -7,15 +7,16 @@ import ItemModel from '@/app/components/ItemModal';
 import ClosetRows from '@/app/components/ClosetRows';
 import { useUser } from '@/app/context/UserContext';
 import OptionController from '@/app/components/OptionController';
-import Toast from '@/app/components/Toast';
 import OutfitExtractor from '@/app/components/OutfitExtractor';
 import { clothesType, EditableClothesType, gadgetType, OutfitPart, OutfitState, UpperLayer } from '@/lib/types';
 import { Sparkles, ChevronLeft, ChevronRight, Watch, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import useClosetAPI from '@/app/hooks/useClosetAPI';
+import { useModal } from '@/app/context/ModalContext';
 
 const ClosetPage = () => {
   const { user } = useUser();
+  const { showToast } = useModal();
   
   const [currentItemState, setCurrentItemState] = useState<OutfitState>({
     top: { base: 0, mid: 0, outer: 0 },
@@ -34,10 +35,7 @@ const ClosetPage = () => {
   const [isExtractorOpen, setIsExtractorOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setToast({ message, type });
-  };
-  const { clothes, setClothes, gadgets, setGadgets, outfits, setOutfits, fetchUserDetails } = useClosetAPI(user, showToast);
+  const { clothes, setClothes, gadgets, setGadgets, outfits, setOutfits, fetchUserDetails } = useClosetAPI(user);
 
   const handleClick = (arrow: 'left' | 'right', position: OutfitPart, layer?: UpperLayer) => {
     const posWrapper = document.getElementById(`${position}-wrapper`);
@@ -228,7 +226,6 @@ const ClosetPage = () => {
 
   return (
     <>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <section id='closet-section' className="w-full max-w-[1500px] py-8 flex flex-col items-center">
         
         <div className="text-center mb-6 relative w-full flex flex-col items-center">

@@ -573,6 +573,7 @@ function ImageSection<T extends clothesType | gadgetType>({
             style={{ transform: `translate(${visualTranslateX}px, ${visualTranslateY}px) scale(${newItem.scale || 1})` }}
           >
             <Image
+              sizes="(max-width: 768px) 100vw, 50vw"
               alt="Preview"
               src={newItem.image}
               fill

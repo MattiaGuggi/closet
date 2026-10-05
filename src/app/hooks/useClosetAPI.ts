@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
 import { clothesType, EditableClothesType, gadgetType, outfitType, userType } from '@/lib/types';
+import { useModal } from '@/app/context/ModalContext';
 
-const useClosetAPI = (user: userType | null, showToast: (message: string, type: 'success' | 'info' | 'error') => void) => {
+const useClosetAPI = (user: userType | null) => {
+    const { showToast } = useModal();
     const [clothes, setClothes] = useState<clothesType[]>([]);
     const [outfits, setOutfits] = useState<outfitType[]>([]);
     const [gadgets, setGadgets] = useState<gadgetType[]>([]);

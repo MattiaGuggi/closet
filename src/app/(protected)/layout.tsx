@@ -1,8 +1,10 @@
 'use client'
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Header from "../components/header";
-import { useUser } from "../context/UserContext";
+import Header from "@/app/components/header";
+import { useUser } from "@/app/context/UserContext";
+import { ModalProvider } from "@/app/context/ModalContext";
+import GlobalModals from "@/app/components/GlobalModals";
 
 export default function ProtectedLayout({
   children,
@@ -26,7 +28,10 @@ export default function ProtectedLayout({
     <>
       <Header />
       <main className="w-full min-h-full flex-1 flex flex-col items-center justify-center">
+        <ModalProvider>
           {children}
+          <GlobalModals />
+        </ModalProvider>
       </main>
     </>
   );

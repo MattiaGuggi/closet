@@ -122,6 +122,7 @@ const OutfitModal = ({ onClose, onSave, outfit, items }: modalType) => {
                         src={currentSelectedItem.image}
                         alt={currentSelectedItem.name || label}
                         fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
                         className="object-contain p-2 drop-shadow-xl"
                         style={{ transform: `scale(${currentSelectedItem.scale || 1})` }}
                       />

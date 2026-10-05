@@ -3,7 +3,6 @@ import Image from "next/image";
 import { Edit3 } from "lucide-react";
 
 const Gadget = ({ item, onOpen }: { item: gadgetType; onOpen: (item: gadgetType) => void }) => {
-  // Clamp scale between 0.4 and 1.25 so previews stay legible and inside the box
   const thumbnailScale = Math.max(0.4, Math.min(item?.scale || 1, 1.25));
 
   return (

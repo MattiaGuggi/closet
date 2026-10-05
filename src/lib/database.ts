@@ -591,3 +591,45 @@ export const getGadgetFromDb = async (id: string) => {
     throw new Error("Failed to fetch gadget from database");
   }
 };
+
+export const updateWishlist = async (userId: string, itemId: string, type: 'Outfit' | 'Gadget' | 'Item') => {
+  await connectDB();
+  try {
+    const user = await db.query.users.findFirst({ where: eq(users._id, userId) });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    let item;
+    console.log(type)
+    switch(type) {
+      case 'Item':
+        item = await db.query.clothes.findFirst({ where: eq(clothes._id, itemId) });
+
+        if (!item) throw new Error("Item not found");
+        await db.update(clothes).set({ isWishlisted: !item.isWishlisted }).where(eq(clothes._id, itemId));
+
+        break;
+      case 'Outfit':
+        item = await db.query.outfits.findFirst({ where: eq(outfits._id, itemId) });
+
+        if (!item) throw new Error("Outfit not found");
+        await db.update(outfits).set({ isWishlisted: !item.isWishlisted }).where(eq(outfits._id, itemId));
+
+        break;
+      case 'Gadget':
+        item = await db.query.gadgets.findFirst({ where: eq(gadgets._id, itemId) });
+
+        if (!item) throw new Error("Gadget not found");
+        await db.update(gadgets).set({ isWishlisted: !item.isWishlisted }).where(eq(gadgets._id, itemId));
+
+        break;
+      default:
+        throw new Error("Invalid type for wishlist addition");
+    }
+
+    return { success: true, message: `${type} updated in wishlist`, item };
+  } catch(err) {
+    console.error("Error updating wishlist", err);
+    throw new Error("Failed to update item in wishlist");
+  }
+};

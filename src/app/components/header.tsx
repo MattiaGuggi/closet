@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
-import { Shirt, Sparkles, User, Home as HomeIcon } from 'lucide-react'
+import { Shirt, Sparkles, User, Home as HomeIcon, Bookmark } from 'lucide-react'
 
 const Header = () => {
   const pathname = usePathname();
@@ -10,6 +10,7 @@ const Header = () => {
   const links = [
     { href: '/', label: 'Home', icon: HomeIcon },
     { href: '/closet', label: 'Closet', icon: Shirt },
+    { href: '/wishlist', label: 'Wishlist', icon: Bookmark },
     { href: '/profile', label: 'Profile', icon: User }
   ];
 

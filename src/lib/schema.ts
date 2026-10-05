@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, real, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, real, jsonb, boolean } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // Users Table
@@ -24,6 +24,7 @@ export const clothes = pgTable("clothes", {
   description: text("description").default(""),
   type: varchar("type", { enum: ["top", "mid", "bottom"] }).notNull(),
   layer: varchar("layer", { enum: ["base", "mid", "outer"] }), 
+  isWishlisted: boolean("is_wishlisted").default(false),
 });
 
 // Gadgets Table
@@ -39,6 +40,7 @@ export const gadgets = pgTable("gadgets", {
   position: jsonb("position").$type<number[]>().default([0, 0, 0]),
   description: text("description").default(""),
   type: varchar("type", { enum: ["hat", "glasses", "bracelet", "fragrance", "watch"] }).notNull(),
+  isWishlisted: boolean("is_wishlisted").default(false),
 });
 
 // Outfits Table
@@ -58,6 +60,7 @@ export const outfits = pgTable("outfits", {
   bottom: uuid("bottom")
     .notNull()
     .references(() => clothes._id, { onDelete: "cascade" }),
+  isWishlisted: boolean("is_wishlisted").default(false),
 });
 
 // Relational Definitions

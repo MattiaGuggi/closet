@@ -14,6 +14,7 @@ export type clothesType = {
     description: string;
     type: Position | null;
     layer?: UpperLayer;
+    isWishlisted?: boolean;
 };
 
 export type gadgetType = {
@@ -26,6 +27,7 @@ export type gadgetType = {
     position: [number, number, number];
     description: string;
     type: Gadget | null;
+    isWishlisted?: boolean;
 };
 
 export type EditableClothesType =  {
@@ -38,6 +40,7 @@ export type EditableClothesType =  {
     position: [number, number, number];
     description: string;
     type: Position | Gadget | null;
+    isWishlisted?: boolean;
     layer?: UpperLayer;
 
     imageFile?: File;
@@ -55,6 +58,7 @@ export type OutfitState = {
 export type outfitType = {
     _id?: number;
     creator: userType | null;
+    isWishlisted?: boolean;
     top: {
       base?: clothesType | null;
       mid?: clothesType | null;

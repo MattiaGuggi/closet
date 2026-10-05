@@ -14,6 +14,7 @@ import OutfitModal from '@/app/components/OutfitModal';
 import { Trash2Icon, LogOut, Edit3, Shirt, Layers, Watch, ListFilter, ChevronDown, Check, Bookmark } from 'lucide-react';
 import Gadget from '@/app/components/Gadget';
 import Toast from '@/app/components/Toast';
+import useClosetAPI from '@/app/hooks/useClosetAPI';
 
 type SortOption = 'Default' | 'A-Z' | 'Z-A' | 'Type A-Z' | 'Type Z-A';
 
@@ -90,10 +91,6 @@ const sortItems = <T extends { name?: string; type?: string | null }>(
 
 const ProfilePage = () => {
   const { user, logout } = useUser();
-  const [clothes, setClothes] = useState<clothesType[] | null>(null);
-  const [outfits, setOutfits] = useState<outfitType[] | null>(null);
-  const [gadgets, setGadgets] = useState<gadgetType[] | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const [clothesSort, setClothesSort] = useState<SortOption>('Default');
   const [gadgetsSort, setGadgetsSort] = useState<SortOption>('Default');
@@ -126,126 +123,10 @@ const ProfilePage = () => {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const fetchUserDetails = useCallback(async () => {
-    if (!user?._id) return;
-    setIsLoading(true);
-    try {
-      const response = await axios.get('/api/user', { params: { userId: user._id } });
-      const data = response.data;
-      
-      setClothes(Array.isArray(data.clothes) ? data.clothes.filter((c: clothesType) => c && c._id) : []);
-      setOutfits(Array.isArray(data.outfits) ? data.outfits.filter((o: outfitType) => o && o._id) : []);
-      setGadgets(Array.isArray(data.gadgets) ? data.gadgets.filter((g: gadgetType) => g && g._id) : []);
-    } catch (err) {
-      console.error(err);
-      showToast('Errore nel recupero dati utente', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?._id]);
+  const { fetchUserDetails, saveItem, saveOutfit, saveGadget, deleteEntity, clothes, setClothes, outfits, setOutfits, gadgets, setGadgets, isLoading } = useClosetAPI(user, showToast);
 
   const sortedClothes = useMemo(() => sortItems(clothes, clothesSort), [clothes, clothesSort]);
   const sortedGadgets = useMemo(() => sortItems(gadgets, gadgetsSort), [gadgets, gadgetsSort]);
-
-  const saveGadget = async (item: gadgetType & { imageFile?: File }) => {
-    setActiveModal(null);
-    showToast('Saving gadget to wardrobe...', 'info');
-    
-    const oldGadget = gadgets?.find((g) => g._id === item._id);
-    setGadgets((prev) => prev?.map((g) => g._id === item._id ? item : g) || []);
-
-    try {
-      const formData = new FormData();
-      formData.append("gadget", JSON.stringify(item));
-      if (item.imageFile) formData.append("image", item.imageFile);
-
-      const response = await axios.post("/api/updateGadget", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (response.data.success) {
-        fetchUserDetails();
-        showToast("Gadget saved successfully!", "success");
-      } else {
-        throw new Error("Failed to update gadget");
-      }
-    } catch (err) {
-      console.error(err);
-      if (oldGadget) {
-        setGadgets((prev) => prev?.map((g) => g._id === oldGadget._id ? oldGadget : g) || []);
-      }
-      showToast("Error updating gadget. Changes reverted.", "error");
-    }
-  };
-
-  const saveItem = async (item: EditableClothesType) => {
-    setActiveModal(null);
-    showToast('Saving item to wardrobe...', 'info');
-
-    const oldItem = clothes?.find((c) => c._id === item._id);
-    setClothes((prev) => prev?.map((c) => c._id === item._id ? (item as unknown as clothesType) : c) || []);
-
-    try {
-      const formData = new FormData();
-      formData.append("item", JSON.stringify(item));
-
-      if (item.imageFile) formData.append("image", item.imageFile);
-      if (item.modelFileFile) formData.append("model", item.modelFileFile);
-
-      formData.append("name", item.name);
-      formData.append("scale", String(item.scale));
-      formData.append("description", item.description);
-      formData.append("position", JSON.stringify(item.position));
-      if (item.type) formData.append("type", item.type);
-
-      const response = await axios.post("/api/updateItem", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (response.data.success) {
-        fetchUserDetails();
-        showToast("Capo salvato con successo!", "success");
-      } else {
-        throw new Error("Failed to update item");
-      }
-    } catch (err) {
-      console.error(err);
-      if (oldItem) {
-        setClothes((prev) => prev?.map((c) => c._id === oldItem._id ? oldItem : c) || []);
-      }
-      showToast("Errore durante l'aggiornamento. Modifiche annullate.", "error");
-    }
-  };
-
-  const saveOutfit = async (outfit: outfitType) => {
-    setActiveModal(null);
-    showToast('Saving outfit to wardrobe...', 'info');
-    
-    const oldOutfit = outfits?.find((o) => o._id === outfit._id);
-    setOutfits((prev) => prev?.map((o) => o._id === outfit._id ? outfit : o) || []);
-
-    try {
-      const formData = new FormData();
-      formData.append("outfit", JSON.stringify(outfit));
-
-      const response = await axios.post("/api/updateOutfit", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (response.data.success) {
-        fetchUserDetails();
-        showToast("Outfit salvato con successo!", "success");
-      } else {
-        throw new Error("Failed to update outfit");
-      }
-    } catch (err) {
-      console.error('Error updating outfit', err);
-      if (oldOutfit) {
-        setOutfits((prev) => prev?.map((o) => o._id === oldOutfit._id ? oldOutfit : o) || []);
-      }
-      showToast("Errore di connessione. Modifiche annullate.", "error");
-    }
-  };
 
   const handleOpenItemModal = (item: clothesType) => {
     setCurrentItem(item);
@@ -263,45 +144,6 @@ const ProfilePage = () => {
   };
   
   const handleCloseModal = () => setActiveModal(null);
-
-  const requestDelete = <T extends { _id?: string | number }>(
-    id: string | number | undefined,
-    entityName: string,
-    endpoint: string,
-    items: T[] | null,
-    setItems: React.Dispatch<React.SetStateAction<T[] | null>>
-  ) => {
-    if (!id) {
-      showToast(`${entityName} ID missing`, 'error');
-      return;
-    }
-  
-    const itemToRestore = items?.find((i) => i._id === id);
-  
-    setConfirmModal({
-      isOpen: true,
-      title: `Delete ${entityName}`,
-      description: `Are you sure you want to delete this ${entityName.toLowerCase()}? The action is irreversible.`,
-      onConfirm: async () => {
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-        setItems((prev) => prev?.filter((i) => i._id !== id) || []);
-        showToast(`${entityName} deleted`, 'success');
-  
-        try {
-          const response = await axios.delete(`${endpoint}?id=${id}`);
-          if (response.data.success) {
-            fetchUserDetails();
-          } else {
-            throw new Error(`Server failed to delete ${entityName.toLowerCase()}`);
-          }
-        } catch (err) {
-          console.error(`Error deleting ${entityName.toLowerCase()}`, err);
-          if (itemToRestore) setItems((prev) => (prev ? [...prev, itemToRestore] : [itemToRestore]));
-          showToast(`Error during deletion. ${entityName} restored.`, 'error');
-        }
-      },
-    });
-  };
 
   const addInWishlist = async (item: clothesType | outfitType | gadgetType) => {
     try {
@@ -409,7 +251,7 @@ const ProfilePage = () => {
                       <Bookmark className="w-4 h-4" />
                     </button>
                     <Clothing item={clothing} onOpen={handleOpenItemModal} />
-                    <button onClick={(e) => { e.stopPropagation(); requestDelete(clothing._id, 'Item', '/api/deleteItem', clothes, setClothes); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
+                    <button onClick={(e) => { e.stopPropagation(); deleteEntity(clothing._id, 'Item', '/api/deleteItem'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
                       <Trash2Icon className="w-4 h-4" />
                     </button>
                   </div>
@@ -454,7 +296,7 @@ const ProfilePage = () => {
                       <Bookmark className="w-4 h-4" />
                     </button>
                     <Outfit item={outfit} onOpen={handleOpenOutfitModal} />
-                    <button onClick={(e) => { e.stopPropagation(); requestDelete(outfit._id, 'Outfit', '/api/deleteOutfit', outfits, setOutfits); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete outfit">
+                    <button onClick={(e) => { e.stopPropagation(); deleteEntity(outfit._id, 'Outfit', '/api/deleteOutfit'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete outfit">
                       <Trash2Icon className="w-4 h-4" />
                     </button>
                   </div>
@@ -508,7 +350,7 @@ const ProfilePage = () => {
                       <Bookmark className="w-4 h-4" />
                     </button>
                     <Gadget item={gadget} onOpen={handleOpenGadgetModal} />
-                    <button onClick={(e) => { e.stopPropagation(); requestDelete(gadget._id, 'Gadget', '/api/deleteGadget', gadgets, setGadgets); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete gadget">
+                    <button onClick={(e) => { e.stopPropagation(); deleteEntity(gadget._id, 'Gadget', '/api/deleteGadget'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete gadget">
                       <Trash2Icon className="w-4 h-4" />
                     </button>
                   </div>

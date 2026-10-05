@@ -12,11 +12,10 @@ import OutfitExtractor from '@/app/components/OutfitExtractor';
 import { clothesType, EditableClothesType, gadgetType, OutfitPart, OutfitState, UpperLayer } from '@/lib/types';
 import { Sparkles, ChevronLeft, ChevronRight, Watch, Wand2 } from 'lucide-react';
 import Image from 'next/image';
+import useClosetAPI from '@/app/hooks/useClosetAPI';
 
 const ClosetPage = () => {
   const { user } = useUser();
-  const [allItems, setAllItems] = useState<clothesType[]>([]);
-  const [allGadgets, setAllGadgets] = useState<gadgetType[]>([]);
   
   const [currentItemState, setCurrentItemState] = useState<OutfitState>({
     top: { base: 0, mid: 0, outer: 0 },
@@ -32,30 +31,19 @@ const ClosetPage = () => {
 
   const [currentGadgetIndex, setCurrentGadgetIndex] = useState<number>(0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isExtractorOpen, setIsExtractorOpen] = useState<boolean>(false); // NEW STATE FOR EXTRACTOR
+  const [isExtractorOpen, setIsExtractorOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
-  
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
   };
-  
-  const fetchItems = async () => {
-    try {
-      const response = await axios.get('/api/items');
-      const data = response.data;
-      setAllItems(data.clothes);
-      setAllGadgets(data.gadgets);
-    } catch (error) {
-      console.error('Error fetching items:', error);
-    }
-  };
+  const { clothes, setClothes, gadgets, setGadgets, outfits, setOutfits, fetchUserDetails } = useClosetAPI(user, showToast);
 
   const handleClick = (arrow: 'left' | 'right', position: OutfitPart, layer?: UpperLayer) => {
     const posWrapper = document.getElementById(`${position}-wrapper`);
     const wrapper = position === 'top' && layer ? posWrapper?.querySelector(`#top-${layer}-wrapper`) : posWrapper;
     
-    const itemsOfType = allItems.filter(item => {
+    const itemsOfType = clothes.filter(item => {
       if (item.type !== position) return false;
       if (position === 'top' && layer) return item.layer === layer;
       return true;
@@ -94,7 +82,7 @@ const ClosetPage = () => {
 
   const handleGadgetClick = (arrow: 'left' | 'right') => {
     const wrapper = document.getElementById('gadget-carousel-wrapper');
-    if (!wrapper || allGadgets.length < 2) return;
+    if (!wrapper || gadgets.length < 2) return;
 
     const tl = gsap.timeline();
     tl.to(wrapper, {
@@ -104,7 +92,7 @@ const ClosetPage = () => {
       ease: 'power2.inOut',
       onComplete: () => {
         setCurrentGadgetIndex(prev => {
-          const maxIndex = allGadgets.length - 1;
+          const maxIndex = gadgets.length - 1;
           return arrow === 'left' 
             ? prev === 0 ? maxIndex : prev - 1 
             : prev === maxIndex ? 0 : prev + 1;
@@ -116,17 +104,17 @@ const ClosetPage = () => {
   };
 
   const buildOutfit = async () => {
-    const baseItems = allItems.filter(i => i.type === 'top' && i.layer === 'base');
-    const midTopItems = allItems.filter(i => i.type === 'top' && i.layer === 'mid');
-    const outerItems = allItems.filter(i => i.type === 'top' && i.layer === 'outer');
+    const baseItems = clothes.filter(i => i.type === 'top' && i.layer === 'base');
+    const midTopItems = clothes.filter(i => i.type === 'top' && i.layer === 'mid');
+    const outerItems = clothes.filter(i => i.type === 'top' && i.layer === 'outer');
 
     const topBase = !hiddenLayers.base ? (baseItems[currentItemState.top.base] || null) : null;
     const topMid = !hiddenLayers.mid ? (midTopItems[currentItemState.top.mid] || null) : null;
     const topOuter = !hiddenLayers.outer ? (outerItems[currentItemState.top.outer] || null) : null;
 
     const top = { base: topBase, mid: topMid, outer: topOuter };
-    const mid = allItems.filter(item => item.type === "mid")[currentItemState.mid] || null;
-    const bottom = allItems.filter(item => item.type === "bottom")[currentItemState.bottom] || null;
+    const mid = clothes.filter(item => item.type === "mid")[currentItemState.mid] || null;
+    const bottom = clothes.filter(item => item.type === "bottom")[currentItemState.bottom] || null;
 
     if ((!top.base && !top.mid && !top.outer) || !mid || !bottom) {
       showToast('Cannot build outfit without at least one top, pants, and shoes!', 'error');
@@ -152,13 +140,13 @@ const ClosetPage = () => {
     showToast(`Saving ${isGadget ? 'gadget' : 'item'} to wardrobe...`, 'info');
 
     if (isGadget) {
-      setAllGadgets(prev => {
+      setGadgets(prev => {
         const updatedList = [...prev, optimisticItem as unknown as gadgetType];
         setCurrentGadgetIndex(updatedList.length - 1);
         return updatedList;
       });
     } else {
-      setAllItems(prev => {
+      setClothes(prev => {
         const updatedList = [...prev, optimisticItem];
         if (optimisticItem.type) {
           const itemType = optimisticItem.type as OutfitPart;
@@ -207,9 +195,9 @@ const ClosetPage = () => {
 
       if (response.data.success && savedItem) {
         if (isGadget) {
-          setAllGadgets(prev => prev.map(i => i._id === tempId ? (savedItem as gadgetType) : i));
+          setGadgets(prev => prev.map(i => i._id === tempId ? (savedItem as gadgetType) : i));
         } else {
-          setAllItems(prev => prev.map(i => i._id === tempId ? savedItem : i));
+          setClothes(prev => prev.map(i => i._id === tempId ? savedItem : i));
         }
         showToast(`${isGadget ? 'Gadget' : 'Item'} saved successfully!`, 'success');
       } else {
@@ -217,16 +205,16 @@ const ClosetPage = () => {
       }
     } catch (err) {
       if (isGadget) {
-        setAllGadgets(prev => prev.filter(i => i._id !== tempId));
+        setGadgets(prev => prev.filter(i => i._id !== tempId));
       } else {
-        setAllItems(prev => prev.filter(i => i._id !== tempId));
+        setClothes(prev => prev.filter(i => i._id !== tempId));
       }
       showToast(`Failed to upload ${isGadget ? 'gadget' : 'item'}. Please try again.`, 'error');
     }
   };
 
   useEffect(() => {
-    fetchItems();
+    fetchUserDetails();
   }, []);
 
   useEffect(() => {
@@ -236,7 +224,7 @@ const ClosetPage = () => {
     }
   }, []);
 
-  const currentGadget = allGadgets[currentGadgetIndex];
+  const currentGadget = gadgets[currentGadgetIndex];
 
   return (
     <>
@@ -265,7 +253,7 @@ const ClosetPage = () => {
         <div className='relative w-full flex flex-col items-center mt-6'>
           <div className='w-full max-w-4xl z-10'>
             <ClosetRows 
-              items={allItems} 
+              items={clothes} 
               currentItemState={currentItemState as OutfitState} 
               handleClick={handleClick} 
               three={three} 

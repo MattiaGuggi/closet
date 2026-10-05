@@ -10,14 +10,19 @@ import Outfit from '@/app/components/Outfit';
 import Gadget from '@/app/components/Gadget';
 import Clothing from '@/app/components/Clothing';
 import SkeletonCard from '@/app/components/SkeletonCard';
+import UserModal from '@/app/components/UserModal';
+import ItemModal from '@/app/components/ItemModal';
+import OutfitModal from '@/app/components/OutfitModal';
+import useClosetAPI from '@/app/hooks/useClosetAPI';
 
 const wishlistPage = () => {
     const { user } = useUser();
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [clothes, setClothes] = useState<clothesType[] | null>(null);
-    const [outfits, setOutfits] = useState<outfitType[] | null>(null);
-    const [gadgets, setGadgets] = useState<gadgetType[] | null>(null);
+    const showToast = (message: string, type: 'success' | 'info' | 'error') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 4000);
+    };
+    const { clothes, setClothes, outfits, setOutfits, gadgets, setGadgets, isLoading, fetchUserDetails, saveItem, saveOutfit, saveGadget, deleteEntity } = useClosetAPI(user, showToast); 
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
         title: string;
@@ -39,11 +44,6 @@ const wishlistPage = () => {
 
     const [activeModal, setActiveModal] = useState<'user' | 'item' | 'outfit' | 'gadget' | null>(null);
 
-    const showToast = (message: string, type: 'success' | 'info' | 'error') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 4000);
-    };
-
     const handleOpenItemModal = (item: clothesType) => {
         setCurrentItem(item);
         setActiveModal('item');
@@ -59,23 +59,7 @@ const wishlistPage = () => {
         setActiveModal('gadget');
     };
 
-    const fetchUserDetails = useCallback(async () => {
-        if (!user?._id) return;
-        setIsLoading(true);
-        try {
-            const response = await axios.get('/api/user', { params: { userId: user._id } });
-            const data = response.data;
-          
-            setClothes(Array.isArray(data.clothes) ? data.clothes.filter((c: clothesType) => c && c._id) : []);
-            setOutfits(Array.isArray(data.outfits) ? data.outfits.filter((o: outfitType) => o && o._id) : []);
-            setGadgets(Array.isArray(data.gadgets) ? data.gadgets.filter((g: gadgetType) => g && g._id) : []);
-        } catch (err) {
-            console.error(err);
-            showToast('Errore nel recupero dati utente', 'error');
-        } finally {
-            setIsLoading(false);
-        }
-    }, [user?._id]);
+    const handleCloseModal = () => setActiveModal(null);
 
     const deleteFromWishlist = async (item: clothesType | outfitType | gadgetType) => {
         try {
@@ -97,45 +81,6 @@ const wishlistPage = () => {
         if (user?._id) fetchUserDetails();
     }, [user?._id, fetchUserDetails]);
 
-    const requestDelete = <T extends { _id?: string | number }>(
-        id: string | number | undefined,
-        entityName: string,
-        endpoint: string,
-        items: T[] | null,
-        setItems: React.Dispatch<React.SetStateAction<T[] | null>>
-    ) => {
-        if (!id) {
-            showToast(`${entityName} ID missing`, 'error');
-            return;
-        }
-    
-        const itemToRestore = items?.find((i) => i._id === id);
-    
-        setConfirmModal({
-        isOpen: true,
-        title: `Delete ${entityName}`,
-        description: `Are you sure you want to delete this ${entityName.toLowerCase()}? The action is irreversible.`,
-        onConfirm: async () => {
-            setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-            setItems((prev) => prev?.filter((i) => i._id !== id) || []);
-            showToast(`${entityName} deleted`, 'success');
-    
-            try {
-                const response = await axios.delete(`${endpoint}?id=${id}`);
-                if (response.data.success) {
-                    fetchUserDetails();
-                } else {
-                    throw new Error(`Server failed to delete ${entityName.toLowerCase()}`);
-                }
-            } catch (err) {
-                console.error(`Error deleting ${entityName.toLowerCase()}`, err);
-                if (itemToRestore) setItems((prev) => (prev ? [...prev, itemToRestore] : [itemToRestore]));
-                showToast(`Error during deletion. ${entityName} restored.`, 'error');
-            }
-        },
-        });
-    };
-
     return (
         <>
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
@@ -156,6 +101,11 @@ const wishlistPage = () => {
                 </div>
             )}
 
+            {activeModal === 'user' && <UserModal onClose={handleCloseModal} />}
+            {activeModal === 'item' && <ItemModal onSave={saveItem} onClose={handleCloseModal} item={currentItem} />}
+            {activeModal === 'outfit' && <OutfitModal onSave={saveOutfit} onClose={handleCloseModal} outfit={currentOutfit} items={clothes} />}
+            {activeModal === 'gadget' && <ItemModal onSave={saveGadget} onClose={handleCloseModal} item={currentGadget} />}
+
             <section id="wishlist-section" className="w-full max-w-6xl mx-auto px-6 py-10 flex flex-col items-center">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
                     {isLoading ? (
@@ -172,7 +122,7 @@ const wishlistPage = () => {
                                 <Bookmark className="w-4 h-4" />
                             </button>
                             <Clothing item={item} onOpen={handleOpenItemModal} />
-                            <button onClick={(e) => { e.stopPropagation(); requestDelete(item._id, 'Item', '/api/deleteItem', clothes, setClothes); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
+                            <button onClick={(e) => { e.stopPropagation(); deleteEntity(item._id, 'Item', '/api/deleteItem'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
                                 <Trash2Icon className="w-4 h-4" />
                             </button>
                         </div>
@@ -200,7 +150,7 @@ const wishlistPage = () => {
                                 <Bookmark className="w-4 h-4" />
                             </button>
                             <Outfit item={item} onOpen={handleOpenOutfitModal} />
-                            <button onClick={(e) => { e.stopPropagation(); requestDelete(item._id, 'Item', '/api/deleteItem', outfits, setOutfits); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
+                            <button onClick={(e) => { e.stopPropagation(); deleteEntity(item._id, 'Outfit', '/api/deleteOutfit'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
                                 <Trash2Icon className="w-4 h-4" />
                             </button>
                         </div>
@@ -228,7 +178,7 @@ const wishlistPage = () => {
                                 <Bookmark className="w-4 h-4" />
                             </button>
                             <Gadget item={item} onOpen={handleOpenGadgetModal} />
-                            <button onClick={(e) => { e.stopPropagation(); requestDelete(item._id, 'Item', '/api/deleteItem', gadgets, setGadgets); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
+                            <button onClick={(e) => { e.stopPropagation(); deleteEntity(item._id, 'Gadget', '/api/deleteGadget'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
                                 <Trash2Icon className="w-4 h-4" />
                             </button>
                         </div>

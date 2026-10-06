@@ -19,6 +19,9 @@ const wishlistPage = () => {
     const handleOpenOutfitModal = (outfit: outfitType) => openModal('outfit', { outfit, items: clothes, onSave: saveOutfit });
     const handleOpenGadgetModal = (gadget: gadgetType) => openModal('gadget', { item: gadget, onSave: saveGadget });
 
+    const allItems = [...(clothes || []), ...(outfits || []), ...(gadgets || [])];
+    const wishlistedItems = allItems.filter(item => item.isWishlisted);
+
     const confirmDelete = (id: string | number | undefined, type: 'Item' | 'Outfit' | 'Gadget', endpoint: string) => {
         if (!id) return;
         openModal('confirm', {
@@ -31,6 +34,13 @@ const wishlistPage = () => {
     useEffect(() => {
         if (user?._id) fetchUserDetails();
     }, [user?._id, fetchUserDetails]);
+
+    if(wishlistedItems.length === 0 && !isLoading)
+        return (
+            <div className="col-span-full p-12 text-center rounded-2xl bg-zinc-900/30 border border-white/5 text-zinc-500 text-sm">
+                Your wishlist is empty. Start adding items to see them here!
+            </div>
+        )
 
     return (
         <section id="wishlist-section" className="w-full max-w-6xl mx-auto px-6 py-10 flex flex-col items-center">

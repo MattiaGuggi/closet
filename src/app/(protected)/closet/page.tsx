@@ -34,8 +34,7 @@ const ClosetPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isExtractorOpen, setIsExtractorOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
-  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
-  const { clothes, setClothes, gadgets, setGadgets, outfits, setOutfits, fetchUserDetails } = useClosetAPI(user);
+  const { clothes, setClothes, gadgets, setGadgets, fetchUserDetails } = useClosetAPI(user);
 
   const handleClick = (arrow: 'left' | 'right', position: OutfitPart, layer?: UpperLayer) => {
     const posWrapper = document.getElementById(`${position}-wrapper`);

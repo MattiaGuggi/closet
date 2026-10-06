@@ -1,6 +1,5 @@
 'use client';
 
-import axios from 'axios';
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useUser } from '@/app/context/UserContext';
@@ -88,8 +87,8 @@ const sortItems = <T extends { name?: string; type?: string | null }>(
 
 const ProfilePage = () => {
   const { user, logout } = useUser();
-  const { showToast, openModal, setActiveModal } = useModal();
-  const { fetchUserDetails, deleteEntity, clothes, outfits, gadgets, isLoading, saveItem, saveOutfit, saveGadget } = useClosetAPI(user);
+  const { openModal, setActiveModal } = useModal();
+  const { fetchUserDetails, deleteEntity, clothes, outfits, gadgets, isLoading, saveItem, saveOutfit, saveGadget, toggleWishlist } = useClosetAPI(user);
   const [clothesSort, setClothesSort] = useState<SortOption>('Default');
   const [gadgetsSort, setGadgetsSort] = useState<SortOption>('Default');
   const [activeDropdown, setActiveDropdown] = useState<'clothes' | 'gadgets' | null>(null);
@@ -100,22 +99,6 @@ const ProfilePage = () => {
 
   const sortedClothes = useMemo(() => sortItems(clothes, clothesSort), [clothes, clothesSort]);
   const sortedGadgets = useMemo(() => sortItems(gadgets, gadgetsSort), [gadgets, gadgetsSort]);
-
-  const addInWishlist = async (item: clothesType | outfitType | gadgetType) => {
-    try {
-      const type = 'top' in item || 'mid' in item || 'bottom' in item ? 'Outfit' : 'Gadget' in item ? 'Gadget' : 'Item';
-      const response = await axios.post('/api/wishlist', { userId: user?._id, itemId: item._id, itemType: type });
-      if (response.data.success) {
-        showToast('Added to wishlist!', 'success');
-        fetchUserDetails();
-      } else {
-        throw new Error('Failed to add to wishlist');
-      }
-    } catch(err) {
-      console.error('Error adding to wishlist', err);
-      showToast('Failed to add to wishlist', 'error');
-    }
-  };
 
   useEffect(() => {
     if (user?._id) fetchUserDetails();
@@ -178,15 +161,7 @@ const ProfilePage = () => {
           ) : sortedClothes && sortedClothes.length > 0 ? (
             sortedClothes.map((clothing, idx) => (
               !clothing.isWishlisted && (
-                <div key={clothing._id || idx} className="relative group transition-transform hover:scale-[1.02]">
-                  <button onClick={(e) => { e.stopPropagation(); addInWishlist(clothing); }} className="absolute top-4 left-4 p-2.5 bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Add to wishlist">
-                    <Bookmark className="w-4 h-4" />
-                  </button>
-                  <Clothing item={clothing} onOpen={handleOpenItemModal} />
-                  <button onClick={(e) => { e.stopPropagation(); deleteEntity(clothing._id, 'Item', '/api/deleteItem'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete item">
-                    <Trash2Icon className="w-4 h-4" />
-                  </button>
-                </div>
+                <Clothing key={clothing._id || idx} item={clothing} onOpen={handleOpenItemModal} />
               )
             ))
           ) : (
@@ -223,15 +198,7 @@ const ProfilePage = () => {
           ) : outfits && outfits.length > 0 ? (
             outfits.map((outfit, idx) => (
               !outfit.isWishlisted && (
-                <div key={outfit._id || idx} className="relative group transition-transform hover:scale-[1.02]">
-                  <button onClick={(e) => { e.stopPropagation(); addInWishlist(outfit); }} className="absolute top-4 left-4 p-2.5 bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Add to wishlist">
-                    <Bookmark className="w-4 h-4" />
-                  </button>
-                  <Outfit item={outfit} onOpen={handleOpenOutfitModal} />
-                  <button onClick={(e) => { e.stopPropagation(); deleteEntity(outfit._id, 'Outfit', '/api/deleteOutfit'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete outfit">
-                    <Trash2Icon className="w-4 h-4" />
-                  </button>
-                </div>
+                <Outfit key={outfit._id || idx} item={outfit} onOpen={handleOpenOutfitModal} />
               )
             ))
           ) : (
@@ -278,10 +245,10 @@ const ProfilePage = () => {
             sortedGadgets.map((gadget, idx) => (
               !gadget.isWishlisted && (
                 <div key={gadget._id || idx} className="relative group transition-transform hover:scale-[1.02]">
-                  <button onClick={(e) => { e.stopPropagation(); addInWishlist(gadget); }} className="absolute top-4 left-4 p-2.5 bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Add to wishlist">
+                  <button onClick={(e) => { e.stopPropagation(); toggleWishlist(gadget, 'add'); }} className="absolute top-4 left-4 p-2.5 bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Add to wishlist">
                     <Bookmark className="w-4 h-4" />
                   </button>
-                  <Gadget item={gadget} onOpen={handleOpenGadgetModal} />
+                  <Gadget key={gadget._id || idx} item={gadget} onOpen={handleOpenGadgetModal} />
                   <button onClick={(e) => { e.stopPropagation(); deleteEntity(gadget._id, 'Gadget', '/api/deleteGadget'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete gadget">
                     <Trash2Icon className="w-4 h-4" />
                   </button>

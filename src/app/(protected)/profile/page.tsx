@@ -147,7 +147,7 @@ const ProfilePage = () => {
           </div>
           <div className="flex flex-col items-end gap-2.5">
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
-              {isLoading ? 'Loading...' : `${clothes?.length || 0} Item(s)`}
+              {isLoading ? 'Loading...' : `${clothes?.filter((c) => !c.isWishlisted).length || 0} Item(s)`}
             </span>
             <SortDropdown 
               value={clothesSort} 
@@ -193,7 +193,7 @@ const ProfilePage = () => {
           </div>
           <div className="flex flex-col items-end gap-2.5">
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
-              {isLoading ? 'Loading...' : `${outfits?.length || 0} Outfit(s)`}
+              {isLoading ? 'Loading...' : `${outfits?.filter((c) => !c.isWishlisted).length || 0} Outfit(s)`}
             </span>
           </div>
         </div>
@@ -230,7 +230,7 @@ const ProfilePage = () => {
           </div>
           <div className="flex flex-col items-end gap-2.5">
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
-              {isLoading ? 'Loading...' : `${gadgets?.length || 0} Gadget(s)`}
+              {isLoading ? 'Loading...' : `${gadgets?.filter((c) => !c.isWishlisted).length || 0} Gadget(s)`}
             </span>
             <SortDropdown 
               value={gadgetsSort} 

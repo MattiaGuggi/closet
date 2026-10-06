@@ -38,17 +38,26 @@ export const getUserFromDb = async (criteria: { _id?: string; email?: string }) 
 
   if (!criteria) return null;
 
+  let user = null;
+
   if (criteria._id) {
-    const [user] = await db.select().from(users).where(eq(users._id, criteria._id));
-    return user || null;
+    [user] = await db.select().from(users).where(eq(users._id, criteria._id));
+  } else if (criteria.email) {
+    [user] = await db.select().from(users).where(eq(users.email, criteria.email));
   }
 
-  if (criteria.email) {
-    const [user] = await db.select().from(users).where(eq(users.email, criteria.email));
-    return user || null;
-  }
+  if (!user) return null;
 
-  return null;
+  const userClothes = await db.select().from(clothes).where(eq(clothes.creator, user._id));
+  const userOutfits = await db.select().from(outfits).where(eq(outfits.creator, user._id));
+  const userGadgets = await db.select().from(gadgets).where(eq(gadgets.creator, user._id));
+
+  return {
+    ...user,
+    clothes: userClothes,
+    outfits: userOutfits,
+    gadgets: userGadgets,
+  };
 };
 
 export const createUserInDb = async (username: string, email: string, password: string) => {
@@ -281,6 +290,7 @@ export const getUserOutfitsFromDb = async (criteria: any) => {
   return rows.map((o) => ({
     _id: o._id,
     creator: o.creator,
+    isWishlisted: o.isWishlisted ?? false,
     top: {
       base: o.topBaseItem || null,
       mid: o.topMidItem || null,
@@ -306,6 +316,7 @@ export const getOutfitsFromDb = async () => {
   return rows.map((o) => ({
     _id: o._id,
     creator: o.creator,
+    isWishlisted: o.isWishlisted ?? false,
     top: {
       base: o.topBaseItem || null,
       mid: o.topMidItem || null,
@@ -337,6 +348,7 @@ export const getOutfitFromDb = async (criteria: string | number | outfitType) =>
   return {
     _id: o._id,
     creator: o.creator,
+    isWishlisted: o.isWishlisted ?? false,
     top: {
       base: o.topBaseItem || null,
       mid: o.topMidItem || null,
@@ -592,44 +604,42 @@ export const getGadgetFromDb = async (id: string) => {
   }
 };
 
-export const updateWishlist = async (userId: string, itemId: string, type: 'Outfit' | 'Gadget' | 'Item') => {
+export const updateWishlist = async (userId: string, itemId: string, type: 'Outfit' | 'Gadget' | 'Item', isWishlisted: boolean) => {
   await connectDB();
   try {
-    const user = await db.query.users.findFirst({ where: eq(users._id, userId) });
-    if (!user) {
-      throw new Error("User not found");
-    }
-    let item;
-    console.log(type)
+    let updatedItem;
+    
     switch(type) {
       case 'Item':
-        item = await db.query.clothes.findFirst({ where: eq(clothes._id, itemId) });
-
-        if (!item) throw new Error("Item not found");
-        await db.update(clothes).set({ isWishlisted: !item.isWishlisted }).where(eq(clothes._id, itemId));
-
+        [updatedItem] = await db.update(clothes)
+          .set({ isWishlisted: Boolean(isWishlisted) })
+          .where(eq(clothes._id, itemId))
+          .returning();
         break;
+        
       case 'Outfit':
-        item = await db.query.outfits.findFirst({ where: eq(outfits._id, itemId) });
-
-        if (!item) throw new Error("Outfit not found");
-        await db.update(outfits).set({ isWishlisted: !item.isWishlisted }).where(eq(outfits._id, itemId));
-
+        [updatedItem] = await db.update(outfits)
+          .set({ isWishlisted: Boolean(isWishlisted) })
+          .where(eq(outfits._id, itemId))
+          .returning();
         break;
+        
       case 'Gadget':
-        item = await db.query.gadgets.findFirst({ where: eq(gadgets._id, itemId) });
-
-        if (!item) throw new Error("Gadget not found");
-        await db.update(gadgets).set({ isWishlisted: !item.isWishlisted }).where(eq(gadgets._id, itemId));
-
+        [updatedItem] = await db.update(gadgets)
+          .set({ isWishlisted: Boolean(isWishlisted) })
+          .where(eq(gadgets._id, itemId))
+          .returning();
         break;
+        
       default:
         throw new Error("Invalid type for wishlist addition");
     }
 
-    return { success: true, message: `${type} updated in wishlist`, item };
+    if (!updatedItem) throw new Error(`${type} not found in database`);
+
+    return { success: true, message: `${type} updated in wishlist`, item: updatedItem };
   } catch(err) {
-    console.error("Error updating wishlist", err);
-    throw new Error("Failed to update item in wishlist");
+    console.error("Error updating wishlist in DB:", err);
+    throw err;
   }
 };

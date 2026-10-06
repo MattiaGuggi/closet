@@ -1,8 +1,6 @@
 import Image from 'next/image'
 import { outfitType } from '@/lib/types'
 import { Bookmark, Edit3, Trash2Icon } from 'lucide-react'
-import useClosetAPI from '../hooks/useClosetAPI';
-import { useUser } from '../context/UserContext';
 
 interface OutfitProps {
   item: outfitType;
@@ -13,7 +11,7 @@ interface OutfitProps {
 
 const Outfit = ({ item, onOpen, onToggleWishlist, onDelete }: OutfitProps) => {
   const hasTop = item?.top?.base || item?.top?.mid || item?.top?.outer;
-  const isWishlisted = item?.isWishlisted || false;
+  const isWishlisted = item?.isWishlisted;
   const wishlistButtonTitle = isWishlisted ? "Remove from wishlist" : "Add to wishlist";
   const classNameForWishlistButton = isWishlisted ? "hover:bg-zinc-900/80 bg-blue-500/20 hover:text-zinc-400 text-blue-400" : "bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400";
 

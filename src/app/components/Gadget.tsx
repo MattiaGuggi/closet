@@ -1,8 +1,6 @@
 import { gadgetType } from "@/lib/types";
 import Image from "next/image";
 import { Bookmark, Edit3, Trash2Icon } from "lucide-react";
-import useClosetAPI from "../hooks/useClosetAPI";
-import { useUser } from "../context/UserContext";
 
 interface GadgetProps {
   item: gadgetType;

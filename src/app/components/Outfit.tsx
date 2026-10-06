@@ -4,15 +4,23 @@ import { Bookmark, Edit3, Trash2Icon } from 'lucide-react'
 import useClosetAPI from '../hooks/useClosetAPI';
 import { useUser } from '../context/UserContext';
 
-const Outfit = ({ item, onOpen }: { item: outfitType, onOpen: (item: outfitType) => void }) => {
-  const { user } = useUser();
-  const { toggleWishlist, deleteEntity } = useClosetAPI(user);
+interface OutfitProps {
+  item: outfitType;
+  onOpen: (item: outfitType) => void;
+  onToggleWishlist: (item: outfitType, action: 'add' | 'remove') => void;
+  onDelete: (id: string | number | undefined, type: 'Outfit', endpoint: string) => void;
+}
+
+const Outfit = ({ item, onOpen, onToggleWishlist, onDelete }: OutfitProps) => {
   const hasTop = item?.top?.base || item?.top?.mid || item?.top?.outer;
+  const isWishlisted = item?.isWishlisted || false;
+  const wishlistButtonTitle = isWishlisted ? "Remove from wishlist" : "Add to wishlist";
+  const classNameForWishlistButton = isWishlisted ? "hover:bg-zinc-900/80 bg-blue-500/20 hover:text-zinc-400 text-blue-400" : "bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400";
 
   return (
     
     <div className="relative group transition-transform hover:scale-[1.02]">
-      <button onClick={(e) => { e.stopPropagation(); toggleWishlist(item, 'add'); }} className="absolute top-4 left-4 p-2.5 bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Add to wishlist">
+      <button onClick={(e) => { e.stopPropagation(); onToggleWishlist(item, isWishlisted ? 'remove' : 'add'); }} className={classNameForWishlistButton + " absolute top-4 left-4 p-2.5 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto"} title={wishlistButtonTitle}>
         <Bookmark className="w-4 h-4" />
       </button>
       <div className='outfit-card w-full rounded-3xl bg-zinc-900/60 border border-white/10 hover:border-indigo-500/40 p-6 flex flex-col items-center justify-between backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02]'>
@@ -64,7 +72,7 @@ const Outfit = ({ item, onOpen }: { item: outfitType, onOpen: (item: outfitType)
           </>
         )}
       </div>
-      <button onClick={(e) => { e.stopPropagation(); deleteEntity(item._id, 'Outfit', '/api/deleteOutfit'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete outfit">
+      <button onClick={(e) => { e.stopPropagation(); onDelete(item._id, 'Outfit', '/api/deleteOutfit'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete outfit">
         <Trash2Icon className="w-4 h-4" />
       </button>
     </div>

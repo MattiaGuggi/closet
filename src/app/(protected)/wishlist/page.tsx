@@ -13,11 +13,20 @@ import { useModal } from '@/app/context/ModalContext';
 const wishlistPage = () => {
     const { user } = useUser();
     const { openModal } = useModal();
-    const { clothes, outfits, gadgets, isLoading, fetchUserDetails, saveItem, saveOutfit, saveGadget } = useClosetAPI(user);
+    const { clothes, outfits, gadgets, isLoading, fetchUserDetails, saveItem, saveOutfit, saveGadget, deleteEntity, toggleWishlist } = useClosetAPI(user);
     
     const handleOpenItemModal = (item: clothesType) => openModal('item', { item, onSave: saveItem });
     const handleOpenOutfitModal = (outfit: outfitType) => openModal('outfit', { outfit, items: clothes, onSave: saveOutfit });
     const handleOpenGadgetModal = (gadget: gadgetType) => openModal('gadget', { item: gadget, onSave: saveGadget });
+
+    const confirmDelete = (id: string | number | undefined, type: 'Item' | 'Outfit' | 'Gadget', endpoint: string) => {
+        if (!id) return;
+        openModal('confirm', {
+            title: `Delete ${type}`,
+            description: 'Are you sure you want to delete this? The action is irreversible.',
+            onConfirm: () => deleteEntity(id, type, endpoint)
+        });
+    };
 
     useEffect(() => {
         if (user?._id) fetchUserDetails();
@@ -35,7 +44,7 @@ const wishlistPage = () => {
                 ) : clothes && clothes.length > 0 ? (
                     clothes.map((item, idx) => (
                         item.isWishlisted && (
-                            <Clothing key={item._id || idx} item={item} onOpen={handleOpenItemModal} />
+                            <Clothing key={item._id || idx} item={item} onOpen={handleOpenItemModal} onDelete={confirmDelete} onToggleWishlist={toggleWishlist} />
                         )
                     ))
                 ) : (
@@ -55,7 +64,7 @@ const wishlistPage = () => {
                 ) : outfits && outfits.length > 0 ? (
                     outfits.map((item, idx) => (
                         item.isWishlisted && (
-                            <Outfit key={item._id || idx} item={item} onOpen={handleOpenOutfitModal} />
+                            <Outfit key={item._id || idx} item={item} onOpen={handleOpenOutfitModal} onDelete={confirmDelete} onToggleWishlist={toggleWishlist} />
                         )
                     ))
                 ) : (
@@ -75,7 +84,7 @@ const wishlistPage = () => {
                 ) : gadgets && gadgets.length > 0 ? (
                     gadgets.map((item, idx) => (
                         item.isWishlisted && (
-                            <Gadget key={item._id || idx} item={item} onOpen={handleOpenGadgetModal} />
+                            <Gadget key={item._id || idx} item={item} onOpen={handleOpenGadgetModal} onDelete={confirmDelete} onToggleWishlist={toggleWishlist} />
                         )
                     ))
                 ) : (

@@ -4,7 +4,7 @@ import { clothesType, EditableClothesType, gadgetType, outfitType, userType } fr
 import { useModal } from '@/app/context/ModalContext';
 
 const useClosetAPI = (user: userType | null) => {
-    const { showToast } = useModal();
+    const { showToast, closeModal } = useModal();
     const [clothes, setClothes] = useState<clothesType[]>([]);
     const [outfits, setOutfits] = useState<outfitType[]>([]);
     const [gadgets, setGadgets] = useState<gadgetType[]>([]);
@@ -32,7 +32,11 @@ const useClosetAPI = (user: userType | null) => {
         showToast('Saving item to wardrobe...', 'info');
         const oldItem = clothes?.find((c) => c._id === item._id);
         
-        setClothes((prev) => prev?.map((c) => c._id === item._id ? (item as unknown as clothesType) : c) || []);
+        setClothes((prev) => {
+            const exists = prev?.find((c) => c._id === item._id);
+            if (exists) return prev?.map((c) => c._id === item._id ? (item as unknown as clothesType) : c) || [];
+            return [...(prev || []), item as unknown as clothesType];
+        });
 
         try {
             const formData = new FormData();
@@ -50,6 +54,7 @@ const useClosetAPI = (user: userType | null) => {
             });
 
             if (response.data.success) {
+                closeModal();
                 await fetchUserDetails();
                 showToast("Capo salvato con successo!", "success");
             } else {
@@ -62,7 +67,7 @@ const useClosetAPI = (user: userType | null) => {
         }
     };
 
-    const deleteEntity = async (id: number | undefined, type: 'Item' | 'Outfit' | 'Gadget', endpoint: string) => {
+    const deleteEntity = async (id: string | number | undefined, type: 'Item' | 'Outfit' | 'Gadget', endpoint: string) => {
         try {
             const response = await axios.delete(`${endpoint}?id=${id}`);
             if (response.data.success) {
@@ -70,6 +75,8 @@ const useClosetAPI = (user: userType | null) => {
                 if (type === 'Item') setClothes(prev => prev?.filter(i => i._id !== id) || []);
                 if (type === 'Outfit') setOutfits(prev => prev?.filter(i => i._id !== id) || []);
                 if (type === 'Gadget') setGadgets(prev => prev?.filter(i => i._id !== id) || []);
+
+                await fetchUserDetails();
                 return true;
             }
             throw new Error('Failed to delete');
@@ -81,8 +88,17 @@ const useClosetAPI = (user: userType | null) => {
     };
 
     const toggleWishlist = async (item: clothesType | outfitType | gadgetType, action: 'add' | 'remove') => {
+        const itemType = 'top' in item || 'mid' in item || 'bottom' in item ? 'Outfit' : 'Gadget' in item ? 'Gadget' : 'Item';
+        const isWishlisted = action === 'add';
+
+        if (itemType === 'Outfit') {
+            setOutfits(prev => prev.map(o => o._id === item._id ? { ...o, isWishlisted } : o));
+        } else if (itemType === 'Gadget') {
+            setGadgets(prev => prev.map(g => g._id === item._id ? { ...g, isWishlisted } : g));
+        } else {
+            setClothes(prev => prev.map(c => c._id === item._id ? { ...c, isWishlisted } : c));
+        }
         try {
-            const itemType = 'top' in item || 'mid' in item || 'bottom' in item ? 'Outfit' : 'Gadget' in item ? 'Gadget' : 'Item';
             const response = await axios.post('/api/wishlist', { userId: user?._id, itemId: item._id, itemType });
             
             if (response.data.success) {
@@ -94,6 +110,7 @@ const useClosetAPI = (user: userType | null) => {
         } catch(err) {
             console.error(err);
             showToast('Error updating wishlist', 'error');
+            await fetchUserDetails();
         }
     };
 
@@ -101,7 +118,11 @@ const useClosetAPI = (user: userType | null) => {
         showToast('Saving outfit to wardrobe...', 'info');
         
         const oldOutfit = outfits?.find((o) => o._id === outfit._id);
-        setOutfits((prev) => prev?.map((o) => o._id === outfit._id ? outfit : o) || []);
+        setOutfits((prev) => {
+            const exists = prev?.find((o) => o._id === outfit._id);
+            if (exists) return prev?.map((o) => o._id === outfit._id ? outfit : o) || [];
+            return [...(prev || []), outfit];
+        });
 
         try {
             const formData = new FormData();
@@ -112,7 +133,8 @@ const useClosetAPI = (user: userType | null) => {
             });
 
             if (response.data.success) {
-                fetchUserDetails();
+                closeModal();
+                await fetchUserDetails();
                 showToast("Outfit salvato con successo!", "success");
             } else {
                 throw new Error("Failed to update outfit");
@@ -130,7 +152,11 @@ const useClosetAPI = (user: userType | null) => {
         showToast('Saving gadget to wardrobe...', 'info');
         
         const oldGadget = gadgets?.find((g) => g._id === item._id);
-        setGadgets((prev) => prev?.map((g) => g._id === item._id ? item : g) || []);
+        setGadgets((prev) => {
+            const exists = prev?.find((g) => g._id === item._id);
+            if (exists) return prev?.map((g) => g._id === item._id ? item : g) || [];
+            return [...(prev || []), item];
+        });
 
         try {
             const formData = new FormData();
@@ -142,7 +168,8 @@ const useClosetAPI = (user: userType | null) => {
             });
 
             if (response.data.success) {
-                fetchUserDetails();
+                closeModal();
+                await fetchUserDetails();
                 showToast("Gadget saved successfully!", "success");
             } else {
                 throw new Error("Failed to update gadget");

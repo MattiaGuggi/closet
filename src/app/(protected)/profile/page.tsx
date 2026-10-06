@@ -100,6 +100,15 @@ const ProfilePage = () => {
   const sortedClothes = useMemo(() => sortItems(clothes, clothesSort), [clothes, clothesSort]);
   const sortedGadgets = useMemo(() => sortItems(gadgets, gadgetsSort), [gadgets, gadgetsSort]);
 
+  const confirmDelete = (id: string | number | undefined, type: 'Item' | 'Outfit' | 'Gadget', endpoint: string) => {
+    if (!id) return;
+    openModal('confirm', {
+        title: `Delete ${type}`,
+        description: 'Are you sure you want to delete this? The action is irreversible.',
+        onConfirm: () => deleteEntity(id, type, endpoint)
+    });
+  };
+
   useEffect(() => {
     if (user?._id) fetchUserDetails();
   }, [user?._id, fetchUserDetails]);
@@ -161,7 +170,7 @@ const ProfilePage = () => {
           ) : sortedClothes && sortedClothes.length > 0 ? (
             sortedClothes.map((clothing, idx) => (
               !clothing.isWishlisted && (
-                <Clothing key={clothing._id || idx} item={clothing} onOpen={handleOpenItemModal} />
+                <Clothing key={clothing._id || idx} item={clothing} onOpen={handleOpenItemModal} onToggleWishlist={toggleWishlist} onDelete={confirmDelete} />
               )
             ))
           ) : (
@@ -198,7 +207,7 @@ const ProfilePage = () => {
           ) : outfits && outfits.length > 0 ? (
             outfits.map((outfit, idx) => (
               !outfit.isWishlisted && (
-                <Outfit key={outfit._id || idx} item={outfit} onOpen={handleOpenOutfitModal} />
+                <Outfit key={outfit._id || idx} item={outfit} onOpen={handleOpenOutfitModal} onDelete={confirmDelete} onToggleWishlist={toggleWishlist} />
               )
             ))
           ) : (
@@ -244,15 +253,7 @@ const ProfilePage = () => {
           ) : sortedGadgets && sortedGadgets.length > 0 ? (
             sortedGadgets.map((gadget, idx) => (
               !gadget.isWishlisted && (
-                <div key={gadget._id || idx} className="relative group transition-transform hover:scale-[1.02]">
-                  <button onClick={(e) => { e.stopPropagation(); toggleWishlist(gadget, 'add'); }} className="absolute top-4 left-4 p-2.5 bg-zinc-900/80 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Add to wishlist">
-                    <Bookmark className="w-4 h-4" />
-                  </button>
-                  <Gadget key={gadget._id || idx} item={gadget} onOpen={handleOpenGadgetModal} />
-                  <button onClick={(e) => { e.stopPropagation(); deleteEntity(gadget._id, 'Gadget', '/api/deleteGadget'); }} className="absolute top-4 right-4 p-2.5 bg-zinc-900/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl border border-white/10 transition-all hover:scale-110 cursor-pointer z-30 backdrop-blur-md pointer-events-auto" title="Delete gadget">
-                    <Trash2Icon className="w-4 h-4" />
-                  </button>
-                </div>
+                <Gadget key={gadget._id || idx} item={gadget} onOpen={handleOpenGadgetModal} onDelete={confirmDelete} onToggleWishlist={toggleWishlist} />
               )
             ))
           ) : (

@@ -7,7 +7,7 @@ import Outfit from '@/app/components/Outfit';
 import Clothing from '@/app/components/Clothing';
 import SkeletonCard from '@/app/components/SkeletonCard';
 import { clothesType, gadgetType, outfitType } from '@/lib/types';
-import { Trash2Icon, LogOut, Edit3, Shirt, Layers, Watch, ListFilter, ChevronDown, Check, Bookmark } from 'lucide-react';
+import { LogOut, Edit3, Shirt, Layers, Watch, ListFilter, ChevronDown, Check, Bookmark } from 'lucide-react';
 import Gadget from '@/app/components/Gadget';
 import useClosetAPI from '@/app/hooks/useClosetAPI';
 import { useModal } from '@/app/context/ModalContext';

@@ -1,13 +1,15 @@
 import React from 'react'
-import { Box, Plus, Sparkles } from 'lucide-react';
+import { Bookmark, Box, Plus, Sparkles } from 'lucide-react';
 
 type optionControllerType = {
   setThree: React.Dispatch<React.SetStateAction<boolean>>;
+  wishlist: boolean;
+  setWishlist: React.Dispatch<React.SetStateAction<boolean>>;
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   buildOutfit: () => void;
 };
 
-const OptionController = ({ setThree, setIsModalOpen, buildOutfit }: optionControllerType) => {
+const OptionController = ({ setThree, wishlist, setWishlist, setIsModalOpen, buildOutfit }: optionControllerType) => {
   return (
     <div className='w-full flex justify-center mb-8 z-30'>
       <div className='flex flex-wrap items-center gap-4 px-6 py-3 rounded-2xl bg-zinc-900/80 border border-white/10 backdrop-blur-2xl shadow-2xl'>
@@ -21,6 +23,17 @@ const OptionController = ({ setThree, setIsModalOpen, buildOutfit }: optionContr
               className="sr-only peer" 
               type="checkbox" 
               onChange={(e) => setThree(e.target.checked)}
+            />
+            <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+          </label>
+          <Bookmark className="w-4 h-4 text-indigo-400" />
+          <span className="text-xs font-semibold text-zinc-300">Include Wishlist</span>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input 
+              className="sr-only peer" 
+              type="checkbox"
+              onChange={(e) => setWishlist(e.target.checked)}
+              checked={wishlist}
             />
             <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
           </label>

@@ -34,7 +34,8 @@ const ClosetPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isExtractorOpen, setIsExtractorOpen] = useState<boolean>(false);
   const [three, setThree] = useState<boolean>(false);
-  const { clothes, setClothes, gadgets, setGadgets, fetchUserDetails } = useClosetAPI(user);
+  const [wishlist, setWishlist] = useState<boolean>(true);
+  const { clothes, setClothes, gadgets, setGadgets, setOutfits, fetchUserDetails } = useClosetAPI(user);
 
   const handleClick = (arrow: 'left' | 'right', position: OutfitPart, layer?: UpperLayer) => {
     const posWrapper = document.getElementById(`${position}-wrapper`);
@@ -211,6 +212,18 @@ const ClosetPage = () => {
   };
 
   useEffect(() => {
+    if(wishlist) {
+      fetchUserDetails();
+    }
+    else {
+      setClothes(prev => prev?.filter(item => !item.isWishlisted) || []);
+      setOutfits(prev => prev?.filter(item => !item.isWishlisted) || []);
+      setGadgets(prev => prev?.filter(item => !item.isWishlisted) || []);
+    }
+
+  }, [wishlist]);
+
+  useEffect(() => {
     fetchUserDetails();
   }, []);
 
@@ -245,14 +258,14 @@ const ClosetPage = () => {
           </div>
         </div>
 
-        <OptionController setThree={setThree} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />
+        <OptionController setThree={setThree} wishlist={wishlist} setWishlist={setWishlist} setIsModalOpen={setIsModalOpen} buildOutfit={buildOutfit} />
         <div className='relative w-full flex flex-col items-center mt-6'>
           <div className='w-full max-w-4xl z-10'>
             <ClosetRows 
               items={clothes} 
               currentItemState={currentItemState as OutfitState} 
               handleClick={handleClick} 
-              three={three} 
+              three={three}
               hiddenLayers={hiddenLayers}
               setHiddenLayers={setHiddenLayers}
             />

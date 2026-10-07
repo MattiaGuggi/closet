@@ -17,7 +17,7 @@ type ClosetRowsProps = {
   setHiddenLayers: React.Dispatch<React.SetStateAction<Record<UpperLayer, boolean>>>;
 };
 
-export default function ClosetRows({ items, currentItemState, handleClick, three, hiddenLayers, setHiddenLayers }: ClosetRowsProps) {
+const ClosetRows = ({ items, currentItemState, handleClick, three, hiddenLayers, setHiddenLayers }: ClosetRowsProps) => {
   const [loadedImages, setLoadedImages] = useState<{ [key: string]: boolean }>({});
   const positions: OutfitPart[] = ["top", "mid", "bottom"];
   
@@ -79,8 +79,6 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
         const itemKey = currentItem ? String(currentItem._id || currentItem.name) : '';
         const rowHeight = pos === "bottom" ? "h-[16vh] min-h-[130px] sm:min-h-[150px]" : "h-[28vh] min-h-[220px] sm:min-h-[260px]";
         const wrapperAlignment = pos === "bottom" ? "items-start pt-1" : "items-center";
-        
-        // Fix: Explicitly declare the row's z-index to reverse the natural DOM stacking order
         const zIndexClass = pos === "top" ? "z-30" : pos === "mid" ? "z-20" : "z-10";
 
         return (
@@ -240,3 +238,5 @@ export default function ClosetRows({ items, currentItemState, handleClick, three
     </div>
   );
 }
+
+export default ClosetRows;
